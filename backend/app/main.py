@@ -13,7 +13,6 @@ from app.api.shift_template import router as shift_template_router
 from app.api.constraint import router as constraint_router
 from app.api.special_rule import router as special_rule_router
 from app.api.role import router as role_router
-from app.api.user import router as user_router
 from app.api.system import router as system_router
 from app.api.schedule import router as schedule_router
 from app.api.swap import router as swap_router
@@ -66,7 +65,6 @@ app.include_router(shift_template_router, prefix="/api")
 app.include_router(special_rule_router, prefix="/api")
 app.include_router(constraint_router, prefix="/api")
 app.include_router(role_router, prefix="/api")
-app.include_router(user_router, prefix="/api")
 app.include_router(system_router, prefix="/api")
 app.include_router(schedule_router, prefix="/api")
 app.include_router(swap_router, prefix="/api")

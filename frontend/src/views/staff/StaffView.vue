@@ -7,15 +7,24 @@
     <div class="page-content">
       <!-- 工具栏 -->
       <div class="toolbar">
-        <el-input
-          v-model="keyword"
-          placeholder="搜索人员姓名或工号"
-          clearable
-          prefix-icon="Search"
-          style="width: 280px"
-          @input="handleSearch"
-          @clear="handleSearch"
-        />
+        <div class="toolbar-left">
+          <el-input
+            v-model="keyword"
+            placeholder="搜索人员姓名或工号"
+            clearable
+            prefix-icon="Search"
+            style="width: 280px"
+            @input="handleSearch"
+            @clear="handleSearch"
+          />
+          <el-button
+            type="warning"
+            :disabled="selectedStaffIds.length === 0"
+            @click="handleBatchResetPwd"
+          >
+            批量重置密码
+          </el-button>
+        </div>
         <el-button type="primary" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新增人员
@@ -23,7 +32,15 @@
       </div>
 
       <!-- 人员表格 -->
-      <el-table :data="filteredStaffList" stripe style="width: 100%" v-loading="loading">
+      <el-table
+        :data="filteredStaffList"
+        stripe
+        style="width: 100%"
+        v-loading="loading"
+        @selection-change="handleSelectionChange"
+        :row-class-name="tableRowClassName"
+      >
+        <el-table-column type="selection" width="50" :selectable="isRowSelectable" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="employee_no" label="工号" width="120" />
         <el-table-column prop="phone" label="联系方式" width="130" />
@@ -80,20 +97,27 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="primary" size="small" @click="handleAccount(row)">账号</el-button>
-            <el-button link type="primary" size="small" @click="handleSpecialRule(row)">特殊规则</el-button>
-            <el-button
-              link
-              :type="row.status === 1 ? 'warning' : 'success'"
-              size="small"
-              @click="handleToggleStatus(row)"
-            >
-              {{ row.status === 1 ? '停用' : '启用' }}
-            </el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <!-- 系统账号（admin）：只能重置密码 -->
+            <template v-if="row.is_system_account">
+              <el-button link type="warning" size="small" @click="handleResetSingle(row)">重置密码</el-button>
+            </template>
+            <!-- 普通人员：正常操作 -->
+            <template v-else>
+              <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button link type="primary" size="small" @click="handleAccount(row)">账号</el-button>
+              <el-button link type="primary" size="small" @click="handleSpecialRule(row)">特殊规则</el-button>
+              <el-button
+                link
+                :type="row.status === 1 ? 'warning' : 'success'"
+                size="small"
+                @click="handleToggleStatus(row)"
+              >
+                {{ row.status === 1 ? '停用' : '启用' }}
+              </el-button>
+              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -130,14 +154,17 @@
         <el-form-item label="姓名" prop="name">
           <el-input v-model="formData.name" placeholder="请输入姓名" />
         </el-form-item>
-        <el-form-item label="工号" prop="employee_no">
-          <el-input v-model="formData.employee_no" placeholder="请输入工号" />
+        <el-form-item v-if="!isCreate" label="工号" prop="employee_no">
+          <el-input v-model="formData.employee_no" disabled />
+        </el-form-item>
+        <el-form-item v-if="isCreate" label="工号">
+          <el-input v-model="formData.employee_no" disabled :placeholder="employeeNoLoading ? '生成中...' : '选择组织后自动生成'" />
         </el-form-item>
         <el-form-item label="联系方式">
           <el-input v-model="formData.phone" placeholder="请输入联系方式" />
         </el-form-item>
         <el-form-item label="所属组织" prop="org_id">
-          <el-select v-model="formData.org_id" placeholder="请选择组织" style="width: 100%">
+          <el-select v-model="formData.org_id" placeholder="请选择组织" style="width: 100%" @change="onOrgChange">
             <el-option
               v-for="org in orgList"
               :key="org.id"
@@ -221,6 +248,7 @@ import SpecialRuleDrawer from './components/SpecialRuleDrawer.vue'
 import AccountDrawer from './components/AccountDrawer.vue'
 import api from '@/api/index'
 import { getSpecialRules, type SpecialRule } from '@/api/special-rule'
+import request from '@/utils/request'
 
 // 状态
 const loading = ref(false)
@@ -236,6 +264,7 @@ const roleList = ref<any[]>([])
 const staffRulesMap = ref<Record<number, SpecialRule[]>>({})
 const drawerVisible = ref(false)
 const isCreate = ref(false)
+const employeeNoLoading = ref(false)
 const formRef = ref<FormInstance>()
 
 // 特殊规则抽屉
@@ -246,6 +275,9 @@ const specialRuleStaffName = ref('')
 // 账号管理抽屉
 const accountVisible = ref(false)
 const accountStaff = ref<any>(null)
+
+// 批量选择
+const selectedStaffIds = ref<number[]>([])
 
 const defaultForm = {
   id: 0,
@@ -263,7 +295,6 @@ const formData = ref({ ...defaultForm })
 
 const rules: FormRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  employee_no: [{ required: true, message: '请输入工号', trigger: 'blur' }],
   org_id: [{ required: true, message: '请选择组织', trigger: 'change' }],
 }
 
@@ -298,19 +329,35 @@ function ruleDesc(rule: SpecialRule): string {
 }
 
 // 加载数据
+const systemAccounts = ref<any[]>([])
+
 async function loadStaff() {
   loading.value = true
   try {
     const params: any = { page: page.value, page_size: pageSize.value }
     if (keyword.value) params.keyword = keyword.value
     const res: any = await api.get('/staffs', { params })
-    staffList.value = Array.isArray(res) ? res : (res.items || [])
-    total.value = res.total || staffList.value.length
+    const list = Array.isArray(res) ? res : (res.items || [])
+    staffList.value = list
+    total.value = res.total || list.length
     await loadAllRules()
+    await loadSystemAccounts()
   } catch (e) {
     staffList.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function loadSystemAccounts() {
+  try {
+    const res: any = await api.get('/staffs/system-accounts')
+    systemAccounts.value = res.items || []
+    // 将系统账号插入列表顶部
+    const allItems = [...systemAccounts.value, ...staffList.value]
+    staffList.value = allItems
+  } catch {
+    // 不影响主列表
   }
 }
 
@@ -371,11 +418,81 @@ function handleSizeChange(newSize: number) {
   loadStaff()
 }
 
-// 新增
 function handleCreate() {
   isCreate.value = true
-  formData.value = { ...defaultForm }
+  formData.value = { ...defaultForm, employee_no: '' }
   drawerVisible.value = true
+}
+
+async function onOrgChange(orgId: number | null) {
+  if (!isCreate.value || !orgId) {
+    if (isCreate.value) formData.value.employee_no = ''
+    return
+  }
+  employeeNoLoading.value = true
+  try {
+    const res: any = await api.get('/staffs/next-employee-no', { params: { org_id: orgId } })
+    formData.value.employee_no = res.employee_no || ''
+  } catch {
+    formData.value.employee_no = ''
+  } finally {
+    employeeNoLoading.value = false
+  }
+}
+
+// 表格选择
+function handleSelectionChange(rows: any[]) {
+  selectedStaffIds.value = rows.filter(r => !r.is_system_account).map(r => r.id)
+}
+
+function isRowSelectable(row: any) {
+  // 系统账号（admin）不可被批量选择
+  return !row.is_system_account
+}
+
+function tableRowClassName({ row }: { row: any }) {
+  return row.is_system_account ? 'system-account-row' : ''
+}
+
+// 单个重置密码
+async function handleResetSingle(row: any) {
+  try {
+    await ElMessageBox.confirm(
+      `确认将 "${row.name}" 的密码重置为默认密码（123456）？重置后首次登录需修改密码。`,
+      '重置密码',
+      { confirmButtonText: '确认重置', cancelButtonText: '取消', type: 'warning' }
+    )
+    let res: any
+    if (row.is_system_account) {
+      // admin 等系统账号：直接调用接口
+      res = await request.post(`/api/staffs/reset-password-by-user/${row.user_id}`)
+    } else {
+      res = await request.post(`/api/staffs/${row.id}/reset-password`)
+    }
+    ElMessage.success(res.message || '密码已重置')
+    await loadStaff()
+    await loadSystemAccounts()
+  } catch {}
+}
+
+// 批量重置密码
+async function handleBatchResetPwd() {
+  if (selectedStaffIds.value.length === 0) {
+    ElMessage.warning('请先选择要重置的人员')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确认将选中的 ${selectedStaffIds.value.length} 位人员密码重置为默认密码（123456）？`,
+      '批量重置密码',
+      { confirmButtonText: '确认重置', cancelButtonText: '取消', type: 'warning' }
+    )
+    const { data: res } = await request.post('/api/staffs/reset-passwords', { staff_ids: selectedStaffIds.value })
+    ElMessage.success(res.message || '批量重置完成')
+    selectedStaffIds.value = []
+    await loadStaff()
+    await loadSystemAccounts()
+  } catch {}
 }
 
 function handleAccount(row: any) {
@@ -547,5 +664,19 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   padding: 16px 0;
+}
+
+.toolbar-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+:deep(.system-account-row) {
+  background-color: #fafafa !important;
+}
+
+:deep(.system-account-row:hover > td) {
+  background-color: #f0f0f0 !important;
 }
 </style>

@@ -32,7 +32,7 @@
           </el-badge>
           <el-dropdown trigger="click">
             <div class="user-info">
-              <span class="username">{{ authStore.username }}</span>
+              <span class="username">{{ authStore.staffName || authStore.username }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>

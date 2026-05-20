@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import SysUser, OrgStaff, SysUserRole
 from app.models.message import SysMessage, SysAnnouncement
+from app.utils.time_helper import to_local_str as _to_local_str
 
 
 class MessageService:
@@ -469,14 +470,6 @@ async def notify_admins_extra(
             relation_type=relation_type,
             relation_id=relation_id,
         )
-
-def _to_local_str(dt) -> str | None:
-    """将 UTC datetime 转为本地时间字符串（东八区 UTC+8）"""
-    if dt is None:
-        return None
-    from datetime import timedelta, timezone
-    local_dt = dt.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=8)))
-    return local_dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
 async def _get_user_display_map(db: AsyncSession, user_ids: list[int]) -> dict[int, str]:

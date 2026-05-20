@@ -7,6 +7,11 @@ from app.models import OrgStaff, OrgOrganization, SysUser, SysRole, SysUserRole
 from app.schemas.staff import StaffCreate, StaffUpdate, StaffResponse, StaffListResponse, StaffAccountUpdate
 from app.api.deps import get_current_user, require_permissions
 from app.utils.security import hash_password
+from pydantic import BaseModel as _BaseModel
+
+
+class _StaffIdsBody(_BaseModel):
+    staff_ids: list[int]
 
 router = APIRouter(prefix="/staffs", tags=["人员管理"])
 
@@ -47,6 +52,115 @@ async def get_staff_list(
 
     return StaffListResponse(total=total, items=items)
 
+@router.post("/reset-password-by-user/{user_id}", summary="通过用户ID重置密码（admin专用）")
+async def reset_password_by_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("staff", "update")),
+):
+    """通过用户ID重置密码（admin 等无 staff_id 的账号专用）"""
+    DEFAULT_PWD = "admin123"
+
+    user = (await db.execute(
+        select(SysUser).where(SysUser.id == user_id)
+    )).scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+
+    user.password_hash = hash_password(DEFAULT_PWD)
+    user.must_change_password = True
+    await db.flush()
+
+    return {
+        "message": f"{user.username} 密码已重置为 {DEFAULT_PWD}",
+        "default_password": DEFAULT_PWD,
+    }
+
+@router.post("/reset-passwords", summary="批量重置密码为默认密码")
+async def batch_reset_passwords(
+    data: _StaffIdsBody,
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("staff", "update")),
+):
+    """批量将指定人员的账号密码重置为默认密码（123456），admin 不可批量操作"""
+    staff_ids = data.staff_ids
+    if not staff_ids:
+        raise HTTPException(status_code=400, detail="请选择要重置的人员")
+
+    DEFAULT_PWD = "123456"
+    default_password_hash = hash_password(DEFAULT_PWD)
+
+    results = []
+    for sid in staff_ids:
+        staff = (await db.execute(
+            select(OrgStaff).where(OrgStaff.id == sid)
+        )).scalars().first()
+        if not staff:
+            results.append({"staff_id": sid, "success": False, "message": "人员不存在"})
+            continue
+
+        user = (await db.execute(
+            select(SysUser).where(SysUser.staff_id == sid)
+        )).scalars().first()
+        if not user:
+            results.append({"staff_id": sid, "success": False, "message": f"{staff.name} 暂无登录账号"})
+            continue
+
+        if user.username == "admin":
+            results.append({"staff_id": sid, "success": False, "message": "admin 账号不可批量重置，请单独操作"})
+            continue
+
+        user.password_hash = default_password_hash
+        user.must_change_password = True
+        results.append({
+            "staff_id": sid,
+            "staff_name": staff.name,
+            "success": True,
+            "message": f"{staff.name} 密码已重置为 {DEFAULT_PWD}",
+        })
+
+    await db.flush()
+
+    success_count = sum(1 for r in results if r["success"])
+    return {
+        "message": f"已重置 {success_count} 个账号",
+        "default_password": DEFAULT_PWD,
+        "results": results,
+    }
+
+
+@router.post("/{staff_id}/reset-password", summary="单个重置密码")
+async def single_reset_password(
+    staff_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("staff", "update")),
+):
+    """单个重置密码为默认密码（支持 admin）"""
+    staff = (await db.execute(
+        select(OrgStaff).where(OrgStaff.id == staff_id)
+    )).scalars().first()
+
+    user = None
+    if staff:
+        user = (await db.execute(
+            select(SysUser).where(SysUser.staff_id == staff_id)
+        )).scalars().first()
+
+    # 也支持 admin（admin 可能没有 staff 记录，特殊处理）
+    if not user:
+        # 尝试直接按 staff_id 查
+        raise HTTPException(status_code=404, detail="该人员暂无登录账号")
+
+    DEFAULT_PWD = "123456"
+    user.password_hash = hash_password(DEFAULT_PWD)
+    user.must_change_password = True
+    await db.flush()
+
+    display_name = staff.name if staff else user.username
+    return {
+        "message": f"{display_name} 密码已重置为 {DEFAULT_PWD}",
+        "default_password": DEFAULT_PWD,
+    }
 
 @router.post("/migrate-accounts", summary="为历史人员批量创建账号")
 async def migrate_accounts(
@@ -95,6 +209,65 @@ async def migrate_accounts(
 
     return {"message": f"已为 {created} 位人员创建账号（用户名=工号，密码=123456）", "created": created}
 
+@router.get("/system-accounts", summary="获取系统账号列表（admin等无人员关联的账号）")
+async def get_system_accounts(
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    """获取未关联人员的系统账号（如 admin）"""
+    from app.models.audit_log import SysAuditLog
+
+    # 查找没有 staff_id 的用户
+    result = await db.execute(
+        select(SysUser).where(SysUser.staff_id.is_(None))
+    )
+    users = result.scalars().all()
+
+    # 角色映射
+    all_roles = (await db.execute(select(SysRole))).scalars().all()
+    role_map = {r.id: r.name for r in all_roles}
+
+    user_ids = [u.id for u in users]
+    urs = (await db.execute(
+        select(SysUserRole).where(SysUserRole.user_id.in_(user_ids))
+    )).scalars().all() if user_ids else []
+    user_roles_map: dict[int, list[str]] = {}
+    for ur in urs:
+        user_roles_map.setdefault(ur.user_id, []).append(role_map.get(ur.role_id, ""))
+
+    items = []
+    for u in users:
+        items.append({
+            "id": None,
+            "name": u.username,
+            "employee_no": u.username,
+            "phone": None,
+            "org_id": None,
+            "org_name": "系统账号",
+            "status": u.status,
+            "tags": [],
+            "available_posts": [],
+            "has_account": True,
+            "account_username": u.username,
+            "account_status": u.status,
+            "account_roles": user_roles_map.get(u.id, []),
+            "is_system_account": True,
+            "user_id": u.id,
+        })
+
+    return {"items": items, "total": len(items)}
+
+@router.get("/next-employee-no", summary="获取下一个工号")
+async def get_next_employee_no(
+    org_id: int = Query(..., description="组织ID"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    """根据组织自动生成下一个工号"""
+    from app.utils.employee_no import generate_employee_no
+    employee_no = await generate_employee_no(db, org_id)
+    return {"employee_no": employee_no}
+
 
 @router.get("/{staff_id}", response_model=StaffResponse, summary="获取人员详情")
 async def get_staff_detail(
@@ -120,26 +293,33 @@ async def create_staff(
     current_user: SysUser = Depends(require_permissions("staff", "create")),
 ):
     """创建人员并自动创建登录账号（用户名=工号，密码=123456，角色由标签自动匹配）"""
-    # 检查工号唯一
-    result = await db.execute(select(OrgStaff).where(OrgStaff.employee_no == data.employee_no))
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="工号已存在")
+    from app.utils.employee_no import generate_employee_no
 
     # 检查组织存在
     org_result = await db.execute(select(OrgOrganization).where(OrgOrganization.id == data.org_id))
     if not org_result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="所属组织不存在")
 
+    # 工号：优先使用传入值，否则自动生成
+    employee_no = data.employee_no
+    if not employee_no:
+        employee_no = await generate_employee_no(db, data.org_id)
+
+    # 检查工号唯一
+    result = await db.execute(select(OrgStaff).where(OrgStaff.employee_no == employee_no))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail=f"工号 '{employee_no}' 已存在")
+
     # 如果要创建账号，先检查用户名是否冲突
     if data.create_account:
-        user_exists = await db.execute(select(SysUser).where(SysUser.username == data.employee_no))
+        user_exists = await db.execute(select(SysUser).where(SysUser.username == employee_no))
         if user_exists.scalar_one_or_none():
-            raise HTTPException(status_code=400, detail=f"登录账号 '{data.employee_no}' 已存在（工号与已有账号重复）")
+            raise HTTPException(status_code=400, detail=f"登录账号 '{employee_no}' 已存在")
 
     # 创建人员
     staff = OrgStaff(
         name=data.name,
-        employee_no=data.employee_no,
+        employee_no=employee_no,
         phone=data.phone,
         org_id=data.org_id,
         status=1,

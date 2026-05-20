@@ -45,12 +45,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '排班规则', icon: 'Setting', roles: ['admin', 'scheduler'] },
       },
       {
-        path: 'users',
-        name: 'Users',
-        component: () => import('@/views/user/UserView.vue'),
-        meta: { title: '用户管理', icon: 'UserFilled', roles: ['admin'] },
-      },
-      {
         path: 'roles',
         name: 'Roles',
         component: () => import('@/views/role/RoleView.vue'),

@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
   const roles = ref<string[]>([])
   const permissions = ref<Record<string, any>>({})
   const staffName = ref<string>('')
+  const staffId = ref<number | null>(null)
   const mustChangePassword = ref<boolean>(false)
 
   const isAuthenticated = computed(() => !!token.value)
@@ -37,6 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
     roles.value = res.roles
     permissions.value = res.permissions
     staffName.value = res.staff_name || ''
+    staffId.value = res.staff_id || null
     // 后端同步校验强制改密状态
     if (res.must_change_password) {
       // 后端返回需要改密，强制登出，回到登录页
@@ -51,6 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
     roles.value = []
     permissions.value = {}
     staffName.value = ''
+    staffId.value = null
     mustChangePassword.value = false
     localStorage.removeItem('token')
     router.push('/login')
@@ -73,7 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    token, userId, username, roles, permissions, staffName,
+    token, userId, username, roles, permissions, staffName, staffId,
     isAuthenticated, isAdmin, mustChangePassword,
     login, fetchUserInfo, logout, hasRole, hasPermission, hasAnyPermission,
   }

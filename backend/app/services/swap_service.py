@@ -14,6 +14,7 @@ from app.models.schedule import SchSchedule, SchScheduleDetail
 from app.models.shift_template import SchShiftTemplate
 from app.models.audit_log import SysAuditLog, SysConfig
 from app.services.message_service import MessageService, notify_admins_extra
+from app.utils.time_helper import to_local_str as _to_local_str
 
 # 调班状态常量
 STATUS_PENDING_CONFIRM = "pending_confirm"
@@ -23,6 +24,7 @@ STATUS_APPROVED = "approved"
 STATUS_COMPLETED = "completed"
 STATUS_CANCELLED = "cancelled"
 STATUS_REJECTED = "rejected"
+STATUS_TARGET_REFUSED = "target_refused"
 
 
 class SwapService:
@@ -40,18 +42,32 @@ class SwapService:
         swap_type: Optional[str] = None,
         page: int = 1,
         page_size: int = 20,
+        user_roles: Optional[list[str]] = None,
     ) -> dict:
         """获取调班申请列表"""
         query = select(SchSwapRequest)
+        is_manager = user_roles and any(r in user_roles for r in ("admin", "scheduler", "leader"))
 
         if user_id is not None:
             if role == "requester":
                 query = query.where(SchSwapRequest.requester_id == user_id)
             elif role == "target":
-                query = query.where(
-                    (SchSwapRequest.target_id == user_id) |
-                    (SchSwapRequest.claimer_id == user_id)
-                )
+                from sqlalchemy import or_
+                conditions = [
+                    SchSwapRequest.target_id == user_id,
+                    SchSwapRequest.claimer_id == user_id,
+                    (
+                        (SchSwapRequest.swap_type == "open") &
+                        (SchSwapRequest.status == STATUS_PENDING_CLAIM) &
+                        (SchSwapRequest.requester_id != user_id)
+                    ),
+                ]
+                # 管理员/排班管理员/组长额外包含待审批的申请
+                if is_manager:
+                    conditions.append(
+                        (SchSwapRequest.status == STATUS_PENDING_APPROVE)
+                    )
+                query = query.where(or_(*conditions))
             elif role == "approver":
                 query = query.where(SchSwapRequest.status == STATUS_PENDING_APPROVE)
 
@@ -102,11 +118,19 @@ class SwapService:
         swap_type = data["swap_type"]
 
         if swap_type == "specified":
-            # 指定换班
+            # 指定换班：前端传入的是 staff_id，需要转换为 user_id
             target_id = data.get("target_id")
             target_schedule_id = data.get("target_schedule_id")
             if not target_id or not target_schedule_id:
                 raise ValueError("指定换班必须提供被换人和对方排班记录")
+
+            # 将 staff_id 转换为 user_id
+            target_user = (await db.execute(
+                select(SysUser).where(SysUser.staff_id == target_id)
+            )).scalars().first()
+            if not target_user:
+                raise ValueError("换班对象暂无登录账号，无法发起换班")
+            target_id = target_user.id
 
             target_schedule = await _get_schedule_or_raise(db, target_schedule_id)
             if target_schedule.status != SchSchedule.STATUS_PUBLISHED:
@@ -157,6 +181,8 @@ class SwapService:
         # 发送通知
         if swap_type == "specified" and target_id:
             await _notify_swap_created(db, swap, target_id)
+        elif swap_type == "open":
+            await _notify_open_swap_created(db, swap)
 
         items = await _serialize_swap_list(db, [swap])
         return items[0] if items else {}
@@ -181,6 +207,8 @@ class SwapService:
         # 检查审批开关
         approval_required = await _is_approval_required(db)
 
+        swap.confirmed_at = datetime.now()
+
         if approval_required:
             swap.status = STATUS_PENDING_APPROVE
             # 通知审批人
@@ -192,13 +220,16 @@ class SwapService:
         await db.flush()
         await db.refresh(swap)
 
-        await _log_action(db, user_id, "swap_confirm", "swap_request", swap.id, {})
+        await _log_action(db, user_id, "swap_confirm", "swap_request", swap.id, {
+            "confirmed_at": str(swap.confirmed_at),
+        })
 
         # 通知发起人
+        confirmer_name = await _get_staff_name_by_user_id(db, user_id)
         await MessageService.create_message(
             db, receiver_id=swap.requester_id,
             title="您的调班申请对方已确认",
-            content=f"申请编号 {swap.request_no} 已确认{'，等待管理员审批' if approval_required else '并生效'}。",
+            content=f"申请编号 {swap.request_no} 已被 {confirmer_name} 确认{'，等待管理员审批' if approval_required else '并生效'}。",
             msg_type="swap", sender_id=user_id,
             relation_type="swap_request", relation_id=swap.id,
         )
@@ -237,10 +268,11 @@ class SwapService:
         await _log_action(db, user_id, "swap_claim", "swap_request", swap.id, {})
 
         # 通知发起人
+        claimer_name = await _get_staff_name_by_user_id(db, user_id)
         await MessageService.create_message(
             db, receiver_id=swap.requester_id,
             title="您的开放换班申请已被认领",
-            content=f"申请编号 {swap.request_no} 已被认领{'，等待管理员审批' if approval_required else '并生效'}。",
+            content=f"申请编号 {swap.request_no} 已被 {claimer_name} 认领{'，等待管理员审批' if approval_required else '并生效'}。",
             msg_type="swap", sender_id=user_id,
             relation_type="swap_request", relation_id=swap.id,
         )
@@ -273,6 +305,7 @@ class SwapService:
         await _log_action(db, user_id, "swap_approve", "swap_request", swap.id, {})
 
         # 通知相关人员
+        approver_name = await _get_staff_name_by_user_id(db, user_id)
         notify_ids = [swap.requester_id]
         if swap.target_id:
             notify_ids.append(swap.target_id)
@@ -283,7 +316,7 @@ class SwapService:
             await MessageService.create_message(
                 db, receiver_id=uid,
                 title="调班申请已审批通过",
-                content=f"申请编号 {swap.request_no} 已通过审批并生效。",
+                content=f"申请编号 {swap.request_no} 已由 {approver_name} 审批通过并生效。",
                 msg_type="approve", sender_id=user_id,
                 relation_type="swap_request", relation_id=swap.id,
             )
@@ -312,11 +345,52 @@ class SwapService:
         await _log_action(db, user_id, "swap_reject", "swap_request", swap.id, {})
 
         # 通知发起人
+        rejector_name = await _get_staff_name_by_user_id(db, user_id)
         await MessageService.create_message(
             db, receiver_id=swap.requester_id,
             title="调班申请已被拒绝",
-            content=f"申请编号 {swap.request_no} 审批未通过。{('原因：' + comment) if comment else ''}",
+            content=f"申请编号 {swap.request_no} 已被 {rejector_name} 审批拒绝。{('原因：' + comment) if comment else ''}",
             msg_type="approve", sender_id=user_id,
+            relation_type="swap_request", relation_id=swap.id,
+        )
+
+        items = await _serialize_swap_list(db, [swap])
+        return items[0] if items else {}
+
+    # ==================== 对方拒绝（指定换班） ====================
+
+    @staticmethod
+    async def refuse(db: AsyncSession, request_id: int, user_id: int, reason: str = None) -> dict:
+        """对方拒绝换班（仅指定换班，pending_confirm 状态）"""
+        swap = await _get_swap_or_raise(db, request_id)
+
+        if swap.swap_type != "specified":
+            raise ValueError("仅指定换班可被拒绝")
+        if swap.status != STATUS_PENDING_CONFIRM:
+            raise ValueError(f"当前状态 {swap.status} 不允许拒绝")
+        if swap.target_id != user_id:
+            raise ValueError("只有被换人才能拒绝")
+
+        swap.status = STATUS_TARGET_REFUSED
+        swap.refused_at = datetime.now()
+        swap.refuse_comment = reason
+        await db.flush()
+        await db.refresh(swap)
+
+        await _log_action(db, user_id, "swap_refuse", "swap_request", swap.id, {
+            "refused_at": str(swap.refused_at), "reason": reason,
+        })
+
+        # 通知发起人
+        refuser_name = await _get_staff_name_by_user_id(db, user_id)
+        msg = f"申请编号 {swap.request_no} 已被 {refuser_name} 拒绝。"
+        if reason:
+            msg += f"原因：{reason}"
+        await MessageService.create_message(
+            db, receiver_id=swap.requester_id,
+            title="您的调班申请已被对方拒绝",
+            content=msg,
+            msg_type="swap", sender_id=user_id,
             relation_type="swap_request", relation_id=swap.id,
         )
 
@@ -332,7 +406,7 @@ class SwapService:
 
         if swap.requester_id != user_id:
             raise ValueError("只有发起人才能撤回")
-        if swap.status in (STATUS_COMPLETED, STATUS_CANCELLED, STATUS_REJECTED):
+        if swap.status in (STATUS_COMPLETED, STATUS_CANCELLED, STATUS_REJECTED, STATUS_TARGET_REFUSED):
             raise ValueError(f"当前状态 {swap.status} 不允许撤回")
 
         swap.status = STATUS_CANCELLED
@@ -342,6 +416,7 @@ class SwapService:
         await _log_action(db, user_id, "swap_cancel", "swap_request", swap.id, {})
 
         # 通知相关人员
+        canceller_name = await _get_staff_name_by_user_id(db, user_id)
         notify_ids = []
         if swap.target_id:
             notify_ids.append(swap.target_id)
@@ -351,7 +426,7 @@ class SwapService:
             await MessageService.create_message(
                 db, receiver_id=uid,
                 title="调班申请已被撤回",
-                content=f"申请编号 {swap.request_no} 已被发起人撤回。",
+                content=f"申请编号 {swap.request_no} 已被 {canceller_name} 撤回。",
                 msg_type="swap", relation_type="swap_request", relation_id=swap.id,
             )
 
@@ -362,6 +437,20 @@ class SwapService:
 # ====================================================================== #
 #  私有辅助函数
 # ====================================================================== #
+
+async def _get_staff_name_by_user_id(db: AsyncSession, user_id: int) -> str:
+    """根据 user_id 获取人员姓名（优先 staff.name，其次 username）"""
+    user = (await db.execute(
+        select(SysUser).where(SysUser.id == user_id)
+    )).scalars().first()
+    if user and user.staff_id:
+        staff = (await db.execute(
+            select(OrgStaff).where(OrgStaff.id == user.staff_id)
+        )).scalars().first()
+        if staff:
+            return staff.name
+    return user.username if user else "未知用户"
+
 
 async def _get_swap_or_raise(db: AsyncSession, request_id: int) -> SchSwapRequest:
     swap = (await db.execute(
@@ -438,19 +527,15 @@ async def _execute_swap(db: AsyncSession, swap: SchSwapRequest):
         )).scalars().all()
 
         # 将发起人从自己的排班中移除，添加到对方排班
-        requester_staff_id = None
         for d in req_details:
             if d.staff_id and (await _is_user_staff(db, swap.requester_id, d.staff_id)):
-                requester_staff_id = d.staff_id
                 d.schedule_id = target_schedule.id
                 break
 
         # 将被换人从对方排班中移除，添加到发起人排班
         if swap.target_id:
-            target_user_staff_id = None
             for d in target_details:
                 if d.staff_id and (await _is_user_staff(db, swap.target_id, d.staff_id)):
-                    target_user_staff_id = d.staff_id
                     d.schedule_id = req_schedule.id
                     break
 
@@ -460,9 +545,11 @@ async def _execute_swap(db: AsyncSession, swap: SchSwapRequest):
             select(SchScheduleDetail).where(SchScheduleDetail.schedule_id == req_schedule.id)
         )).scalars().all()
 
-        claimer_staff_id = (await db.execute(
-            select(OrgStaff.id).where(OrgStaff.user_id == swap.claimer_id)
-        )).scalar_one_or_none()
+        # 反向查询：通过 SysUser.staff_id 获取认领人的 staff_id
+        claimer_user = (await db.execute(
+            select(SysUser).where(SysUser.id == swap.claimer_id)
+        )).scalars().first()
+        claimer_staff_id = claimer_user.staff_id if claimer_user else None
 
         for d in req_details:
             if d.staff_id and (await _is_user_staff(db, swap.requester_id, d.staff_id)):
@@ -502,7 +589,13 @@ async def _notify_swap_created(db: AsyncSession, swap: SchSwapRequest, target_us
     req_user = (await db.execute(
         select(SysUser).where(SysUser.id == swap.requester_id)
     )).scalars().first()
-    req_name = req_user.username if req_user else "未知用户"
+    req_name = "未知用户"
+    if req_user and req_user.staff_id:
+        req_staff = (await db.execute(
+            select(OrgStaff).where(OrgStaff.id == req_user.staff_id)
+        )).scalars().first()
+        if req_staff:
+            req_name = req_staff.name
 
     schedule = (await db.execute(
         select(SchSchedule).where(SchSchedule.id == swap.requester_schedule_id)
@@ -533,6 +626,74 @@ async def _notify_swap_created(db: AsyncSession, swap: SchSwapRequest, target_us
         msg_type="swap", sender_id=swap.requester_id,
         relation_type="swap_request", relation_id=swap.id,
         exclude_user_ids={swap.requester_id, target_user_id},
+    )
+
+
+async def _notify_open_swap_created(db: AsyncSession, swap: SchSwapRequest):
+    """通知同组织人员有新的开放换班申请"""
+    req_schedule = (await db.execute(
+        select(SchSchedule).where(SchSchedule.id == swap.requester_schedule_id)
+    )).scalars().first()
+
+    if not req_schedule:
+        return
+
+    # 查找同组织的活跃人员（排除发起人自己）
+    staff_list = (await db.execute(
+        select(OrgStaff).where(
+            OrgStaff.org_id == req_schedule.org_id,
+            OrgStaff.status == 1,
+        )
+    )).scalars().all()
+
+    # 获取发起人姓名
+    req_user = (await db.execute(
+        select(SysUser).where(SysUser.id == swap.requester_id)
+    )).scalars().first()
+    req_name = "未知用户"
+    if req_user and req_user.staff_id:
+        req_staff = (await db.execute(
+            select(OrgStaff).where(OrgStaff.id == req_user.staff_id)
+        )).scalars().first()
+        if req_staff:
+            req_name = req_staff.name
+
+    # 获取班次信息
+    shift = (await db.execute(
+        select(SchShiftTemplate).where(SchShiftTemplate.id == req_schedule.shift_id)
+    )).scalars().first()
+    shift_name = getattr(shift, "name", "未知班次") if shift else "未知班次"
+    date_str = str(req_schedule.date)
+
+    # 查找人员对应的用户ID
+    staff_ids = [s.id for s in staff_list if s.id]
+    user_rows = (await db.execute(
+        select(SysUser.staff_id, SysUser.id)
+        .where(SysUser.staff_id.in_(staff_ids), SysUser.status == 1)
+    )).all()
+    staff_to_user: dict[int, int] = {row[0]: row[1] for row in user_rows if row[0]}
+
+    # 向同组织所有人发送通知（排除发起人）
+    for staff in staff_list:
+        uid = staff_to_user.get(staff.id)
+        if not uid or uid == swap.requester_id:
+            continue
+        await MessageService.create_message(
+            db, receiver_id=uid,
+            title=f"{req_name}发布了一个替班申请",
+            content=f"申请编号：{swap.request_no}\n日期：{date_str}\n班次：{shift_name}\n快来认领！",
+            msg_type="swap", sender_id=swap.requester_id,
+            relation_type="swap_request", relation_id=swap.id,
+        )
+
+    # 管理员补发
+    await notify_admins_extra(
+        db,
+        title=f"新开放换班申请：{swap.request_no}",
+        content=f"{req_name} 发布了 {date_str} {shift_name} 的替班申请。",
+        msg_type="swap", sender_id=swap.requester_id,
+        relation_type="swap_request", relation_id=swap.id,
+        exclude_user_ids={swap.requester_id},
     )
 
 
@@ -644,12 +805,15 @@ async def _serialize_swap_list(db: AsyncSession, swaps: list[SchSwapRequest]) ->
             "claimer_name": user_map.get(s.claimer_id) if s.claimer_id else None,
             "reason": s.reason,
             "status": s.status,
+            "confirmed_at": _to_local_str(s.confirmed_at),
+            "refused_at": _to_local_str(s.refused_at),
+            "refuse_comment": s.refuse_comment,
             "approved_by": s.approved_by,
             "approver_name": user_map.get(s.approved_by) if s.approved_by else None,
-            "approved_at": s.approved_at,
+            "approved_at": _to_local_str(s.approved_at),
             "approve_comment": s.approve_comment,
-            "created_at": s.created_at,
-            "updated_at": s.updated_at,
+            "created_at": _to_local_str(s.created_at),
+            "updated_at": _to_local_str(s.updated_at),
         })
 
     return items

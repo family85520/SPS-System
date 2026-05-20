@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import SysUser, OrgOrganization, OrgStaff, SchConstraint, SysMessage, SysAnnouncement
 from app.models.schedule import SchSchedule, SchScheduleDetail
 from app.models.shift_template import SchShiftTemplate
+from app.utils.time_helper import to_local_short as _to_local_short
 
 
 class DashboardService:
@@ -95,15 +96,6 @@ class DashboardService:
 
 
 # ========== 私有辅助函数 ==========
-
-def _to_local_short(dt) -> str | None:
-    """将 UTC datetime 转为本地时间短字符串（东八区 UTC+8）"""
-    if dt is None:
-        return None
-    from datetime import timedelta, timezone
-    local_dt = dt.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=8)))
-    return local_dt.strftime("%Y-%m-%d %H:%M")
-
 
 async def _get_today_duty(db: AsyncSession, today: date, org_id: Optional[int]) -> list:
     """获取今日值班安排"""

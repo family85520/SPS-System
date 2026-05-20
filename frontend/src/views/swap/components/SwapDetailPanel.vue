@@ -49,21 +49,56 @@
       <div style="margin-top: 24px">
         <h4 style="margin-bottom: 12px; font-size: 14px; color: #1F2D3D;">流程状态</h4>
         <el-timeline>
+          <!-- 节点1：发起申请（始终显示） -->
           <el-timeline-item timestamp="发起申请" placement="top" type="primary">
             {{ data.created_at }}
           </el-timeline-item>
+
+          <!-- 节点2：等待对方确认（指定换班，且状态不是初始待确认时才显示为已完成节点） -->
           <el-timeline-item
-            v-if="data.status !== 'pending_confirm' && data.status !== 'pending_claim'"
-            :timestamp="data.swap_type === 'specified' ? '对方确认' : '被人认领'"
+            v-if="data.swap_type === 'specified'"
+            timestamp="等待对方确认"
             placement="top"
-            type="success"
-          />
+            :type="data.status === 'pending_confirm' ? 'warning' : (data.status === 'target_refused' ? 'danger' : 'success')"
+          >
+            <template v-if="data.status === 'pending_confirm'">
+              等待对方确认中...
+            </template>
+            <template v-else-if="data.status === 'target_refused'">
+              对方已拒绝 {{ data.refused_at || '' }}
+              <div v-if="data.refuse_comment" style="color: #F56C6C; font-size: 12px; margin-top: 4px;">
+                原因：{{ data.refuse_comment }}
+              </div>
+            </template>
+            <template v-else>
+              {{ data.confirmed_at || '' }}
+            </template>
+          </el-timeline-item>
+
+          <!-- 节点2b：等待认领（开放换班） -->
+          <el-timeline-item
+            v-if="data.swap_type === 'open'"
+            timestamp="等待认领"
+            placement="top"
+            :type="data.status === 'pending_claim' ? 'warning' : 'success'"
+          >
+            <template v-if="data.status === 'pending_claim'">
+              等待他人认领中...
+            </template>
+            <template v-else>
+              已被认领
+            </template>
+          </el-timeline-item>
+
+          <!-- 节点3：等待审批（仅需要审批时显示） -->
           <el-timeline-item
             v-if="['pending_approve', 'approved', 'completed', 'rejected'].includes(data.status)"
             timestamp="等待审批"
             placement="top"
-            type="warning"
+            :type="data.status === 'pending_approve' ? 'warning' : 'success'"
           />
+
+          <!-- 节点4a：审批通过 -->
           <el-timeline-item
             v-if="['approved', 'completed'].includes(data.status)"
             timestamp="审批通过"
@@ -72,6 +107,8 @@
           >
             {{ data.approved_at }}
           </el-timeline-item>
+
+          <!-- 节点4b：审批拒绝 -->
           <el-timeline-item
             v-if="data.status === 'rejected'"
             timestamp="审批拒绝"
@@ -80,12 +117,16 @@
           >
             {{ data.approve_comment || '无意见' }}
           </el-timeline-item>
+
+          <!-- 节点5：已完成 -->
           <el-timeline-item
             v-if="data.status === 'completed'"
             timestamp="已完成"
             placement="top"
             type="success"
           />
+
+          <!-- 已撤回 -->
           <el-timeline-item
             v-if="data.status === 'cancelled'"
             timestamp="已撤回"
@@ -120,6 +161,7 @@ const statusLabels: Record<string, string> = {
   completed: '已完成',
   cancelled: '已撤回',
   rejected: '已拒绝',
+  target_refused: '对方已拒绝',
 }
 
 const statusLabel = (s: string) => statusLabels[s] || s
@@ -133,6 +175,7 @@ const statusTagType = (s: string) => {
     completed: 'success',
     cancelled: 'info',
     rejected: 'danger',
+    target_refused: 'danger',
   }
   return (map[s] || 'info') as any
 }

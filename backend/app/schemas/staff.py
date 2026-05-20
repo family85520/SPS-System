@@ -6,7 +6,7 @@ from datetime import datetime
 class StaffCreate(BaseModel):
     """创建人员"""
     name: str = Field(..., min_length=1, max_length=50, description="姓名")
-    employee_no: str = Field(..., min_length=1, max_length=30, description="工号")
+    employee_no: Optional[str] = Field(None, max_length=30, description="工号（留空自动生成）")
     phone: Optional[str] = Field(None, max_length=20, description="联系电话")
     org_id: int = Field(..., description="所属组织ID")
     tags: Optional[List[str]] = Field(None, description='特殊角色标签（同时用于分配系统角色）')
