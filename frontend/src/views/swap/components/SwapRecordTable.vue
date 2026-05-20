@@ -9,7 +9,7 @@
       </template>
     </el-table-column>
     <el-table-column label="发起人" prop="requester_name" width="100" />
-    <el-table-column label="我的班次" min-width="160">
+    <el-table-column label="发起人班次" min-width="160">
       <template #default="{ row }">
         <div>{{ row.requester_schedule_date }}</div>
         <div style="font-size: 12px; color: #8492a6;">{{ row.requester_shift_name }}</div>
@@ -50,6 +50,9 @@
         <template v-if="row.status === 'pending_confirm' && row.target_id === currentUserId">
           <el-button type="success" text size="small" @click="$emit('confirm', row)">
             确认
+          </el-button>
+          <el-button type="danger" text size="small" @click="$emit('refuse', row)">
+            拒绝
           </el-button>
         </template>
         <!-- 待认领：其他人可认领 -->
@@ -103,6 +106,7 @@ const props = defineProps<{
 defineEmits<{
   (e: 'detail', row: SwapRequestItem): void
   (e: 'confirm', row: SwapRequestItem): void
+  (e: 'refuse', row: SwapRequestItem): void
   (e: 'claim', row: SwapRequestItem): void
   (e: 'approve', row: SwapRequestItem): void
   (e: 'reject', row: SwapRequestItem): void
@@ -124,6 +128,7 @@ const statusLabels: Record<string, string> = {
   completed: '已完成',
   cancelled: '已撤回',
   rejected: '已拒绝',
+  target_refused: '对方已拒绝',
 }
 
 const statusLabel = (s: string) => statusLabels[s] || s
@@ -137,6 +142,7 @@ const statusTagType = (s: string) => {
     completed: 'success',
     cancelled: 'info',
     rejected: 'danger',
+    target_refused: 'danger',
   }
   return (map[s] || 'info') as any
 }

@@ -80,6 +80,7 @@
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { createSwap, getMySchedules } from '@/api/swap'
+import { useAuthStore } from '@/stores/auth'
 import request from '@/utils/request'
 import type { FormInstance, FormRules } from 'element-plus'
 
@@ -92,6 +93,7 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
+const authStore = useAuthStore()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 
@@ -117,7 +119,11 @@ const targetLoading = ref(false)
 
 const loadMySchedules = async () => {
   try {
-    const { data: res } = await getMySchedules({})
+    if (!authStore.staffId) {
+      mySchedules.value = []
+      return
+    }
+    const { data: res } = await getMySchedules({ staff_id: authStore.staffId })
     mySchedules.value = res.items || []
   } catch {
     mySchedules.value = []
@@ -131,8 +137,8 @@ const searchTarget = async (keyword: string) => {
   }
   targetLoading.value = true
   try {
-    const { data: res } = await request.get('/api/options/staffs', { params: { keyword } })
-    targetUsers.value = (res.data || []).map((s: any) => ({ id: s.id, name: s.name }))
+    const { data: res } = await request.get('/api/staffs', { params: { keyword, page: 1, page_size: 50 } })
+    targetUsers.value = (res.items || []).map((s: any) => ({ id: s.id, name: s.name }))
   } catch {
     targetUsers.value = []
   } finally {
@@ -144,7 +150,7 @@ const onTargetChange = async (targetStaffId: number) => {
   form.value.target_schedule_id = null
   try {
     const { data: res } = await request.get('/api/schedules', {
-      params: { page: 1, page_size: 50 },
+      params: { staff_id: targetStaffId, page: 1, page_size: 50 },
     })
     targetSchedules.value = res.items || []
   } catch {

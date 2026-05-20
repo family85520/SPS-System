@@ -7,6 +7,7 @@ from app.models import SysUser, SysUserRole, SysRole
 from app.schemas.auth import LoginRequest, TokenResponse, UserInfo, ChangePasswordRequest, ForceChangePasswordRequest
 from app.utils.security import verify_password, hash_password, create_access_token
 from app.api.deps import get_current_user
+from app.utils.time_helper import to_local_str as _to_local_str
 
 router = APIRouter(prefix="/auth", tags=["认证管理"])
 
@@ -79,7 +80,7 @@ async def get_me(current_user: SysUser = Depends(get_current_user)):
         status=current_user.status,
         roles=role_codes,
         permissions=permissions,
-        last_login_at=current_user.last_login_at,
+        last_login_at=_to_local_str(current_user.last_login_at),
         must_change_password=current_user.must_change_password,
     )
 

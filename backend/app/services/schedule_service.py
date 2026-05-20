@@ -12,6 +12,7 @@ from app.models import OrgOrganization, OrgStaff
 from app.models.schedule import SchSchedule, SchScheduleDetail
 from app.models.shift_template import SchShiftTemplate
 from app.services.message_service import MessageService
+from app.utils.time_helper import to_local_str as _to_local_str
 
 
 # 排班状态常量
@@ -31,6 +32,7 @@ class ScheduleService:
         db: AsyncSession,
         *,
         org_id: Optional[int] = None,
+        staff_id: Optional[int] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         status: Optional[int] = None,
@@ -41,6 +43,15 @@ class ScheduleService:
         """获取排班列表"""
         query = select(SchSchedule)
         query = _apply_schedule_filters(query, org_id, start_date, end_date, status, shift_id)
+
+        # 按人员ID筛选：通过排班明细表关联查找该人员参与的排班
+        if staff_id is not None:
+            detail_subq = (
+                select(SchScheduleDetail.schedule_id)
+                .where(SchScheduleDetail.staff_id == staff_id)
+                .distinct()
+            )
+            query = query.where(SchSchedule.id.in_(detail_subq))
 
         total = (await db.execute(select(func.count()).select_from(query.subquery()))).scalar() or 0
 
@@ -196,10 +207,10 @@ class ScheduleService:
             "leader_name": leader_name,
             "status": schedule.status,
             "source": schedule.source,
-            "published_at": schedule.published_at,
+            "published_at": _to_local_str(schedule.published_at),
             "published_by": schedule.published_by,
-            "created_at": getattr(schedule, "created_at", None),
-            "updated_at": getattr(schedule, "updated_at", None),
+            "created_at": _to_local_str(getattr(schedule, "created_at", None)),
+            "updated_at": _to_local_str(getattr(schedule, "updated_at", None)),
             "details": details,
         }
 
@@ -738,10 +749,10 @@ def _serialize_schedule_list_item(s, shift_map, org_map, leader_map, detail_map,
         "leader_name": leader_map.get(s.leader_staff_id) if s.leader_staff_id else None,
         "status": s.status,
         "source": s.source,
-        "published_at": s.published_at,
+        "published_at": _to_local_str(s.published_at),
         "published_by": s.published_by,
-        "created_at": getattr(s, "created_at", None),
-        "updated_at": getattr(s, "updated_at", None),
+        "created_at": _to_local_str(getattr(s, "created_at", None)),
+        "updated_at": _to_local_str(getattr(s, "updated_at", None)),
         "details": [
             {
                 "id": d.id,

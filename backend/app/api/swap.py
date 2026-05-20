@@ -24,9 +24,11 @@ async def list_swaps(
     db: AsyncSession = Depends(get_db),
     current_user: SysUser = Depends(get_current_user),
 ):
+    role_codes = [r.code for r in current_user.roles]
     result = await SwapService.get_list(
         db, user_id=current_user.id, role=role,
         status=status, swap_type=swap_type, page=page, page_size=page_size,
+        user_roles=role_codes,
     )
     return SwapListResponse(items=result["items"], total=result["total"])
 
@@ -41,7 +43,7 @@ async def list_all_swaps(
     current_user: SysUser = Depends(get_current_user),
 ):
     role_codes = [r.code for r in current_user.roles]
-    if "admin" not in role_codes and "scheduler" not in role_codes:
+    if "admin" not in role_codes and "scheduler" not in role_codes and "leader" not in role_codes:
         raise HTTPException(status_code=403, detail="无权查看全部记录")
 
     result = await SwapService.get_list(
@@ -108,6 +110,9 @@ async def approve_swap(
     db: AsyncSession = Depends(get_db),
     current_user: SysUser = Depends(get_current_user),
 ):
+    role_codes = [r.code for r in current_user.roles]
+    if "admin" not in role_codes and "scheduler" not in role_codes:
+        raise HTTPException(status_code=403, detail="仅管理员或排班管理员可审批")
     try:
         result = await SwapService.approve(db, request_id, current_user.id, data.approve_comment)
         return {"code": 200, "data": result, "message": "审批通过"}
@@ -122,8 +127,25 @@ async def reject_swap(
     db: AsyncSession = Depends(get_db),
     current_user: SysUser = Depends(get_current_user),
 ):
+    role_codes = [r.code for r in current_user.roles]
+    if "admin" not in role_codes and "scheduler" not in role_codes:
+        raise HTTPException(status_code=403, detail="仅管理员或排班管理员可审批")
     try:
         result = await SwapService.reject(db, request_id, current_user.id, data.approve_comment)
+        return {"code": 200, "data": result, "message": "已拒绝"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/{request_id}/refuse", summary="对方拒绝换班")
+async def refuse_swap(
+    request_id: int,
+    data: SwapApproveRequest = SwapApproveRequest(),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    try:
+        result = await SwapService.refuse(db, request_id, current_user.id, data.approve_comment)
         return {"code": 200, "data": result, "message": "已拒绝"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -44,12 +44,15 @@ class SwapRequestResponse(BaseModel):
     claimer_name: Optional[str] = None
     reason: Optional[str] = None
     status: str
+    confirmed_at: Optional[str] = None
+    refused_at: Optional[str] = None
+    refuse_comment: Optional[str] = None
     approved_by: Optional[int] = None
     approver_name: Optional[str] = None
-    approved_at: Optional[_datetime] = None
+    approved_at: Optional[str] = None
     approve_comment: Optional[str] = None
-    created_at: Optional[_datetime] = None
-    updated_at: Optional[_datetime] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -18,6 +18,7 @@
             <el-option label="已完成" value="completed" />
             <el-option label="已撤回" value="cancelled" />
             <el-option label="已拒绝" value="rejected" />
+            <el-option label="对方已拒绝" value="target_refused" />
           </el-select>
           <el-button type="primary" @click="showForm = true">
             发起换班申请
@@ -33,6 +34,7 @@
         :page-size="pageSize"
         @detail="handleDetail"
         @confirm="handleConfirm"
+        @refuse="handleRefuse"
         @claim="handleClaim"
         @approve="handleApprove"
         @reject="handleReject"
@@ -52,6 +54,15 @@
       v-model:visible="showDetail"
       :data="currentItem"
     />
+
+    <!-- 拒绝换班弹窗 -->
+    <el-dialog v-model="showRefuseDialog" title="拒绝换班" width="400px">
+      <el-input v-model="refuseComment" type="textarea" :rows="3" placeholder="请输入拒绝原因（选填）" />
+      <template #footer>
+        <el-button @click="showRefuseDialog = false">取消</el-button>
+        <el-button type="danger" :loading="actionLoading" @click="doRefuse">确认拒绝</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 审批弹窗 -->
     <el-dialog v-model="showApproveDialog" title="审批意见" width="400px">
@@ -77,7 +88,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import {
-  getSwapList, getAllSwapList, confirmSwap, claimSwap,
+  getSwapList, getAllSwapList, confirmSwap, claimSwap, refuseSwap,
   approveSwap, rejectSwap, cancelSwap,
 } from '@/api/swap'
 import type { SwapRequestItem } from '@/api/swap'
@@ -86,7 +97,7 @@ import SwapRequestForm from './components/SwapRequestForm.vue'
 import SwapDetailPanel from './components/SwapDetailPanel.vue'
 
 const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.hasRole('admin') || authStore.hasRole('scheduler'))
+const isAdmin = computed(() => authStore.hasRole('admin') || authStore.hasRole('scheduler') || authStore.hasRole('leader'))
 
 const activeTab = ref('mine')
 const statusFilter = ref('')
@@ -102,8 +113,10 @@ const currentItem = ref<SwapRequestItem | null>(null)
 
 const showApproveDialog = ref(false)
 const showRejectDialog = ref(false)
+const showRefuseDialog = ref(false)
 const approveComment = ref('')
 const rejectComment = ref('')
+const refuseComment = ref('')
 const actionLoading = ref(false)
 let actionTargetId = 0
 
@@ -205,6 +218,24 @@ const doReject = async () => {
     await rejectSwap(actionTargetId, rejectComment.value || undefined)
     ElMessage.success('已拒绝')
     showRejectDialog.value = false
+    fetchData()
+  } catch {} finally {
+    actionLoading.value = false
+  }
+}
+
+const handleRefuse = (row: SwapRequestItem) => {
+  actionTargetId = row.id
+  refuseComment.value = ''
+  showRefuseDialog.value = true
+}
+
+const doRefuse = async () => {
+  actionLoading.value = true
+  try {
+    await refuseSwap(actionTargetId, refuseComment.value || undefined)
+    ElMessage.success('已拒绝')
+    showRefuseDialog.value = false
     fetchData()
   } catch {} finally {
     actionLoading.value = false

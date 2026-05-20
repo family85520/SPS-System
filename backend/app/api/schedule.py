@@ -34,6 +34,7 @@ router = APIRouter(prefix="/schedules", tags=["排班管理"])
 @router.get("", response_model=ScheduleListResponse, summary="获取排班列表")
 async def list_schedules(
     org_id: int | None = Query(None, description="组织ID筛选"),
+    staff_id: int | None = Query(None, description="人员ID筛选（查该人员参与的排班）"),
     start_date: str | None = Query(None, description="开始日期 YYYY-MM-DD"),
     end_date: str | None = Query(None, description="结束日期 YYYY-MM-DD"),
     status: int | None = Query(None, description="状态：0草稿/1已发布/2已撤回"),
@@ -46,7 +47,7 @@ async def list_schedules(
     sd = _parse_date(start_date, "start_date") if start_date else None
     ed = _parse_date(end_date, "end_date") if end_date else None
     result = await ScheduleService.get_list(
-        db, org_id=org_id, start_date=sd, end_date=ed,
+        db, org_id=org_id, staff_id=staff_id, start_date=sd, end_date=ed,
         status=status, shift_id=shift_id, page=page, page_size=page_size,
     )
     return ScheduleListResponse(items=result["items"], total=result["total"])

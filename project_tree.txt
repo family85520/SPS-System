@@ -1,0 +1,181 @@
+﻿
+========== 后端 (backend) ==========
+backend
+├── app
+│   ├── api
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── constraint.py
+│   │   ├── dashboard.py
+│   │   ├── deps.py
+│   │   ├── message.py
+│   │   ├── organization.py
+│   │   ├── role.py
+│   │   ├── schedule.py
+│   │   ├── shift_template.py
+│   │   ├── special_rule.py
+│   │   ├── staff.py
+│   │   ├── swap.py
+│   │   └── system.py
+│   ├── engine
+│   │   ├── constraint_checker.py
+│   │   ├── models.py
+│   │   ├── scheduler.py
+│   │   └── scoring.py
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── audit_log.py
+│   │   ├── base.py
+│   │   ├── constraint.py
+│   │   ├── duty_team.py
+│   │   ├── message.py
+│   │   ├── organization.py
+│   │   ├── schedule.py
+│   │   ├── shift_template.py
+│   │   ├── special_rule.py
+│   │   ├── staff.py
+│   │   ├── swap.py
+│   │   └── user.py
+│   ├── schemas
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── constraint.py
+│   │   ├── message.py
+│   │   ├── organization.py
+│   │   ├── role.py
+│   │   ├── schedule.py
+│   │   ├── shift_template.py
+│   │   ├── special_rule.py
+│   │   ├── staff.py
+│   │   ├── swap.py
+│   │   └── system.py
+│   ├── services
+│   │   ├── __init__.py
+│   │   ├── constraint_service.py
+│   │   ├── dashboard_service.py
+│   │   ├── message_service.py
+│   │   ├── role_service.py
+│   │   ├── schedule_service.py
+│   │   ├── shift_template_service.py
+│   │   ├── special_rule_service.py
+│   │   └── swap_service.py
+│   ├── utils
+│   │   ├── __init__.py
+│   │   ├── employee_no.py
+│   │   ├── init_data.py
+│   │   ├── security.py
+│   │   └── time_helper.py
+│   ├── __init__.py
+│   ├── config.py
+│   ├── database.py
+│   └── main.py
+└── alembic.ini
+
+========== 前端 (frontend) ==========
+frontend
+├── .vscode
+│   └── extensions.json
+├── public
+│   ├── favicon.svg
+│   └── icons.svg
+├── src
+│   ├── api
+│   │   ├── auth.ts
+│   │   ├── constraint.ts
+│   │   ├── dashboard.ts
+│   │   ├── index.ts
+│   │   ├── message.ts
+│   │   ├── organization.ts
+│   │   ├── role.ts
+│   │   ├── schedule.ts
+│   │   ├── shift-template.ts
+│   │   ├── special-rule.ts
+│   │   ├── staff.ts
+│   │   ├── swap.ts
+│   │   └── system.ts
+│   ├── assets
+│   │   └── styles
+│   │       └── global.scss
+│   ├── layouts
+│   │   └── MainLayout.vue
+│   ├── router
+│   │   └── index.ts
+│   ├── stores
+│   │   ├── auth.ts
+│   │   ├── message.ts
+│   │   └── system.ts
+│   ├── utils
+│   │   └── request.ts
+│   ├── views
+│   │   ├── constraint
+│   │   │   └── ConstraintView.vue
+│   │   ├── dashboard
+│   │   │   └── DashboardView.vue
+│   │   ├── login
+│   │   │   └── LoginView.vue
+│   │   ├── message
+│   │   │   ├── components
+│   │   │   │   ├── AnnouncementSection.vue
+│   │   │   │   ├── MessageDetailDrawer.vue
+│   │   │   │   └── MessageList.vue
+│   │   │   └── MessageView.vue
+│   │   ├── organization
+│   │   │   └── OrgView.vue
+│   │   ├── placeholder
+│   │   │   └── PlaceholderView.vue
+│   │   ├── role
+│   │   │   └── RoleView.vue
+│   │   ├── schedule
+│   │   │   ├── components
+│   │   │   │   ├── CalendarGrid.vue
+│   │   │   │   ├── ShiftCell.vue
+│   │   │   │   ├── ShiftDetailDrawer.vue
+│   │   │   │   └── StaffSelector.vue
+│   │   │   └── ScheduleCalendarView.vue
+│   │   ├── shift-template
+│   │   │   └── ShiftTemplateView.vue
+│   │   ├── staff
+│   │   │   ├── components
+│   │   │   │   ├── AccountDrawer.vue
+│   │   │   │   └── SpecialRuleDrawer.vue
+│   │   │   └── StaffView.vue
+│   │   ├── swap
+│   │   │   ├── components
+│   │   │   │   ├── SwapDetailPanel.vue
+│   │   │   │   ├── SwapRecordTable.vue
+│   │   │   │   └── SwapRequestForm.vue
+│   │   │   └── SwapView.vue
+│   │   └── system
+│   │       └── SystemView.vue
+│   ├── App.vue
+│   ├── env.d.ts
+│   └── main.ts
+├── .gitignore
+├── auto-imports.d.ts
+├── components.d.ts
+├── index.html
+├── package.json
+├── package-lock.json
+├── README.md
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+
+========== 部署 (deploy) ==========
+deploy
+├── linux
+│   ├── install.sh
+│   └── start.sh
+└── windows
+    └── start.bat
+
+========== 文档 (docs) ==========
+docs
+├── context prompting.md
+├── DevelopmentTaskFlow.md
+├── ProjectStatus.md
+├── UI_设计方案_完整.md
+├── Week1_Summary.md
+├── Week2_Summary.md
+└── 排班管理系统 产品需求文档PRD_V1.0.md

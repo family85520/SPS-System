@@ -21,6 +21,9 @@ class SchSwapRequest(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(20), default="pending_confirm", nullable=False, comment="状态")
     approved_by: Mapped[int | None] = mapped_column(Integer, ForeignKey("sys_user.id"), nullable=True, comment="审批人ID")
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, comment="审批时间")
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, comment="对方确认时间")
+    refused_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, comment="对方拒绝时间")
+    refuse_comment: Mapped[str | None] = mapped_column(Text, nullable=True, comment="对方拒绝原因")
     approve_comment: Mapped[str | None] = mapped_column(Text, nullable=True, comment="审批意见")
 
     # 关系

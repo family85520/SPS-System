@@ -18,6 +18,9 @@ export interface SwapRequestItem {
   claimer_name: string | null
   reason: string | null
   status: string
+  confirmed_at: string | null
+  refused_at: string | null
+  refuse_comment: string | null
   approved_by: number | null
   approver_name: string | null
   approved_at: string | null
@@ -81,6 +84,10 @@ export function cancelSwap(id: number) {
   return request.put(`/api/swaps/${id}/cancel`)
 }
 
-export function getMySchedules(params: { start_date?: string; end_date?: string }) {
+export function refuseSwap(id: number, comment?: string) {
+  return request.put(`/api/swaps/${id}/refuse`, { approve_comment: comment })
+}
+
+export function getMySchedules(params: { staff_id?: number; start_date?: string; end_date?: string; status?: number }) {
   return request.get('/api/schedules', { params })
 }
