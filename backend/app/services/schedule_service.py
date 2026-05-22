@@ -593,7 +593,7 @@ class ScheduleService:
         query = select(SchSchedule).where(
             SchSchedule.date >= start_date,
             SchSchedule.date <= end_date,
-            SchSchedule.status.in_([STATUS_DRAFT, STATUS_PUBLISHED, STATUS_PENDING_APPROVAL]),
+            SchSchedule.status == 1,
         )
         if org_id is not None:
             query = query.where(SchSchedule.org_id == org_id)
@@ -621,6 +621,9 @@ class ScheduleService:
         shift_map = await _get_shift_map(db, {s.shift_id for s in schedules})
         org_map = await _get_org_map(db, {s.org_id for s in schedules})
 
+        # 构建日期 → 节假日映射
+        holiday_dates = _get_holiday_set(start_date, end_date)
+
         # 按人员聚合
         staff_data: dict[int, dict] = {}
         for d in details:
@@ -630,6 +633,7 @@ class ScheduleService:
                     "staff_id": sid, "total_shifts": 0,
                     "total_hours": 0.0, "night_shifts": 0,
                     "weekend_shifts": 0, "leader_shifts": 0,
+                    "holiday_shifts": 0,
                 }
             sd = staff_data[sid]
             sd["total_shifts"] += 1
@@ -649,6 +653,10 @@ class ScheduleService:
             dow = schedule.date.weekday()
             if dow >= 5:
                 sd["weekend_shifts"] += 1
+
+            # 节假日判断
+            if str(schedule.date) in holiday_dates:
+                sd["holiday_shifts"] += 1
 
             if d.role_type == "leader":
                 sd["leader_shifts"] += 1
@@ -676,6 +684,7 @@ class ScheduleService:
                 + sd["night_shifts"] * 5.0
                 + sd["weekend_shifts"] * 3.0
                 + sd["leader_shifts"] * 3.0
+                + sd["holiday_shifts"] * 4.0
             )
 
             items.append({
@@ -688,6 +697,7 @@ class ScheduleService:
                 "night_shifts": sd["night_shifts"],
                 "weekend_shifts": sd["weekend_shifts"],
                 "leader_shifts": sd["leader_shifts"],
+                "holiday_shifts": sd["holiday_shifts"],
                 "weight_score": round(weight, 1),
             })
 
@@ -700,6 +710,7 @@ class ScheduleService:
         all_shifts = sum(d["total_shifts"] for d in staff_data.values())
         all_hours = sum(d["total_hours"] for d in staff_data.values())
         all_night = sum(d["night_shifts"] for d in staff_data.values())
+        all_holiday = sum(d["holiday_shifts"] for d in staff_data.values())
 
         return {
             "period": {"start": str(start_date), "end": str(end_date)},
@@ -710,6 +721,7 @@ class ScheduleService:
                 "avg_shifts_per_person": round(all_shifts / total_staff, 1) if total_staff else 0.0,
                 "avg_hours_per_person": round(all_hours / total_staff, 1) if total_staff else 0.0,
                 "total_night_shifts": all_night,
+                "total_holiday_shifts": all_holiday,
             },
         }
 
@@ -1050,6 +1062,26 @@ def _is_night_shift_time(start_time: str, end_time: str) -> bool:
         return sh >= 20 or eh <= 8
     except (ValueError, AttributeError):
         return False
+
+
+def _get_holiday_set(start_date: date, end_date: date) -> set[str]:
+    """获取日期范围内的法定节假日日期集合（使用 chinese_calendar 库，如果不可用则使用内置规则）"""
+    holidays: set[str] = set()
+    try:
+        from chinese_calendar import is_holiday, get_holiday_detail
+        current = start_date
+        while current <= end_date:
+            if is_holiday(current):
+                holidays.add(str(current))
+            current += timedelta(days=1)
+    except ImportError:
+        # chinese_calendar 未安装，使用周末近似
+        current = start_date
+        while current <= end_date:
+            if current.weekday() >= 5:  # 周六、周日
+                holidays.add(str(current))
+            current += timedelta(days=1)
+    return holidays
 
 
 # ====================================================================== #

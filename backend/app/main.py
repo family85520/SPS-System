@@ -76,6 +76,10 @@ app.include_router(message_router, prefix="/api")
 from app.api.dashboard import router as dashboard_router
 app.include_router(dashboard_router, prefix="/api")
 
+# 新增：导出路由
+from app.api.export import router as export_router
+app.include_router(export_router, prefix="/api")
+
 @app.get("/", tags=["健康检查"])
 async def root():
     return {
