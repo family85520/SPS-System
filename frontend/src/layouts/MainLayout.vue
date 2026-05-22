@@ -88,7 +88,16 @@ const currentRoute = computed(() => route.path)
 const currentTitle = computed(() => route.meta?.title as string || '')
 
 function hasRoutePermission(routeItem: any): boolean {
-  const roles = routeItem.meta?.roles
+  const meta = routeItem.meta
+  if (!meta) return true
+
+  // 优先检查动态权限（来自角色权限矩阵）
+  if (meta.permission) {
+    return authStore.hasAnyPermission(meta.permission)
+  }
+
+  // 其次检查硬编码角色（仅用于无法用权限矩阵控制的场景，如系统配置）
+  const roles = meta.roles
   if (!roles || roles.length === 0) return true
   return roles.some((role: string) => authStore.hasRole(role))
 }

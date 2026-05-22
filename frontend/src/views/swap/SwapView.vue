@@ -20,7 +20,7 @@
             <el-option label="已拒绝" value="rejected" />
             <el-option label="对方已拒绝" value="target_refused" />
           </el-select>
-          <el-button type="primary" @click="showForm = true">
+          <el-button v-if="authStore.hasPermission('swap', 'create')" type="primary" @click="showForm = true">
             发起换班申请
           </el-button>
         </div>

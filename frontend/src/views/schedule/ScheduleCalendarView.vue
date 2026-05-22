@@ -54,11 +54,11 @@
 
       <!-- 右侧：操作 -->
       <div class="toolbar-right">
-        <el-button @click="handleAutoSchedule">
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" @click="handleAutoSchedule">
           <el-icon><MagicStick /></el-icon>
           自动排班
         </el-button>
-        <el-button @click="handleAddSchedule('')">
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" @click="handleAddSchedule('')">
           <el-icon><Plus /></el-icon>
           添加排班
         </el-button>
@@ -66,27 +66,27 @@
           <el-icon><CircleCheck /></el-icon>
           校验
         </el-button>
-        <el-button type="primary" @click="handlePublish">
+        <el-button v-if="authStore.hasPermission('schedule', 'publish')" type="primary" @click="handlePublish">
           <el-icon><Upload /></el-icon>
           发布
         </el-button>
-        <el-button @click="handleRecall">
+        <el-button v-if="authStore.hasPermission('schedule', 'publish')" @click="handleRecall">
           <el-icon><RefreshLeft /></el-icon>
           撤回
         </el-button>
-        <el-button type="danger" @click="handleDeleteDrafts">
+        <el-button v-if="authStore.hasPermission('schedule', 'delete')" type="danger" @click="handleDeleteDrafts">
           <el-icon><Delete /></el-icon>
           清除草稿
         </el-button>
-        <el-button type="success" @click="handleApprove">
+        <el-button v-if="authStore.hasPermission('schedule', 'approve')" type="success" @click="handleApprove">
           <el-icon><Select /></el-icon>
           审核通过
         </el-button>
-        <el-button type="danger" @click="handleReject">
+        <el-button v-if="authStore.hasPermission('schedule', 'approve')" type="danger" @click="handleReject">
           <el-icon><CloseBold /></el-icon>
           审核拒绝
         </el-button>
-        <el-button @click="handleExport">
+        <el-button v-if="authStore.hasPermission('export', 'read')" @click="handleExport">
           <el-icon><Download /></el-icon>
           导出排班
         </el-button>
@@ -217,7 +217,7 @@
         </template>
         <template #footer>
           <el-button @click="validationDialogVisible = false">关闭</el-button>
-          <el-button type="primary" :disabled="validationResult && !validationResult.is_valid" @click="handlePublish; validationDialogVisible = false">
+          <el-button v-if="authStore.hasPermission('schedule', 'publish')" type="primary" :disabled="validationResult && !validationResult.is_valid" @click="handlePublish; validationDialogVisible = false">
             确认发布
           </el-button>
         </template>
@@ -304,6 +304,7 @@ import {
   CloseBold,
   Delete,
 } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/api/index'
 import {
   getScheduleCalendar,
@@ -322,6 +323,7 @@ import ShiftDetailDrawer from './components/ShiftDetailDrawer.vue'
 
 // ==================== 日历状态 ====================
 
+const authStore = useAuthStore()
 const loading = ref(false)
 const now = new Date()
 const currentYear = ref(now.getFullYear())

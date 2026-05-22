@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.api.auth import get_current_user
+from app.api.deps import require_permissions
 from app.models import SysUser, OrgStaff
 from app.models.schedule import SchSchedule, SchScheduleDetail
 from app.schemas.schedule import (
@@ -42,7 +43,7 @@ async def list_schedules(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
 ):
     sd = _parse_date(start_date, "start_date") if start_date else None
     ed = _parse_date(end_date, "end_date") if end_date else None
@@ -60,7 +61,7 @@ async def get_schedule_calendar(
     org_id: int | None = Query(None, description="组织ID筛选"),
     status: int | None = Query(None, description="状态筛选"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
 ):
     result = await ScheduleService.get_calendar(
         db, start_date=_parse_date(start_date, "start_date"),
@@ -75,7 +76,7 @@ async def get_schedule_calendar(
 async def get_schedule(
     schedule_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
 ):
     try:
         return await ScheduleService.get_by_id(db, schedule_id)
@@ -87,7 +88,7 @@ async def get_schedule(
 async def create_schedule(
     data: ScheduleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "create")),
 ):
     try:
         return await ScheduleService.create(db, data.model_dump())
@@ -100,7 +101,7 @@ async def update_schedule(
     schedule_id: int,
     data: ScheduleUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "update")),
 ):
     update_data = data.model_dump(exclude_unset=True)
     if not update_data:
@@ -115,7 +116,7 @@ async def update_schedule(
 async def delete_schedule(
     schedule_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "delete")),
 ):
     try:
         await ScheduleService.delete(db, schedule_id)
@@ -131,7 +132,7 @@ async def assign_staff(
     schedule_id: int,
     data: AssignStaffRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "update")),
 ):
     try:
         return await ScheduleService.assign_staff(db, schedule_id, data.model_dump())
@@ -144,7 +145,7 @@ async def remove_staff(
     schedule_id: int,
     data: RemoveStaffRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "update")),
 ):
     try:
         await ScheduleService.remove_staff(db, schedule_id, data.staff_id)
@@ -159,7 +160,7 @@ async def remove_staff(
 async def batch_detail(
     data: BatchDetailRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "create")),
 ):
     if not data.items:
         raise HTTPException(status_code=400, detail="明细列表不能为空")
@@ -178,7 +179,7 @@ async def batch_detail(
 async def publish_schedules(
     data: BatchPublishRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "publish")),
 ):
     try:
         from app.models.audit_log import SysConfig
@@ -201,7 +202,7 @@ async def publish_schedules(
 async def approve_schedules(
     data: BatchPublishRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "approve")),
 ):
     try:
         count = await ScheduleService.approve(db, data.schedule_ids, current_user.id)
@@ -214,7 +215,7 @@ async def approve_schedules(
 async def reject_schedules(
     data: BatchPublishRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "approve")),
 ):
     try:
         count = await ScheduleService.reject(db, data.schedule_ids, current_user.id)
@@ -227,7 +228,7 @@ async def reject_schedules(
 async def recall_schedules(
     data: BatchPublishRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "publish")),
 ):
     try:
         count = await ScheduleService.recall(db, data.schedule_ids, current_user.id)
@@ -242,7 +243,7 @@ async def delete_draft_schedules(
     start_date: str = Query(None, description="起始日期（可选）"),
     end_date: str = Query(None, description="结束日期（可选）"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "delete")),
 ):
     query = select(SchSchedule).where(SchSchedule.status.in_([0, 2]))
     if org_id:
@@ -273,7 +274,7 @@ async def get_staff_summary(
     staff_id: int,
     days: int = Query(30, ge=1, le=365, description="统计天数"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
 ):
     result = await ScheduleService.get_staff_summary(db, staff_id, days)
     return StaffSummaryResponse(**result)
@@ -290,7 +291,7 @@ async def auto_generate_schedule(
     staff_ids: str = Query(..., description="人员ID列表，逗号分隔"),
     include_leader: bool = Query(True, description="是否需要领导参与排班"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "create")),
 ):
     """自动生成排班表"""
     sd = _parse_date(start_date, "start_date")
@@ -324,7 +325,7 @@ async def validate_schedules(
     end_date: str = Query(..., description="结束日期 YYYY-MM-DD"),
     org_id: int | None = Query(None, description="组织ID"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
 ):
     from app.models.constraint import SchConstraint
     from app.models.special_rule import SchSpecialRule
@@ -378,7 +379,7 @@ async def validate_single_schedule(
     schedule_id: int = Query(..., description="排班记录ID"),
     staff_id: int = Query(..., description="人员ID"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
 ):
     from app.models.constraint import SchConstraint
     from app.models.special_rule import SchSpecialRule

@@ -4,6 +4,7 @@ from typing import Optional
 
 from app.database import get_db
 from app.api.auth import get_current_user
+from app.api.deps import require_permissions
 from app.models import SysUser
 from app.schemas.constraint import (
     ConstraintCreate,
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/constraints", tags=["约束规则管理"])
 async def list_constraints(
     enabled: Optional[bool] = Query(None, description="是否启用筛选"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("constraint", "read")),
 ):
     """获取约束规则列表"""
     return await ConstraintService.list_constraints(db, enabled=enabled)
@@ -30,7 +31,7 @@ async def list_constraints(
 async def get_constraint(
     constraint_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("constraint", "read")),
 ):
     """获取单个约束规则详情"""
     constraint = await ConstraintService.get_constraint(db, constraint_id)
@@ -43,7 +44,7 @@ async def get_constraint(
 async def create_constraint(
     data: ConstraintCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("constraint", "create")),
 ):
     """创建约束规则"""
     try:
@@ -59,7 +60,7 @@ async def update_constraint(
     constraint_id: int,
     data: ConstraintUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("constraint", "update")),
 ):
     """更新约束规则"""
     try:
@@ -74,7 +75,7 @@ async def update_constraint(
 async def delete_constraint(
     constraint_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("constraint", "delete")),
 ):
     """删除约束规则"""
     try:
@@ -90,7 +91,7 @@ async def delete_constraint(
 async def toggle_constraint(
     constraint_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("constraint", "update")),
 ):
     """启用/禁用约束规则"""
     try:
@@ -105,7 +106,7 @@ async def toggle_constraint(
 async def batch_update_priority(
     data: BatchPriorityRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("constraint", "update")),
 ):
     """批量更新优先级"""
     try:

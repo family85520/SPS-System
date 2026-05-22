@@ -46,7 +46,7 @@ def _build_tree(orgs: List[OrgOrganization], parent_id: Optional[int] = None) ->
 async def get_org_tree(
     include_disabled: bool = Query(False, description="是否包含停用的组织"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("organization", "read")),
 ):
     """获取完整的组织架构树"""
     query = select(OrgOrganization).options(selectinload(OrgOrganization.children))
@@ -66,7 +66,7 @@ async def get_org_list(
     parent_id: Optional[int] = Query(None, description="上级组织ID"),
     include_disabled: bool = Query(False),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("organization", "read")),
 ):
     """获取组织列表，可按上级组织筛选"""
     query = select(OrgOrganization).options(selectinload(OrgOrganization.children))

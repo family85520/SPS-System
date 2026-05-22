@@ -24,7 +24,7 @@ async def get_staff_list(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=200, description="每页数量"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("staff", "read")),
 ):
     """获取人员列表，支持筛选和分页"""
     query = select(OrgStaff)
@@ -165,7 +165,7 @@ async def single_reset_password(
 @router.post("/migrate-accounts", summary="为历史人员批量创建账号")
 async def migrate_accounts(
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("staff", "create")),
 ):
     """为没有登录账号的历史人员批量创建账号（用户名=工号，密码=123456）"""
     result = await db.execute(text("""
@@ -212,7 +212,7 @@ async def migrate_accounts(
 @router.get("/system-accounts", summary="获取系统账号列表（admin等无人员关联的账号）")
 async def get_system_accounts(
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("staff", "read")),
 ):
     """获取未关联人员的系统账号（如 admin）"""
     from app.models.audit_log import SysAuditLog
@@ -261,7 +261,7 @@ async def get_system_accounts(
 async def get_next_employee_no(
     org_id: int = Query(..., description="组织ID"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("staff", "read")),
 ):
     """根据组织自动生成下一个工号"""
     from app.utils.employee_no import generate_employee_no
@@ -273,7 +273,7 @@ async def get_next_employee_no(
 async def get_staff_detail(
     staff_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("staff", "read")),
 ):
     """获取人员详细信息"""
     result = await db.execute(select(OrgStaff).where(OrgStaff.id == staff_id))

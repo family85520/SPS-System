@@ -24,6 +24,13 @@ export interface UserRoleAssign {
   role_ids: number[]
 }
 
+export function getPermissionSchema(): Promise<{
+  modules: Array<{ key: string; label: string; actions: string[] }>
+  actions: Array<{ key: string; label: string }>
+}> {
+  return api.get('/roles/permission-schema')
+}
+
 export function getRoles(): Promise<Role[]> {
   return api.get('/roles')
 }

@@ -73,6 +73,7 @@
                 <template #default="{ row }">
                   <el-checkbox
                     v-model="permissionMap[row.key][action.key]"
+                    :disabled="isActionDisabled(row, action)"
                     @change="handlePermissionChange"
                   />
                 </template>
@@ -105,6 +106,7 @@ import {
   createRole,
   updateRole,
   deleteRole,
+  getPermissionSchema,
   type Role,
   type RoleCreate,
   type RoleUpdate,
@@ -118,33 +120,36 @@ const selectedId = ref<number | null>(null)
 const isCreate = ref(false)
 const formRef = ref<FormInstance>()
 
-// 权限模块定义
-const permissionModules = [
-  { key: 'organization', label: '组织管理' },
-  { key: 'staff', label: '人员管理' },
-  { key: 'shift_template', label: '班次模板' },
-  { key: 'constraint', label: '约束规则' },
-  { key: 'schedule', label: '排班管理' },
-  { key: 'swap', label: '调班管理' },
-  { key: 'message', label: '消息中心' },
-  { key: 'export', label: '数据导出' },
-]
+// 权限模块和操作定义（从后端动态加载）
+const permissionModules = ref<Array<{ key: string; label: string; actions: string[] }>>([])
+const actions = ref<Array<{ key: string; label: string }>>([])
+const supportedActionsMap = ref<Record<string, Set<string>>>({})
 
-const actions = [
-  { key: 'read', label: '查看' },
-  { key: 'create', label: '创建' },
-  { key: 'update', label: '编辑' },
-  { key: 'delete', label: '删除' },
-  { key: 'publish', label: '发布' },
-  { key: 'approve', label: '审批' },
-]
+async function loadPermissionSchema() {
+  try {
+    const schema = await getPermissionSchema()
+    permissionModules.value = schema.modules || []
+    actions.value = schema.actions || []
+    const map: Record<string, Set<string>> = {}
+    schema.modules.forEach((m: any) => {
+      map[m.key] = new Set(m.actions)
+    })
+    supportedActionsMap.value = map
+  } catch {
+    permissionModules.value = []
+    actions.value = []
+    supportedActionsMap.value = {}
+  }
+  // schema 加载后必须重建 permissionMap，否则新模块在 map 中无对应条目
+  Object.assign(permissionMap, createEmptyPermissionMap())
+}
 
 // 权限矩阵响应式对象
 function createEmptyPermissionMap(): Record<string, Record<string, boolean>> {
   const map: Record<string, Record<string, boolean>> = {}
-  permissionModules.forEach((m) => {
+  permissionModules.value.forEach((m) => {
     map[m.key] = {}
-    actions.forEach((a) => {
+    actions.value.forEach((a) => {
       map[m.key][a.key] = false
     })
   })
@@ -176,8 +181,8 @@ const rules: FormRules = {
 // 将 permissions 对象转为权限矩阵
 function loadPermissionsToMap(permissions: Record<string, any> | null) {
   // 先清空
-  permissionModules.forEach((m) => {
-    actions.forEach((a) => {
+  permissionModules.value.forEach((m) => {
+    actions.value.forEach((a) => {
       permissionMap[m.key][a.key] = false
     })
   })
@@ -186,9 +191,11 @@ function loadPermissionsToMap(permissions: Record<string, any> | null) {
 
   // all=true 表示全部权限
   if (permissions.all === true) {
-    permissionModules.forEach((m) => {
-      actions.forEach((a) => {
-        permissionMap[m.key][a.key] = true
+    permissionModules.value.forEach((m) => {
+      actions.value.forEach((a) => {
+        if (isActionSupported(m.key, a.key)) {
+          permissionMap[m.key][a.key] = true
+        }
       })
     })
     return
@@ -198,7 +205,7 @@ function loadPermissionsToMap(permissions: Record<string, any> | null) {
   for (const [moduleKey, moduleActions] of Object.entries(permissions)) {
     if (Array.isArray(moduleActions) && permissionMap[moduleKey]) {
       moduleActions.forEach((action: string) => {
-        if (permissionMap[moduleKey][action] !== undefined) {
+        if (permissionMap[moduleKey][action] !== undefined && isActionSupported(moduleKey, action)) {
           permissionMap[moduleKey][action] = true
         }
       })
@@ -209,10 +216,10 @@ function loadPermissionsToMap(permissions: Record<string, any> | null) {
 // 将权限矩阵转为 permissions 对象
 function saveMapToPermissions(): Record<string, string[]> {
   const permissions: Record<string, string[]> = {}
-  permissionModules.forEach((m) => {
+  permissionModules.value.forEach((m) => {
     const enabledActions: string[] = []
-    actions.forEach((a) => {
-      if (permissionMap[m.key][a.key]) {
+    actions.value.forEach((a) => {
+      if (permissionMap[m.key][a.key] && isActionSupported(m.key, a.key)) {
         enabledActions.push(a.key)
       }
     })
@@ -221,6 +228,15 @@ function saveMapToPermissions(): Record<string, string[]> {
     }
   })
   return permissions
+}
+
+function isActionSupported(moduleKey: string, actionKey: string): boolean {
+  const supported = supportedActionsMap.value[moduleKey]
+  return supported ? supported.has(actionKey) : false
+}
+
+function isActionDisabled(moduleItem: any, actionItem: any): boolean {
+  return !isActionSupported(moduleItem.key, actionItem.key)
 }
 
 function handlePermissionChange() {
@@ -322,8 +338,9 @@ function handleCancel() {
   selectedId.value = null
 }
 
-onMounted(() => {
-  loadList()
+onMounted(async () => {
+  await loadPermissionSchema()
+  await loadList()
 })
 </script>
 

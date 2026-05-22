@@ -5,6 +5,7 @@ from typing import Optional
 
 from app.database import get_db
 from app.api.auth import get_current_user
+from app.api.deps import require_permissions
 from app.models import SysUser
 from app.schemas.shift_template import (
     ShiftTemplateCreate,
@@ -22,7 +23,7 @@ async def list_shift_templates(
     status: Optional[int] = Query(None, description="状态筛选：0=停用 1=启用"),
     keyword: Optional[str] = Query(None, description="关键词搜索"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "read")),
 ):
     """获取班次模板列表"""
     templates = await ShiftTemplateService.list_templates(db, org_id=org_id, status=status, keyword=keyword)
@@ -33,7 +34,7 @@ async def list_shift_templates(
 async def get_shift_template(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "read")),
 ):
     """获取单个班次模板详情"""
     template = await ShiftTemplateService.get_template(db, template_id)
@@ -46,7 +47,7 @@ async def get_shift_template(
 async def create_shift_template(
     data: ShiftTemplateCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "create")),
 ):
     """创建班次模板"""
     try:
@@ -63,7 +64,7 @@ async def update_shift_template(
     template_id: int,
     data: ShiftTemplateUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
 ):
     """更新班次模板"""
     try:
@@ -79,7 +80,7 @@ async def update_shift_template(
 async def delete_shift_template(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "delete")),
 ):
     """删除班次模板"""
     try:
@@ -95,7 +96,7 @@ async def delete_shift_template(
 async def copy_shift_template(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "create")),
 ):
     """复制班次模板"""
     try:
@@ -111,7 +112,7 @@ async def copy_shift_template(
 async def toggle_shift_template_status(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
 ):
     """启用/停用班次模板"""
     try:
@@ -131,7 +132,7 @@ from app.schemas.shift_template import RotationGroupCreate, RotationGroupRespons
 async def get_rotation_groups(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "read")),
 ):
     result = await db.execute(
         select(SchRotationGroup).where(
@@ -159,7 +160,7 @@ async def create_rotation_group(
     template_id: int,
     data: RotationGroupCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
 ):
     group = SchRotationGroup(
         shift_template_id=template_id,
@@ -191,7 +192,7 @@ async def update_rotation_group(
     group_id: int,
     data: RotationGroupCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
 ):
     result = await db.execute(
         select(SchRotationGroup).where(
@@ -228,7 +229,7 @@ async def delete_rotation_group(
     template_id: int,
     group_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "delete")),
 ):
     result = await db.execute(
         select(SchRotationGroup).where(
@@ -251,7 +252,7 @@ from app.schemas.shift_template import DutyTeamCreate, DutyTeamResponse
 async def get_duty_teams(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "read")),
 ):
     result = await db.execute(
         select(SchDutyTeam).where(
@@ -277,7 +278,7 @@ async def create_duty_team(
     template_id: int,
     data: DutyTeamCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
 ):
     team = SchDutyTeam(
         shift_template_id=template_id,
@@ -305,7 +306,7 @@ async def update_duty_team(
     team_id: int,
     data: DutyTeamCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
 ):
     result = await db.execute(
         select(SchDutyTeam).where(
@@ -338,7 +339,7 @@ async def delete_duty_team(
     template_id: int,
     team_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("shift_template", "delete")),
 ):
     result = await db.execute(
         select(SchDutyTeam).where(

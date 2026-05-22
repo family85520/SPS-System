@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.api.auth import get_current_user
+from app.api.deps import require_roles
 from app.models import SysUser
 from app.schemas.role import (
     RoleCreate,
@@ -15,10 +16,69 @@ from app.services.role_service import RoleService
 router = APIRouter(prefix="/roles", tags=["角色权限管理"])
 
 
+@router.get("/permission-schema", summary="获取权限规格表")
+async def get_permission_schema(
+    current_user: SysUser = Depends(require_roles("admin")),
+):
+    """返回每个模块支持的操作列表，前端根据此数据动态渲染权限矩阵"""
+    return {
+        "modules": [
+            {
+                "key": "organization",
+                "label": "组织管理",
+                "actions": ["read", "create", "update", "delete"],
+            },
+            {
+                "key": "staff",
+                "label": "人员管理",
+                "actions": ["read", "create", "update", "delete"],
+            },
+            {
+                "key": "shift_template",
+                "label": "班次模板",
+                "actions": ["read", "create", "update", "delete"],
+            },
+            {
+                "key": "constraint",
+                "label": "约束规则",
+                "actions": ["read", "create", "update", "delete"],
+            },
+            {
+                "key": "schedule",
+                "label": "排班管理",
+                "actions": ["read", "create", "update", "delete", "publish", "approve"],
+            },
+            {
+                "key": "swap",
+                "label": "调班管理",
+                "actions": ["read", "create", "approve"],
+            },
+            {
+                "key": "message",
+                "label": "消息中心",
+                "actions": ["read", "create", "delete"],
+            },
+            {
+                "key": "export",
+                "label": "数据导出",
+                "actions": ["read"],
+            },
+        ],
+        "actions": [
+            {"key": "read", "label": "查看"},
+            {"key": "create", "label": "创建"},
+            {"key": "update", "label": "编辑"},
+            {"key": "delete", "label": "删除"},
+            {"key": "publish", "label": "发布"},
+            {"key": "approve", "label": "审批"},
+        ],
+    }
+
+
 @router.get("", response_model=list[RoleResponse])
 async def list_roles(
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """获取角色列表"""
     return await RoleService.list_roles(db)
@@ -28,7 +88,7 @@ async def list_roles(
 async def get_role(
     role_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """获取角色详情"""
     role = await RoleService.get_role(db, role_id)
@@ -41,7 +101,7 @@ async def get_role(
 async def create_role(
     data: RoleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """创建自定义角色"""
     try:
@@ -57,7 +117,7 @@ async def update_role(
     role_id: int,
     data: RoleUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """更新角色"""
     try:
@@ -72,7 +132,7 @@ async def update_role(
 async def delete_role(
     role_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """删除自定义角色"""
     try:
@@ -88,7 +148,7 @@ async def delete_role(
 async def get_user_roles(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """获取用户的角色列表"""
     try:
@@ -104,7 +164,7 @@ async def assign_user_roles(
     user_id: int,
     data: UserRoleAssign,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """为用户分配角色"""
     try:

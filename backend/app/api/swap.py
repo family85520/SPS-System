@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_permissions
 from app.models import SysUser
 from app.schemas.swap import SwapRequestCreate, SwapApproveRequest, SwapRequestResponse, SwapListResponse
 from app.services.swap_service import SwapService
@@ -22,7 +22,7 @@ async def list_swaps(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "read")),
 ):
     role_codes = [r.code for r in current_user.roles]
     result = await SwapService.get_list(
@@ -40,7 +40,7 @@ async def list_all_swaps(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "read")),
 ):
     role_codes = [r.code for r in current_user.roles]
     if "admin" not in role_codes and "scheduler" not in role_codes and "leader" not in role_codes:
@@ -57,7 +57,7 @@ async def list_all_swaps(
 async def get_swap(
     request_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "read")),
 ):
     try:
         return await SwapService.get_by_id(db, request_id)
@@ -69,7 +69,7 @@ async def get_swap(
 async def create_swap(
     data: SwapRequestCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "create")),
 ):
     try:
         return await SwapService.create(db, current_user.id, data.model_dump())
@@ -81,7 +81,7 @@ async def create_swap(
 async def confirm_swap(
     request_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "create")),
 ):
     try:
         result = await SwapService.confirm(db, request_id, current_user.id)
@@ -94,7 +94,7 @@ async def confirm_swap(
 async def claim_swap(
     request_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "create")),
 ):
     try:
         result = await SwapService.claim(db, request_id, current_user.id)
@@ -108,11 +108,8 @@ async def approve_swap(
     request_id: int,
     data: SwapApproveRequest = SwapApproveRequest(),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "approve")),
 ):
-    role_codes = [r.code for r in current_user.roles]
-    if "admin" not in role_codes and "scheduler" not in role_codes:
-        raise HTTPException(status_code=403, detail="仅管理员或排班管理员可审批")
     try:
         result = await SwapService.approve(db, request_id, current_user.id, data.approve_comment)
         return {"code": 200, "data": result, "message": "审批通过"}
@@ -125,11 +122,8 @@ async def reject_swap(
     request_id: int,
     data: SwapApproveRequest = SwapApproveRequest(),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "approve")),
 ):
-    role_codes = [r.code for r in current_user.roles]
-    if "admin" not in role_codes and "scheduler" not in role_codes:
-        raise HTTPException(status_code=403, detail="仅管理员或排班管理员可审批")
     try:
         result = await SwapService.reject(db, request_id, current_user.id, data.approve_comment)
         return {"code": 200, "data": result, "message": "已拒绝"}
@@ -142,7 +136,7 @@ async def refuse_swap(
     request_id: int,
     data: SwapApproveRequest = SwapApproveRequest(),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "create")),
 ):
     try:
         result = await SwapService.refuse(db, request_id, current_user.id, data.approve_comment)
@@ -155,7 +149,7 @@ async def refuse_swap(
 async def cancel_swap(
     request_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("swap", "create")),
 ):
     try:
         result = await SwapService.cancel(db, request_id, current_user.id)
