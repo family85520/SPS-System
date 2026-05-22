@@ -189,3 +189,34 @@ class StaffSummaryResponse(BaseModel):
     total_hours: float = 0.0
     night_shifts: int = 0
     recent_shifts: list[StaffShiftStat] = []
+
+# ==================== 排班工作量统计 ====================
+
+class ScheduleStatisticsItem(BaseModel):
+    """单人工作量统计"""
+    staff_id: int
+    staff_name: str
+    employee_no: str = ""
+    org_name: str = ""
+    total_shifts: int = 0
+    total_hours: float = 0.0
+    night_shifts: int = 0
+    weekend_shifts: int = 0
+    leader_shifts: int = 0
+    weight_score: float = 0.0
+
+
+class ScheduleStatisticsSummary(BaseModel):
+    """工作量统计汇总"""
+    total_staff: int = 0
+    total_shifts: int = 0
+    avg_shifts_per_person: float = 0.0
+    avg_hours_per_person: float = 0.0
+    total_night_shifts: int = 0
+
+
+class ScheduleStatisticsResponse(BaseModel):
+    """排班工作量统计响应"""
+    period: dict
+    items: list[ScheduleStatisticsItem]
+    summary: ScheduleStatisticsSummary

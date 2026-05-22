@@ -578,6 +578,141 @@ class ScheduleService:
             "recent_shifts": recent_shifts,
         }
 
+    # ==================== 工作量统计 ====================
+
+    @staticmethod
+    async def get_statistics(
+        db: AsyncSession,
+        *,
+        start_date: date,
+        end_date: date,
+        org_id: Optional[int] = None,
+        top: Optional[int] = None,
+    ) -> dict:
+        """获取排班工作量统计"""
+        query = select(SchSchedule).where(
+            SchSchedule.date >= start_date,
+            SchSchedule.date <= end_date,
+            SchSchedule.status.in_([STATUS_DRAFT, STATUS_PUBLISHED, STATUS_PENDING_APPROVAL]),
+        )
+        if org_id is not None:
+            query = query.where(SchSchedule.org_id == org_id)
+
+        schedules = list((await db.execute(query)).scalars().all())
+        if not schedules:
+            return {
+                "period": {"start": str(start_date), "end": str(end_date)},
+                "items": [],
+                "summary": {
+                    "total_staff": 0, "total_shifts": 0,
+                    "avg_shifts_per_person": 0.0, "avg_hours_per_person": 0.0,
+                    "total_night_shifts": 0,
+                },
+            }
+
+        schedule_ids = [s.id for s in schedules]
+        schedule_map = {s.id: s for s in schedules}
+
+        # 批量查询明细
+        details = list((await db.execute(
+            select(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(schedule_ids))
+        )).scalars().all())
+
+        shift_map = await _get_shift_map(db, {s.shift_id for s in schedules})
+        org_map = await _get_org_map(db, {s.org_id for s in schedules})
+
+        # 按人员聚合
+        staff_data: dict[int, dict] = {}
+        for d in details:
+            sid = d.staff_id
+            if sid not in staff_data:
+                staff_data[sid] = {
+                    "staff_id": sid, "total_shifts": 0,
+                    "total_hours": 0.0, "night_shifts": 0,
+                    "weekend_shifts": 0, "leader_shifts": 0,
+                }
+            sd = staff_data[sid]
+            sd["total_shifts"] += 1
+
+            schedule = schedule_map.get(d.schedule_id)
+            if not schedule:
+                continue
+
+            shift = shift_map.get(schedule.shift_id)
+            if shift:
+                dur = _calc_duration(shift.start_time, shift.end_time)
+                sd["total_hours"] += dur
+                if _is_night_shift_time(shift.start_time, shift.end_time):
+                    sd["night_shifts"] += 1
+
+            # 周末判断
+            dow = schedule.date.weekday()
+            if dow >= 5:
+                sd["weekend_shifts"] += 1
+
+            if d.role_type == "leader":
+                sd["leader_shifts"] += 1
+
+        # 查询人员信息
+        staff_ids = list(staff_data.keys())
+        staff_objs = (await db.execute(
+            select(OrgStaff).where(OrgStaff.id.in_(staff_ids))
+        )).scalars().all()
+
+        staff_info: dict[int, OrgStaff] = {s.id: s for s in staff_objs}
+
+        # 构建返回数据
+        items = []
+        for sid, sd in staff_data.items():
+            staff = staff_info.get(sid)
+            staff_name = staff.name if staff else "未知"
+            employee_no = getattr(staff, "employee_no", "") or ""
+            org = org_map.get(staff.org_id) if staff else None
+            org_name = getattr(org, "name", "") if org else ""
+
+            weight = (
+                sd["total_shifts"] * 3.0
+                + sd["total_hours"] * 0.5
+                + sd["night_shifts"] * 5.0
+                + sd["weekend_shifts"] * 3.0
+                + sd["leader_shifts"] * 3.0
+            )
+
+            items.append({
+                "staff_id": sid,
+                "staff_name": staff_name,
+                "employee_no": employee_no,
+                "org_name": org_name,
+                "total_shifts": sd["total_shifts"],
+                "total_hours": round(sd["total_hours"], 1),
+                "night_shifts": sd["night_shifts"],
+                "weekend_shifts": sd["weekend_shifts"],
+                "leader_shifts": sd["leader_shifts"],
+                "weight_score": round(weight, 1),
+            })
+
+        items.sort(key=lambda x: x["weight_score"], reverse=True)
+
+        if top is not None and top > 0:
+            items = items[:top]
+
+        total_staff = len(staff_data)
+        all_shifts = sum(d["total_shifts"] for d in staff_data.values())
+        all_hours = sum(d["total_hours"] for d in staff_data.values())
+        all_night = sum(d["night_shifts"] for d in staff_data.values())
+
+        return {
+            "period": {"start": str(start_date), "end": str(end_date)},
+            "items": items,
+            "summary": {
+                "total_staff": total_staff,
+                "total_shifts": all_shifts,
+                "avg_shifts_per_person": round(all_shifts / total_staff, 1) if total_staff else 0.0,
+                "avg_hours_per_person": round(all_hours / total_staff, 1) if total_staff else 0.0,
+                "total_night_shifts": all_night,
+            },
+        }
+
     # ==================== 自动排班编排 ====================
 
     @staticmethod

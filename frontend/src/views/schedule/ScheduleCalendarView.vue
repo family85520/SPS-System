@@ -1,7 +1,7 @@
 <template>
   <div class="schedule-page">
-    <!-- 工具栏 -->
-    <div class="calendar-toolbar">
+    <!-- 工具栏（日历视图专用） -->
+    <div v-if="activeTab === 'calendar'" class="calendar-toolbar">
       <!-- 左侧：导航 -->
       <div class="toolbar-left">
         <el-button-group>
@@ -93,8 +93,25 @@
       </div>
     </div>
 
+    <!-- Tab 栏 -->
+    <div class="tab-bar">
+      <div
+        :class="['tab-item', { active: activeTab === 'calendar' }]"
+        @click="activeTab = 'calendar'"
+      >
+        日历视图
+      </div>
+      <div
+        v-if="authStore.hasPermission('schedule', 'read')"
+        :class="['tab-item', { active: activeTab === 'statistics' }]"
+        @click="activeTab = 'statistics'"
+      >
+        统计报表
+      </div>
+    </div>
+
     <!-- 日历主体 -->
-    <div class="calendar-body" v-loading="loading">
+    <div v-if="activeTab === 'calendar'" class="calendar-body" v-loading="loading">
       <CalendarGrid
         :year="currentYear"
         :month="currentMonth"
@@ -233,6 +250,9 @@
       </div>
     </div>
 
+    <!-- 统计报表 -->
+    <StatisticsPanel v-if="activeTab === 'statistics'" />
+
     <!-- 详情抽屉 -->
     <ShiftDetailDrawer
       v-model:visible="drawerVisible"
@@ -321,6 +341,7 @@ import {
 } from '@/api/schedule'
 import CalendarGrid from './components/CalendarGrid.vue'
 import ShiftDetailDrawer from './components/ShiftDetailDrawer.vue'
+import StatisticsPanel from './components/StatisticsPanel.vue'
 
 // ==================== 日历状态 ====================
 
@@ -328,6 +349,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(false)
+const activeTab = ref<'calendar' | 'statistics'>('calendar')
 const now = new Date()
 const currentYear = ref(now.getFullYear())
 const currentMonth = ref(now.getMonth())
@@ -828,6 +850,36 @@ onMounted(async () => {
   padding: 16px;
   min-width: 900px;
   overflow-x: auto;
+}
+/* Tab 栏 */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  background: #FFFFFF;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
+  overflow: hidden;
+}
+
+.tab-item {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #556173;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-item:hover {
+  color: #0A63D8;
+}
+
+.tab-item.active {
+  color: #0A63D8;
+  border-bottom-color: #0A63D8;
+  background: #EBF5FF;
 }
 
 /* 工具栏 */

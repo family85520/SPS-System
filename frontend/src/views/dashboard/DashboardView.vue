@@ -194,6 +194,81 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 第四行：值班工作量统计 -->
+    <el-row
+      v-if="authStore.hasPermission('schedule', 'read')"
+      :gutter="16"
+      class="dashboard-row"
+    >
+      <el-col :span="24">
+        <el-card shadow="never" class="dashboard-card card-workload" v-loading="workloadLoading">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">值班工作量统计</span>
+              <span class="card-date">{{ currentMonthLabel }}</span>
+            </div>
+          </template>
+          <div v-if="workloadItems.length > 0" class="workload-container">
+            <!-- 概览数字 -->
+            <div class="workload-summary-grid">
+              <div class="workload-summary-item">
+                <div class="stat-value" style="color: #0A63D8">{{ workloadSummary.total_staff }}</div>
+                <div class="stat-label">参与人数</div>
+              </div>
+              <div class="workload-summary-item">
+                <div class="stat-value" style="color: #28A745">{{ workloadSummary.total_shifts }}</div>
+                <div class="stat-label">总班次数</div>
+              </div>
+              <div class="workload-summary-item">
+                <div class="stat-value" style="color: #17A2B8">{{ workloadSummary.avg_shifts_per_person }}</div>
+                <div class="stat-label">人均班次</div>
+              </div>
+              <div class="workload-summary-item">
+                <div class="stat-value" style="color: #FFC107">
+                  {{ workloadSummary.avg_hours_per_person }}<span style="font-size: 13px; color: #909399;">h</span>
+                </div>
+                <div class="stat-label">人均工时</div>
+              </div>
+            </div>
+
+            <!-- Top5 排名 -->
+            <div class="workload-ranking">
+              <div class="workload-ranking-title">工作量排名 Top 5</div>
+              <div class="workload-list">
+                <div
+                  v-for="(item, idx) in workloadItems"
+                  :key="item.staff_id"
+                  class="workload-item"
+                >
+                  <div :class="['workload-rank', idx < 3 ? `wrank-${idx + 1}` : 'wrank-other']">
+                    {{ idx + 1 }}
+                  </div>
+                  <div class="workload-info">
+                    <div class="workload-name">{{ item.staff_name }}</div>
+                    <div class="workload-detail">
+                      {{ item.total_shifts }}班 · {{ item.total_hours }}h · 夜班{{ item.night_shifts }}
+                    </div>
+                  </div>
+                  <div class="workload-bar-wrapper">
+                    <div class="workload-bar-bg">
+                      <div
+                        class="workload-bar-fill"
+                        :style="{ width: getBarWidth(item.weight_score), background: getBarColor(idx) }"
+                      />
+                    </div>
+                  </div>
+                  <div class="workload-score" :style="{ color: getScoreColor(idx) }">
+                    {{ item.weight_score }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="当月暂无排班工作量数据" :image-size="60" />
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -213,6 +288,8 @@ import {
 import { ElMessage } from 'element-plus'
 import { getDashboardOverview } from '@/api/dashboard'
 import type { DashboardOverview } from '@/api/dashboard'
+import { getScheduleStatistics } from '@/api/schedule'
+import type { ScheduleStatisticsResponse } from '@/api/schedule'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -256,6 +333,65 @@ const statusTagType = computed(() => {
   }
   return (map[overview.value.schedule_status] || 'info') as any
 })
+
+// ==================== 值班工作量统计 ====================
+
+const workloadData = ref<ScheduleStatisticsResponse | null>(null)
+const workloadLoading = ref(false)
+
+const currentMonthLabel = computed(() => {
+  const d = new Date()
+  return `${d.getFullYear()}年${d.getMonth() + 1}月`
+})
+
+const workloadSummary = computed(() =>
+  workloadData.value?.summary || {
+    total_staff: 0, total_shifts: 0,
+    avg_shifts_per_person: 0, avg_hours_per_person: 0,
+    total_night_shifts: 0,
+  }
+)
+
+const workloadItems = computed(() => workloadData.value?.items || [])
+
+const maxWorkloadWeight = computed(() => {
+  if (!workloadItems.value.length) return 1
+  return Math.max(...workloadItems.value.map(i => i.weight_score))
+})
+
+const barColors = ['#0A63D8', '#17A2B8', '#28A745', '#FFC107', '#7B68EE']
+
+function getBarColor(index: number) {
+  return barColors[Math.min(index, barColors.length - 1)]
+}
+
+function getScoreColor(index: number) {
+  return barColors[Math.min(index, barColors.length - 1)]
+}
+
+function getBarWidth(score: number) {
+  return maxWorkloadWeight.value > 0
+    ? (score / maxWorkloadWeight.value * 100) + '%'
+    : '0%'
+}
+
+const fetchWorkload = async () => {
+  if (!authStore.hasPermission('schedule', 'read')) return
+  workloadLoading.value = true
+  try {
+    const d = new Date()
+    const yy = d.getFullYear()
+    const mm = d.getMonth()
+    const startDate = `${yy}-${String(mm + 1).padStart(2, '0')}-01`
+    const ld = new Date(yy, mm + 1, 0).getDate()
+    const endDate = `${yy}-${String(mm + 1).padStart(2, '0')}-${String(ld).padStart(2, '0')}`
+    workloadData.value = await getScheduleStatistics({ start_date: startDate, end_date: endDate, top: 5 })
+  } catch {
+    // silently fail
+  } finally {
+    workloadLoading.value = false
+  }
+}
 
 const shiftColors = ['#FFD166', '#06D6A0', '#118AB2', '#F08A5D']
 
@@ -323,7 +459,10 @@ const fetchOverview = async () => {
   }
 }
 
-onMounted(fetchOverview)
+onMounted(() => {
+  fetchOverview()
+  fetchWorkload()
+})
 </script>
 
 <style scoped>
@@ -561,5 +700,113 @@ onMounted(fetchOverview)
 
 .staff-stat-item {
   padding: 12px 0;
+}
+
+/* 值班工作量统计 */
+.workload-container {
+  display: flex;
+  gap: 32px;
+}
+
+.workload-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  min-width: 200px;
+}
+
+.workload-summary-item {
+  text-align: center;
+  padding: 12px 8px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.workload-ranking {
+  flex: 1;
+  min-width: 0;
+}
+
+.workload-ranking-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #556173;
+  margin-bottom: 10px;
+}
+
+.workload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workload-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.workload-item:hover {
+  background: #EBEEF5;
+}
+
+.workload-rank {
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.wrank-1 { background: #FFC107; color: #fff; }
+.wrank-2 { background: #C0C4CC; color: #fff; }
+.wrank-3 { background: #CD7F32; color: #fff; }
+.wrank-other { background: #E6EAF0; color: #556173; }
+
+.workload-info { flex: 1; min-width: 0; }
+
+.workload-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1F2D3D;
+}
+
+.workload-detail {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 2px;
+}
+
+.workload-bar-wrapper {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.workload-bar-bg {
+  height: 8px;
+  background: #EBEEF5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.workload-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.workload-score {
+  font-size: 16px;
+  font-weight: 700;
+  width: 48px;
+  text-align: right;
+  flex-shrink: 0;
 }
 </style>

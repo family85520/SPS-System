@@ -161,3 +161,41 @@ export function rejectSchedules(scheduleIds: number[]): Promise<any> {
 export function getStaffSummary(staffId: number, days?: number): Promise<any> {
   return api.get(`/schedules/staff-summary/${staffId}`, { params: { days } })
 }
+
+// ==================== 工作量统计 ====================
+
+export interface ScheduleStatisticsItem {
+  staff_id: number
+  staff_name: string
+  employee_no: string
+  org_name: string
+  total_shifts: number
+  total_hours: number
+  night_shifts: number
+  weekend_shifts: number
+  leader_shifts: number
+  weight_score: number
+}
+
+export interface ScheduleStatisticsSummary {
+  total_staff: number
+  total_shifts: number
+  avg_shifts_per_person: number
+  avg_hours_per_person: number
+  total_night_shifts: number
+}
+
+export interface ScheduleStatisticsResponse {
+  period: { start: string; end: string }
+  items: ScheduleStatisticsItem[]
+  summary: ScheduleStatisticsSummary
+}
+
+export function getScheduleStatistics(params: {
+  start_date: string
+  end_date: string
+  org_id?: number
+  top?: number
+}): Promise<ScheduleStatisticsResponse> {
+  return api.get('/schedules/statistics', { params })
+}

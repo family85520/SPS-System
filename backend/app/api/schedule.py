@@ -122,6 +122,27 @@ async def get_schedules_by_staff(
     return {"code": 200, "data": data, "message": "success"}
 
 
+# ==================== 工作量统计（必须在 /{schedule_id} 之前，避免路由冲突） ====================
+
+@router.get("/statistics", summary="排班工作量统计")
+async def get_schedule_statistics(
+    start_date: str = Query(..., description="开始日期 YYYY-MM-DD"),
+    end_date: str = Query(..., description="结束日期 YYYY-MM-DD"),
+    org_id: int | None = Query(None, description="组织ID筛选"),
+    top: int | None = Query(None, ge=1, description="仅返回前N名"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
+):
+    result = await ScheduleService.get_statistics(
+        db,
+        start_date=_parse_date(start_date, "start_date"),
+        end_date=_parse_date(end_date, "end_date"),
+        org_id=org_id,
+        top=top,
+    )
+    return result
+
+
 # ==================== 单条 CRUD ====================
 
 @router.get("/{schedule_id}", response_model=ScheduleResponse, summary="获取排班详情")
