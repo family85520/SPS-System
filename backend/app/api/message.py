@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user, require_permissions
 from app.models import SysUser
 from app.schemas.message import BroadcastRequest, AnnouncementCreate, AnnouncementUpdate
 from app.services.message_service import MessageService, AnnouncementService
@@ -25,7 +25,7 @@ async def get_messages(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "read")),
 ):
     result = await MessageService.get_messages(
         db, receiver_id=current_user.id, msg_type=msg_type,
@@ -37,7 +37,7 @@ async def get_messages(
 @router.get("/messages/unread-count", summary="获取未读消息数量")
 async def get_unread_count(
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "read")),
 ):
     result = await MessageService.get_unread_count(db, receiver_id=current_user.id)
     return {"code": 200, "data": result, "message": "success"}
@@ -47,7 +47,7 @@ async def get_unread_count(
 async def mark_message_read(
     message_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "read")),
 ):
     success = await MessageService.mark_as_read(db, message_id=message_id, receiver_id=current_user.id)
     if not success:
@@ -58,7 +58,7 @@ async def mark_message_read(
 @router.put("/messages/read-all", summary="全部标记已读")
 async def mark_all_messages_read(
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "read")),
 ):
     count = await MessageService.mark_all_as_read(db, receiver_id=current_user.id)
     return {"code": 200, "data": {"count": count}, "message": f"已标记 {count} 条消息为已读"}
@@ -68,12 +68,8 @@ async def mark_all_messages_read(
 async def broadcast_message(
     data: BroadcastRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "create")),
 ):
-    role_codes = [r.code for r in current_user.roles]
-    if "admin" not in role_codes and "scheduler" not in role_codes:
-        raise HTTPException(status_code=403, detail="无权执行此操作")
-
     messages = await MessageService.broadcast_message(
         db, title=data.title, content=data.content, msg_type=data.msg_type,
         sender_id=current_user.id, target_scope=data.target_scope,
@@ -91,7 +87,7 @@ async def get_announcements(
     size: int = Query(20, ge=1, le=100),
     is_active: bool | None = Query(None, description="筛选有效状态，不传则显示全部未删除的"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "read")),
 ):
     result = await AnnouncementService.get_announcements(db, page=page, size=size, is_active=is_active)
     return {"code": 200, "data": result, "message": "success"}
@@ -101,12 +97,8 @@ async def get_announcements(
 async def create_announcement(
     data: AnnouncementCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "create")),
 ):
-    role_codes = [r.code for r in current_user.roles]
-    if "admin" not in role_codes and "scheduler" not in role_codes:
-        raise HTTPException(status_code=403, detail="无权发布公告")
-
     ann = await AnnouncementService.create_announcement(
         db, title=data.title, content=data.content, publisher_id=current_user.id,
         target_scope=data.target_scope, target_ids=data.target_ids,
@@ -119,7 +111,7 @@ async def update_announcement(
     ann_id: int,
     data: AnnouncementUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "create")),
 ):
     result = await AnnouncementService.update_announcement(
         db, ann_id=ann_id, data=data.model_dump(exclude_unset=True),
@@ -133,7 +125,7 @@ async def update_announcement(
 async def withdraw_announcement(
     ann_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "delete")),
 ):
     success = await AnnouncementService.withdraw_announcement(db, ann_id=ann_id)
     if not success:
@@ -145,7 +137,7 @@ async def withdraw_announcement(
 async def delete_announcement(
     ann_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_permissions("message", "delete")),
 ):
     success = await AnnouncementService.delete_announcement(db, ann_id=ann_id)
     if not success:

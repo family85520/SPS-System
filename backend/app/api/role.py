@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.api.auth import get_current_user
-from app.api.deps import require_roles
+from app.api.deps import get_current_user, require_roles
 from app.models import SysUser
 from app.schemas.role import (
     RoleCreate,
@@ -73,6 +73,20 @@ async def get_permission_schema(
             {"key": "approve", "label": "审批"},
         ],
     }
+
+
+@router.get("/options", summary="获取角色选项列表")
+async def get_role_options(
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    """获取角色选项（登录即可，用于人员管理标签下拉等场景）"""
+    from app.models import SysRole
+    roles = (await db.execute(
+        select(SysRole).order_by(SysRole.id)
+    )).scalars().all()
+    data = [{"id": r.id, "name": r.name, "code": r.code} for r in roles]
+    return {"code": 200, "data": data, "message": "success"}
 
 
 @router.get("", response_model=list[RoleResponse])

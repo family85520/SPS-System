@@ -326,8 +326,9 @@ function handleTypeChange() {
 
 async function loadShiftTemplates() {
   try {
-    const res = await api.get('/shift-templates')
-    shiftTemplateList.value = Array.isArray(res) ? res : []
+    const res: any = await api.get('/shift-templates/options')
+    const list = Array.isArray(res) ? res : (res.data || [])
+    shiftTemplateList.value = list
   } catch (e) {
     shiftTemplateList.value = []
   }
@@ -335,8 +336,9 @@ async function loadShiftTemplates() {
 
 async function loadStaffList() {
   try {
-    const res: any = await api.get('/staffs')
-    staffList.value = Array.isArray(res) ? res : (res.items || [])
+    const res: any = await api.get('/staffs/options')
+    const list = Array.isArray(res) ? res : (res.data || [])
+    staffList.value = list
   } catch (e) {
     staffList.value = []
   }

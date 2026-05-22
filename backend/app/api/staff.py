@@ -5,7 +5,7 @@ from sqlalchemy import select, func, text
 from app.database import get_db
 from app.models import OrgStaff, OrgOrganization, SysUser, SysRole, SysUserRole
 from app.schemas.staff import StaffCreate, StaffUpdate, StaffResponse, StaffListResponse, StaffAccountUpdate
-from app.api.deps import get_current_user, require_permissions
+from app.api.deps import get_current_user, require_permissions, require_roles
 from app.utils.security import hash_password
 from pydantic import BaseModel as _BaseModel
 
@@ -56,7 +56,7 @@ async def get_staff_list(
 async def reset_password_by_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("staff", "update")),
+    current_user: SysUser = Depends(require_roles('admin')),
 ):
     """通过用户ID重置密码（admin 等无 staff_id 的账号专用）"""
     DEFAULT_PWD = "admin123"
@@ -212,7 +212,7 @@ async def migrate_accounts(
 @router.get("/system-accounts", summary="获取系统账号列表（admin等无人员关联的账号）")
 async def get_system_accounts(
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("staff", "read")),
+    current_user: SysUser = Depends(require_roles('admin')),
 ):
     """获取未关联人员的系统账号（如 admin）"""
     from app.models.audit_log import SysAuditLog
@@ -256,6 +256,49 @@ async def get_system_accounts(
         })
 
     return {"items": items, "total": len(items)}
+
+# ==================== 选项数据（供排班等页面下拉使用，只需登录权限） ====================
+
+@router.get("/options", summary="获取人员选项列表")
+async def get_staff_options(
+    org_id: Optional[int] = Query(None, description="组织ID筛选"),
+    keyword: Optional[str] = Query(None, description="姓名关键词"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    """获取在岗人员选项（仅返回下拉所需字段，无需 staff.read 权限）"""
+    stmt = select(OrgStaff).where(OrgStaff.status == 1)
+    if org_id is not None:
+        stmt = stmt.where(OrgStaff.org_id == org_id)
+    if keyword:
+        stmt = stmt.where(OrgStaff.name.ilike(f"%{keyword}%"))
+    stmt = stmt.order_by(OrgStaff.employee_no).limit(200)
+    result = await db.execute(stmt)
+    staffs = result.scalars().all()
+
+    # 批量查组织名称
+    org_ids = list({s.org_id for s in staffs})
+    org_map: dict[int, str] = {}
+    if org_ids:
+        orgs = (await db.execute(
+            select(OrgOrganization.id, OrgOrganization.name)
+            .where(OrgOrganization.id.in_(org_ids))
+        )).all()
+        org_map = {row[0]: row[1] for row in orgs}
+
+    data = [
+        {
+            "id": s.id,
+            "name": s.name,
+            "employee_no": s.employee_no,
+            "org_id": s.org_id,
+            "org_name": org_map.get(s.org_id, ""),
+            "tags": s.tags or [],
+        }
+        for s in staffs
+    ]
+    return {"code": 200, "data": data, "message": "success"}
+
 
 @router.get("/next-employee-no", summary="获取下一个工号")
 async def get_next_employee_no(

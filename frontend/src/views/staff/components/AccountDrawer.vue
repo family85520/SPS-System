@@ -124,7 +124,8 @@
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
-import { getRoles, type Role } from '@/api/role'
+import type { Role } from '@/api/role'
+import api from '@/api/index'
 
 interface StaffItem {
   id: number
@@ -158,8 +159,9 @@ const creating = ref(false)
 
 async function loadRoles() {
   try {
-    const res = await getRoles()
-    allRoles.value = Array.isArray(res) ? res : []
+    const res: any = await api.get('/roles/options')
+    const list = Array.isArray(res) ? res : (res.data || [])
+    allRoles.value = list
   } catch {
     allRoles.value = []
   }

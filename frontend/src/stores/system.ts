@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { getSystemConfig } from '@/api/system'
+import { ref } from 'vue'
+import api from '@/api/index'
 
 export const useSystemStore = defineStore('system', () => {
   const systemName = ref<string>(localStorage.getItem('systemName') || '排班管理系统')
@@ -9,15 +9,16 @@ export const useSystemStore = defineStore('system', () => {
 
   async function fetchConfig() {
     try {
-      const res = await getSystemConfig()
-      systemName.value = res.system_name
-      orgName.value = res.org_name
-      swapApprovalEnabled.value = res.swap_approval_enabled
-      localStorage.setItem('systemName', res.system_name)
-      localStorage.setItem('orgName', res.org_name)
-      localStorage.setItem('swapApproval', String(res.swap_approval_enabled))
+      const res: any = await api.get('/system/config/overview')
+      const data = res.data || res
+      systemName.value = data.system_name || systemName.value
+      orgName.value = data.org_name ?? orgName.value
+      swapApprovalEnabled.value = data.swap_approval_enabled ?? swapApprovalEnabled.value
+      localStorage.setItem('systemName', systemName.value)
+      localStorage.setItem('orgName', orgName.value)
+      localStorage.setItem('swapApproval', String(swapApprovalEnabled.value))
     } catch (e) {
-      // 使用默认值
+      // 使用 localStorage 缓存的默认值
     }
   }
 

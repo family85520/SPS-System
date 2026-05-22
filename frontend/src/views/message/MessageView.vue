@@ -47,18 +47,21 @@ import MessageDetailDrawer from './components/MessageDetailDrawer.vue'
 import AnnouncementSection from './components/AnnouncementSection.vue'
 import { getUnreadCount } from '@/api/message'
 import { useMessageStore } from '@/stores/message'
+import { useAuthStore } from '@/stores/auth'
 import type { MessageItem } from '@/api/message'
 
 const activeTab = ref('all')
 const drawerVisible = ref(false)
 const currentMessage = ref<MessageItem | null>(null)
 const messageStore = useMessageStore()
+const authStore = useAuthStore()
 const unreadTotal = ref(0)
 const messageListRef = ref<InstanceType<typeof MessageList> | null>(null)
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const fetchUnreadCount = async () => {
+  if (!authStore.hasPermission('message', 'read')) return
   try {
     const { data: res } = await getUnreadCount()
     if (res.code === 200) {
@@ -94,6 +97,7 @@ const startPolling = () => {
 }
 
 onMounted(() => {
+  if (!authStore.hasPermission('message', 'read')) return
   fetchUnreadCount()
   startPolling()
 })

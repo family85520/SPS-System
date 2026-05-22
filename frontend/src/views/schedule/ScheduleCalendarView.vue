@@ -62,7 +62,7 @@
           <el-icon><Plus /></el-icon>
           添加排班
         </el-button>
-        <el-button :loading="validating" @click="handleValidate">
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" :loading="validating" @click="handleValidate">
           <el-icon><CircleCheck /></el-icon>
           校验
         </el-button>
@@ -290,6 +290,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowLeft,
@@ -323,6 +324,8 @@ import ShiftDetailDrawer from './components/ShiftDetailDrawer.vue'
 
 // ==================== 日历状态 ====================
 
+const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(false)
 const now = new Date()
@@ -343,19 +346,20 @@ const shiftTemplateList = ref<any[]>([])
 
 async function loadOrgs() {
   try {
-    const res = await api.get('/organizations')
-    orgList.value = Array.isArray(res) ? res : []
+    const res: any = await api.get('/options/organizations')
+    orgList.value = Array.isArray(res) ? res : (res.data || [])
   } catch (e) {
-    // interceptor handles error
+    // 选项接口只需登录权限，正常不应失败；静默处理
+    orgList.value = []
   }
 }
 
 async function loadShiftTemplates() {
   try {
-    const res = await api.get('/shift-templates')
-    shiftTemplateList.value = Array.isArray(res) ? res : []
+    const res: any = await api.get('/shift-templates/options')
+    shiftTemplateList.value = Array.isArray(res) ? res : (res.data || [])
   } catch (e) {
-    // interceptor handles error
+    shiftTemplateList.value = []
   }
 }
 
@@ -531,8 +535,9 @@ async function loadAllStaff() {
   try {
     const params: any = {}
     if (autoScheduleForm.org_id) params.org_id = autoScheduleForm.org_id
-    const res: any = await api.get('/staffs', { params })
-    allStaffList.value = Array.isArray(res) ? res : (res.items || [])
+    const res: any = await api.get('/staffs/options', { params })
+    const list = Array.isArray(res) ? res : (res.data || res.items || [])
+    allStaffList.value = list
     // 清除不在当前列表中的已选人员
     const validIds = allStaffList.value.map((s: any) => s.id)
     autoScheduleForm.staff_ids = autoScheduleForm.staff_ids.filter(id => validIds.includes(id))
@@ -804,6 +809,13 @@ function formatDateStr(d: Date): string {
 onMounted(async () => {
   await Promise.all([loadOrgs(), loadShiftTemplates()])
   await loadCalendar()
+
+  // 从工作台快捷操作跳转时，自动打开自动排班弹窗
+  if (route.query.auto === '1') {
+    handleAutoSchedule()
+    // 清除 query 参数，避免刷新时重复触发
+    router.replace({ path: '/schedule' })
+  }
 })
 </script>
 

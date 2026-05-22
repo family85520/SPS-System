@@ -57,12 +57,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '排班管理', icon: 'Calendar', permission: 'schedule' },
       },
       {
-        path: 'schedule/auto',
-        name: 'AutoSchedule',
-        component: () => import('@/views/placeholder/PlaceholderView.vue'),
-        meta: { title: '自动排班', icon: 'MagicStick', permission: 'schedule' },
-      },
-      {
         path: 'swap',
         name: 'Swap',
         component: () => import('@/views/swap/SwapView.vue'),

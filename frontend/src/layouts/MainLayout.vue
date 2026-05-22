@@ -7,7 +7,7 @@
       </div>
       <el-menu :default-active="currentRoute" :collapse="isCollapse" router background-color="#304156" text-color="#bfcbd9" active-text-color="#409eff">
         <template v-for="route in menuRoutes" :key="route.path">
-          <el-menu-item v-if="hasRoutePermission(route)" :index="'/' + route.path">
+          <el-menu-item v-if="hasRoutePermission(route) && !route.meta?.hidden" :index="'/' + route.path">
             <el-icon><component :is="route.meta?.icon" /></el-icon>
             <template #title>{{ route.meta?.title }}</template>
           </el-menu-item>
@@ -72,7 +72,9 @@ const systemStore = useSystemStore()
 const messageStore = useMessageStore()
 
 onMounted(() => {
-  messageStore.startPolling(30000)
+  if (authStore.hasPermission('message', 'read')) {
+    messageStore.startPolling(30000)
+  }
 })
 
 onUnmounted(() => {

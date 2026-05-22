@@ -30,7 +30,12 @@ request.interceptors.response.use(
         router.push('/login')
         ElMessage.error('登录已过期，请重新登录')
       } else if (status === 403) {
-        ElMessage.error('无权访问')
+        const detail = data?.detail || ''
+        if (detail.includes('权限')) {
+          ElMessage.warning(detail)
+        } else {
+          ElMessage.warning('您没有该操作的权限，如需请联系管理员')
+        }
       } else if (status === 500) {
         ElMessage.error('服务器错误')
       } else {

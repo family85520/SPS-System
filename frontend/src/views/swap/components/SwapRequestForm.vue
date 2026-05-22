@@ -123,8 +123,8 @@ const loadMySchedules = async () => {
       mySchedules.value = []
       return
     }
-    const { data: res } = await getMySchedules({ staff_id: authStore.staffId })
-    mySchedules.value = res.items || []
+    const { data: res } = await getMySchedules({ staff_id: authStore.staffId, status: 1 })
+    mySchedules.value = res.data || res.items || []
   } catch {
     mySchedules.value = []
   }
@@ -137,8 +137,9 @@ const searchTarget = async (keyword: string) => {
   }
   targetLoading.value = true
   try {
-    const { data: res } = await request.get('/api/staffs', { params: { keyword, page: 1, page_size: 50 } })
-    targetUsers.value = (res.items || []).map((s: any) => ({ id: s.id, name: s.name }))
+    const { data: res } = await request.get('/api/staffs/options', { params: { keyword } })
+    const items = res.data || res.items || res || []
+    targetUsers.value = (Array.isArray(items) ? items : []).map((s: any) => ({ id: s.id, name: s.name }))
   } catch {
     targetUsers.value = []
   } finally {
@@ -149,10 +150,10 @@ const searchTarget = async (keyword: string) => {
 const onTargetChange = async (targetStaffId: number) => {
   form.value.target_schedule_id = null
   try {
-    const { data: res } = await request.get('/api/schedules', {
-      params: { staff_id: targetStaffId, page: 1, page_size: 50 },
+    const { data: res } = await request.get('/api/schedules/by-staff', {
+      params: { staff_id: targetStaffId, status: 1 },
     })
-    targetSchedules.value = res.items || []
+    targetSchedules.value = res.data || []
   } catch {
     targetSchedules.value = []
   }

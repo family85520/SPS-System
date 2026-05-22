@@ -66,10 +66,11 @@ const filteredList = computed(() => {
 async function loadStaff() {
   loading.value = true
   try {
-    const params: any = { status: 1 }
+    const params: any = {}
     if (props.orgId) params.org_id = props.orgId
-    const res: any = await api.get('/staffs', { params })
-    staffList.value = Array.isArray(res) ? res : (res.items || [])
+    const res: any = await api.get('/staffs/options', { params })
+    const list = Array.isArray(res) ? res : (res.data || [])
+    staffList.value = list
   } catch (e) {
     staffList.value = []
   } finally {

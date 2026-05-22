@@ -9,7 +9,13 @@
           clearable
           prefix-icon="Search"
         />
-        <el-button type="primary" @click="handleCreate" style="margin-top: 8px; width: 100%">
+        <!-- 新建模板：需要 shift_template create 权限 -->
+        <el-button
+          v-if="authStore.hasPermission('shift_template', 'create')"
+          type="primary"
+          @click="handleCreate"
+          style="margin-top: 8px; width: 100%"
+        >
           <el-icon><Plus /></el-icon>
           新建模板
         </el-button>
@@ -67,7 +73,13 @@
           v-loading="saving"
         >
           <el-form-item label="班次名称" prop="name">
-            <el-input v-model="formData.name" placeholder="请输入班次名称" maxlength="50" show-word-limit />
+            <el-input
+              v-model="formData.name"
+              placeholder="请输入班次名称"
+              maxlength="50"
+              show-word-limit
+              :disabled="!canEdit"
+            />
           </el-form-item>
 
           <el-form-item label="起始时间" prop="start_time">
@@ -78,6 +90,7 @@
               end="23:30"
               placeholder="选择起始时间"
               style="width: 100%"
+              :disabled="!canEdit"
             />
           </el-form-item>
 
@@ -89,6 +102,7 @@
               end="23:30"
               placeholder="选择结束时间"
               style="width: 100%"
+              :disabled="!canEdit"
             />
           </el-form-item>
 
@@ -104,7 +118,7 @@
 
           <el-form-item label="颜色标识" prop="color">
             <div class="color-picker-wrapper">
-              <el-color-picker v-model="formData.color" :predefine="presetColors" />
+              <el-color-picker v-model="formData.color" :predefine="presetColors" :disabled="!canEdit" />
               <span class="color-preview" :style="{ background: formData.color }">
                 {{ formData.color }}
               </span>
@@ -114,11 +128,11 @@
           <el-divider content-position="left">值班领导</el-divider>
 
           <el-form-item label="最少人数" prop="leader_min">
-            <el-input-number v-model="formData.leader_min" :min="0" :max="99" controls-position="right" />
+            <el-input-number v-model="formData.leader_min" :min="0" :max="99" controls-position="right" :disabled="!canEdit" />
           </el-form-item>
 
           <el-form-item label="最多人数" prop="leader_max">
-            <el-input-number v-model="formData.leader_max" :min="formData.leader_min" :max="99" controls-position="right" />
+            <el-input-number v-model="formData.leader_max" :min="formData.leader_min" :max="99" controls-position="right" :disabled="!canEdit" />
           </el-form-item>
 
           <el-form-item label="候选人员">
@@ -128,6 +142,7 @@
               filterable
               placeholder="选择领导候选人员（留空则从全部人员中选）"
               style="width: 100%"
+              :disabled="!canEdit"
             >
               <el-option
                 v-for="s in staffList"
@@ -145,7 +160,7 @@
           <el-divider content-position="left">排班模式</el-divider>
 
           <el-form-item label="排班模式">
-            <el-select v-model="formData.schedule_mode" style="width: 100%">
+            <el-select v-model="formData.schedule_mode" style="width: 100%" :disabled="!canEdit">
               <el-option label="逐人轮询（默认）" value="individual" />
               <el-option label="值班组轮换" value="team_rotation" />
               <el-option label="轮换组排班" value="rotation_group" />
@@ -165,10 +180,10 @@
               <div style="width: 100%;">
                 <div v-for="(team, idx) in dutyTeams" :key="team.id || idx" class="rotation-group-item">
                   <div class="rotation-group-header">
-                    <el-input v-model="team.name" placeholder="组名称（如：白班A组）" style="width: 200px" />
-                    <el-input-number v-model="team.priority" :min="1" :max="100" controls-position="right" style="width: 90px" />
-                    <el-switch v-model="team.enabled" />
-                    <el-button type="danger" text @click="dutyTeams.splice(idx, 1)">删除</el-button>
+                    <el-input v-model="team.name" placeholder="组名称（如：白班A组）" style="width: 200px" :disabled="!canEdit" />
+                    <el-input-number v-model="team.priority" :min="1" :max="100" controls-position="right" style="width: 90px" :disabled="!canEdit" />
+                    <el-switch v-model="team.enabled" :disabled="!canEdit" />
+                    <el-button v-if="canEdit" type="danger" text @click="dutyTeams.splice(idx, 1)">删除</el-button>
                   </div>
                   <div class="rotation-group-body">
                     <el-select
@@ -177,6 +192,7 @@
                       filterable
                       placeholder="选择组内人员（建议新老搭配）"
                       style="width: 100%"
+                      :disabled="!canEdit"
                     >
                       <el-option
                         v-for="s in staffList"
@@ -192,7 +208,7 @@
                     </el-select>
                   </div>
                 </div>
-                <el-button @click="addDutyTeam" style="margin-top: 8px;">+ 添加值班组</el-button>
+                <el-button v-if="canEdit" @click="addDutyTeam" style="margin-top: 8px;">+ 添加值班组</el-button>
                 <div style="font-size: 12px; color: #909399; margin-top: 4px;">
                   值班组按日期轮流值班，同组人员在同一天排班。建议每组2人，新老员工搭配。
                 </div>
@@ -203,7 +219,7 @@
           <el-divider content-position="left">整体轮换频次</el-divider>
 
           <el-form-item label="轮换频次">
-            <el-select v-model="formData.rotation_frequency" style="width: 100%">
+            <el-select v-model="formData.rotation_frequency" style="width: 100%" :disabled="!canEdit">
               <el-option label="按天轮换" value="day" />
               <el-option label="按周轮换" value="week" />
               <el-option label="按月轮换" value="month" />
@@ -214,11 +230,11 @@
           <el-divider content-position="left">值班人员</el-divider>
 
           <el-form-item label="最少人数" prop="member_min">
-            <el-input-number v-model="formData.member_min" :min="1" :max="99" controls-position="right" />
+            <el-input-number v-model="formData.member_min" :min="1" :max="99" controls-position="right" :disabled="!canEdit" />
           </el-form-item>
 
           <el-form-item label="最多人数" prop="member_max">
-            <el-input-number v-model="formData.member_max" :min="formData.member_min" :max="99" controls-position="right" />
+            <el-input-number v-model="formData.member_max" :min="formData.member_min" :max="99" controls-position="right" :disabled="!canEdit" />
           </el-form-item>
 
           <el-divider content-position="left">轮换组（可选）</el-divider>
@@ -227,16 +243,16 @@
             <div style="width: 100%;">
               <div v-for="(group, idx) in rotationGroups" :key="group.id || idx" class="rotation-group-item">
                 <div class="rotation-group-header">
-                  <el-input v-model="group.name" placeholder="组名称" style="width: 150px" />
-                  <el-select v-model="group.rotation_unit" style="width: 110px">
+                  <el-input v-model="group.name" placeholder="组名称" style="width: 150px" :disabled="!canEdit" />
+                  <el-select v-model="group.rotation_unit" style="width: 110px" :disabled="!canEdit">
                     <el-option label="按天" value="day" />
                     <el-option label="按周" value="week" />
                     <el-option label="按月" value="month" />
                   </el-select>
-                  <el-input-number v-model="group.slot_count" :min="1" :max="10" controls-position="right" style="width: 90px" />
-                  <el-input-number v-model="group.priority" :min="1" :max="100" controls-position="right" style="width: 90px" />
-                  <el-switch v-model="group.enabled" />
-                  <el-button type="danger" text @click="rotationGroups.splice(idx, 1)">删除</el-button>
+                  <el-input-number v-model="group.slot_count" :min="1" :max="10" controls-position="right" style="width: 90px" :disabled="!canEdit" />
+                  <el-input-number v-model="group.priority" :min="1" :max="100" controls-position="right" style="width: 90px" :disabled="!canEdit" />
+                  <el-switch v-model="group.enabled" :disabled="!canEdit" />
+                  <el-button v-if="canEdit" type="danger" text @click="rotationGroups.splice(idx, 1)">删除</el-button>
                 </div>
                 <div class="rotation-group-body">
                   <el-select
@@ -245,6 +261,7 @@
                     filterable
                     placeholder="选择轮换人员（按顺序轮换）"
                     style="width: 100%"
+                    :disabled="!canEdit"
                   >
                     <el-option
                       v-for="s in staffList"
@@ -255,7 +272,7 @@
                   </el-select>
                 </div>
               </div>
-              <el-button @click="addRotationGroup" style="margin-top: 8px;">+ 添加轮换组</el-button>
+              <el-button v-if="canEdit" @click="addRotationGroup" style="margin-top: 8px;">+ 添加轮换组</el-button>
               <div style="font-size: 12px; color: #909399; margin-top: 4px;">
                 轮换组内的人员按顺序在指定周期内循环值班，剩余名额从全员中公平轮值
               </div>
@@ -265,27 +282,52 @@
           <el-divider content-position="left">适用日期</el-divider>
 
           <el-form-item label="适用日期" prop="apply_days">
-            <el-checkbox-group v-model="formData.apply_days">
+            <el-checkbox-group v-model="formData.apply_days" :disabled="!canEdit">
               <el-checkbox-button v-for="(label, idx) in dayLabels" :key="idx" :value="idx + 1">
                 {{ label }}
               </el-checkbox-button>
             </el-checkbox-group>
           </el-form-item>
 
+          <!-- 启用状态：需要 shift_template update 权限 -->
           <el-form-item v-if="!isCreate" label="启用状态">
             <el-switch
+              v-if="authStore.hasPermission('shift_template', 'update')"
               :model-value="currentStatus === 1"
               active-text="启用"
               inactive-text="停用"
               @change="handleToggleStatus"
             />
+            <el-tag v-else :type="currentStatus === 1 ? 'success' : 'info'" size="small">
+              {{ currentStatus === 1 ? '启用' : '停用' }}
+            </el-tag>
           </el-form-item>
 
           <el-form-item>
             <div class="form-actions">
-              <el-button type="primary" @click="handleSave">保存</el-button>
-              <el-button v-if="!isCreate" @click="handleCopy">复制</el-button>
-              <el-button v-if="!isCreate" type="danger" @click="handleDelete">删除</el-button>
+              <!-- 保存：新建需要 create，编辑需要 update -->
+              <el-button
+                v-if="authStore.hasPermission('shift_template', isCreate ? 'create' : 'update')"
+                type="primary"
+                @click="handleSave"
+              >
+                保存
+              </el-button>
+              <!-- 复制：需要 shift_template create 权限 -->
+              <el-button
+                v-if="!isCreate && authStore.hasPermission('shift_template', 'create')"
+                @click="handleCopy"
+              >
+                复制
+              </el-button>
+              <!-- 删除：需要 shift_template delete 权限 -->
+              <el-button
+                v-if="!isCreate && authStore.hasPermission('shift_template', 'delete')"
+                type="danger"
+                @click="handleDelete"
+              >
+                删除
+              </el-button>
               <el-button @click="handleCancel">取消</el-button>
             </div>
           </el-form-item>
@@ -304,6 +346,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, WarningFilled, Document } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/api/index'
 import {
   getShiftTemplates,
@@ -315,6 +358,14 @@ import {
   type ShiftTemplate,
   type ShiftTemplateForm,
 } from '@/api/shift-template'
+
+const authStore = useAuthStore()
+
+// 编辑权限计算属性：新建时需要 create，编辑时需要 update
+const canEdit = computed(() => {
+  if (isCreate.value) return authStore.hasPermission('shift_template', 'create')
+  return authStore.hasPermission('shift_template', 'update')
+})
 
 // ==================== 值班组 ====================
 
@@ -352,14 +403,12 @@ async function saveDutyTeams(templateId: number) {
   const serverIds = (Array.isArray(serverRes) ? serverRes : []).map((t: any) => t.id)
   const frontendIds = dutyTeams.value.filter(t => t.id).map(t => t.id)
 
-  // 删除服务器有但前端没有的
   for (const sid of serverIds) {
     if (!frontendIds.includes(sid)) {
       await api.delete(`/shift-templates/${templateId}/duty-teams/${sid}`)
     }
   }
 
-  // 创建或更新
   for (const team of dutyTeams.value) {
     const payload = {
       name: team.name,
@@ -411,19 +460,16 @@ async function loadRotationGroups(templateId: number) {
 }
 
 async function saveRotationGroups(templateId: number) {
-  // 获取服务器已有轮换组
   const serverRes = await api.get(`/shift-templates/${templateId}/rotation-groups`)
   const serverIds = (Array.isArray(serverRes) ? serverRes : []).map((g: any) => g.id)
   const frontendIds = rotationGroups.value.filter(g => g.id).map(g => g.id)
 
-  // 删除服务器有但前端没有的
   for (const sid of serverIds) {
     if (!frontendIds.includes(sid)) {
       await api.delete(`/shift-templates/${templateId}/rotation-groups/${sid}`)
     }
   }
 
-  // 创建或更新
   for (const group of rotationGroups.value) {
     const payload = {
       name: group.name,
@@ -519,8 +565,9 @@ const rules: FormRules = {
 
 async function loadStaffList() {
   try {
-    const res: any = await api.get('/staffs')
-    staffList.value = Array.isArray(res) ? res : (res.items || [])
+    const res: any = await api.get('/staffs/options')
+    const list = Array.isArray(res) ? res : (res.data || [])
+    staffList.value = list
   } catch (e) {
     staffList.value = []
   }
@@ -679,7 +726,6 @@ onMounted(() => {
   min-width: 700px;
 }
 
-/* 左侧列表 */
 .left-panel {
   width: 320px;
   min-width: 280px;
@@ -786,7 +832,6 @@ onMounted(() => {
   color: #FFFFFF;
 }
 
-/* 右侧表单 */
 .right-panel {
   flex: 1;
   min-width: 400px;

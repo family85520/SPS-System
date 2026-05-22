@@ -37,7 +37,7 @@
       <div class="section">
         <div class="section-title">值班领导</div>
         <StaffSelector
-          v-if="isDraft"
+          v-if="isDraft && authStore.hasPermission('schedule', 'update')"
           :model-value="schedule.leader_staff_id"
           :org-id="schedule.org_id"
           placeholder="选择值班领导"
@@ -65,7 +65,7 @@
               <el-tag v-if="d.role_type === 'leader'" size="small" type="success">领导</el-tag>
             </div>
             <el-button
-              v-if="isDraft"
+              v-if="isDraft && authStore.hasPermission('schedule', 'delete')"
               type="danger"
               link
               size="small"
@@ -77,8 +77,8 @@
           <el-empty v-if="memberDetails.length === 0" description="暂无值班人员" :image-size="48" />
         </div>
 
-        <!-- 添加人员 -->
-        <div v-if="isDraft" class="add-member-area">
+        <!-- 添加人员：需要 schedule update 权限 -->
+        <div v-if="isDraft && authStore.hasPermission('schedule', 'update')" class="add-member-area">
           <StaffSelector
             v-model="newStaffId"
             :org-id="schedule.org_id"
@@ -116,7 +116,14 @@
 
       <!-- 操作按钮 -->
       <div class="drawer-footer">
-        <el-button v-if="isDraft" type="danger" @click="handleDelete">删除</el-button>
+        <!-- 删除：需要 schedule delete 权限 -->
+        <el-button
+          v-if="isDraft && authStore.hasPermission('schedule', 'delete')"
+          type="danger"
+          @click="handleDelete"
+        >
+          删除
+        </el-button>
         <div style="flex: 1" />
         <el-button @click="handleClose">关闭</el-button>
       </div>
@@ -128,6 +135,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { WarningFilled } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
 import type { Schedule, ScheduleDetail, CalendarShift } from '@/api/schedule'
 import {
   getSchedule,
@@ -147,6 +155,10 @@ const emit = defineEmits<{
   (e: 'update:visible', val: boolean): void
   (e: 'refresh'): void
 }>()
+
+// ==================== 权限 ====================
+
+const authStore = useAuthStore()
 
 // ==================== 状态 ====================
 
@@ -190,12 +202,10 @@ const conflicts = computed(() => {
 async function handleLeaderChange(staffId: number | number[] | null) {
   if (!props.schedule || staffId === null || staffId === undefined || typeof staffId === 'object') return
   try {
-    // 如果当前有领导的detail，先移除
     const oldLeader = memberDetails.value.find((d) => d.role_type === 'leader')
     if (oldLeader) {
       await removeStaff(props.schedule.id, oldLeader.staff_id)
     }
-    // 添加新领导
     await assignStaff(props.schedule.id, {
       staff_id: staffId as number,
       role_type: 'leader',

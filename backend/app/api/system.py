@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.api.auth import get_current_user
+from app.api.deps import get_current_user, require_roles
 from app.models import SysUser, SysConfig
 from app.schemas.system import SystemConfigResponse, SystemConfigUpdate
 
@@ -30,10 +30,27 @@ async def get_public_config(
         "org_name": org_name,
     }
 
+@router.get("/config/overview")
+async def get_config_overview(
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    """获取系统概要配置（登录即可，用于页面标题/侧边栏等场景）"""
+    system_name = await get_config_value(db, "system_name", "排班管理系统")
+    org_name = await get_config_value(db, "org_name", "")
+    swap_approval = await get_config_value(db, "swap_approval_enabled", "true")
+
+    return {
+        "system_name": system_name,
+        "org_name": org_name,
+        "swap_approval_enabled": swap_approval.lower() == "true",
+    }
+
+
 @router.get("/config", response_model=SystemConfigResponse)
 async def get_system_config(
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """获取所有系统配置"""
     system_name = await get_config_value(db, "system_name", "排班管理系统")
@@ -55,7 +72,7 @@ async def get_system_config(
 async def update_system_config(
     data: SystemConfigUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(get_current_user),
+    current_user: SysUser = Depends(require_roles("admin")),
 ):
     """更新系统配置"""
     try:

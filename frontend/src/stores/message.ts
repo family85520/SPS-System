@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getUnreadCount } from '@/api/message'
+import { useAuthStore } from '@/stores/auth'
 
 export const useMessageStore = defineStore('message', () => {
   const unreadCount = ref(0)
@@ -8,6 +9,11 @@ export const useMessageStore = defineStore('message', () => {
   let timer: ReturnType<typeof setInterval> | null = null
 
   const fetchUnread = async () => {
+    const authStore = useAuthStore()
+    if (!authStore.hasPermission('message', 'read')) {
+      stopPolling()
+      return
+    }
     try {
       const { data: res } = await getUnreadCount()
       if (res.code === 200) {
@@ -15,7 +21,8 @@ export const useMessageStore = defineStore('message', () => {
         byType.value = res.data.by_type || {}
       }
     } catch {
-      // 静默
+      // 静默：403 时自动停止轮询
+      stopPolling()
     }
   }
 

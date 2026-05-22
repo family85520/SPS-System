@@ -70,6 +70,58 @@ async def get_schedule_calendar(
     return CalendarResponse(dates=result["dates"])
 
 
+# ==================== 轻量选项接口（登录即可，供调班等页面下拉使用） ====================
+
+@router.get("/by-staff", summary="获取指定人员的排班列表（选项用）")
+async def get_schedules_by_staff(
+    staff_id: int = Query(..., description="人员ID"),
+    status: int | None = Query(None, description="状态筛选：0草稿/1已发布"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    """获取指定人员参与的排班列表（仅返回下拉所需字段，无需 schedule.read 权限）"""
+    # 查找该人员作为 detail 的所有 schedule_id
+    detail_query = select(SchScheduleDetail.schedule_id).where(
+        SchScheduleDetail.staff_id == staff_id
+    )
+    detail_result = await db.execute(detail_query)
+    schedule_ids = [row[0] for row in detail_result.all()]
+
+    if not schedule_ids:
+        return {"code": 200, "data": [], "message": "success"}
+
+    query = select(SchSchedule).where(SchSchedule.id.in_(schedule_ids))
+    if status is not None:
+        query = query.where(SchSchedule.status == status)
+    query = query.order_by(SchSchedule.date.desc()).limit(100)
+
+    schedules = (await db.execute(query)).scalars().all()
+
+    # 批量查班次名称
+    from app.models.shift_template import SchShiftTemplate
+    shift_ids = list({s.shift_id for s in schedules})
+    shift_map: dict[int, str] = {}
+    if shift_ids:
+        shifts = (await db.execute(
+            select(SchShiftTemplate.id, SchShiftTemplate.name)
+            .where(SchShiftTemplate.id.in_(shift_ids))
+        )).all()
+        shift_map = {row[0]: row[1] for row in shifts}
+
+    data = [
+        {
+            "id": s.id,
+            "date": str(s.date),
+            "shift_id": s.shift_id,
+            "shift_name": shift_map.get(s.shift_id, ""),
+            "status": s.status,
+            "org_id": s.org_id,
+        }
+        for s in schedules
+    ]
+    return {"code": 200, "data": data, "message": "success"}
+
+
 # ==================== 单条 CRUD ====================
 
 @router.get("/{schedule_id}", response_model=ScheduleResponse, summary="获取排班详情")

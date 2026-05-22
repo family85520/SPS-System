@@ -5,8 +5,7 @@ from typing import Optional
 import json
 
 from app.database import get_db
-from app.api.auth import get_current_user
-from app.api.deps import require_permissions
+from app.api.deps import get_current_user, require_permissions
 from app.models import SysUser
 from app.models.special_rule import SchSpecialRule
 from app.schemas.special_rule import (
@@ -23,7 +22,7 @@ router = APIRouter(prefix="/special-rules", tags=["特殊排班规则管理"])
 async def list_special_rules(
     staff_id: Optional[int] = Query(None, description="按人员ID筛选"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("constraint", "read")),
+    current_user: SysUser = Depends(require_permissions("staff", "read")),
 ):
     """获取特殊规则列表"""
     return await SpecialRuleService.list_rules(db, staff_id=staff_id)
@@ -33,7 +32,7 @@ async def list_special_rules(
 async def get_special_rule(
     rule_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("constraint", "read")),
+    current_user: SysUser = Depends(require_permissions("staff", "read")),
 ):
     """获取单个特殊规则详情"""
     rule = await SpecialRuleService.get_rule(db, rule_id)
@@ -46,7 +45,7 @@ async def get_special_rule(
 async def create_special_rule(
     data: SpecialRuleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("constraint", "create")),
+    current_user: SysUser = Depends(require_permissions("staff", "update")),
 ):
     """创建特殊规则"""
     # ===== 业务规则校验 =====
@@ -67,7 +66,7 @@ async def update_special_rule(
     rule_id: int,
     data: SpecialRuleUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("constraint", "update")),
+    current_user: SysUser = Depends(require_permissions("staff", "update")),
 ):
     """更新特殊规则"""
     try:
@@ -163,7 +162,7 @@ async def _validate_special_rule(
 async def delete_special_rule(
     rule_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("constraint", "delete")),
+    current_user: SysUser = Depends(require_permissions("staff", "update")),
 ):
     """删除特殊规则"""
     try:

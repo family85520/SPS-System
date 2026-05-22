@@ -105,20 +105,28 @@
             <span class="card-title">待处理事项</span>
           </template>
           <div class="pending-list">
-            <div class="pending-item" @click="router.push('/swap')">
+            <div
+              v-if="authStore.hasPermission('swap', 'read') || authStore.hasPermission('swap', 'approve')"
+              class="pending-item"
+              @click="router.push('/swap')"
+            >
               <el-badge :value="overview.pending_swap_count" :hidden="overview.pending_swap_count === 0">
                 <span class="pending-label">待审批调班</span>
               </el-badge>
               <span class="pending-count">{{ overview.pending_swap_count }} 条</span>
             </div>
-            <div class="pending-item" @click="router.push('/message')">
+            <div
+              v-if="authStore.hasPermission('message', 'read')"
+              class="pending-item"
+              @click="router.push('/message')"
+            >
               <el-badge :value="overview.unread_messages" :hidden="overview.unread_messages === 0">
                 <span class="pending-label">未读消息</span>
               </el-badge>
               <span class="pending-count">{{ overview.unread_messages }} 条</span>
             </div>
             <div
-              v-if="overview.constraint_warnings > 0"
+              v-if="overview.constraint_warnings > 0 && authStore.hasPermission('schedule', 'read')"
               class="pending-item"
               @click="router.push('/schedule/calendar')"
             >
@@ -127,6 +135,11 @@
                 {{ overview.constraint_warnings }} 条
               </span>
             </div>
+            <el-empty
+              v-if="!authStore.hasPermission('swap', 'read') && !authStore.hasPermission('swap', 'approve') && !authStore.hasPermission('message', 'read') && overview.constraint_warnings === 0"
+              description="暂无待处理事项"
+              :image-size="48"
+            />
           </div>
         </el-card>
       </el-col>
@@ -195,7 +208,7 @@ import {
   Bell,
   Document,
   Setting,
-  DataAnalysis,
+  MagicStick,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getDashboardOverview } from '@/api/dashboard'
@@ -246,20 +259,53 @@ const statusTagType = computed(() => {
 
 const shiftColors = ['#FFD166', '#06D6A0', '#118AB2', '#F08A5D']
 
-// 快捷操作（根据角色动态）
+// 快捷操作（根据权限动态显示）
 const quickActions = computed(() => {
-  const actions = [
-    { label: '自动排班', path: '/schedule/auto', icon: Calendar, bgColor: '#EBF5FF', iconColor: '#0A63D8' },
-    { label: '排班日历', path: '/schedule', icon: List, bgColor: '#E8F8F0', iconColor: '#28A745' },
-    { label: '调班申请', path: '/swap', icon: Switch, bgColor: '#FFF8E1', iconColor: '#FFC107' },
-    { label: '消息中心', path: '/message', icon: Message, bgColor: '#F3E5F5', iconColor: '#9C27B0' },
-  ]
-  if (authStore.hasRole('admin')) {
-    actions.push(
-      { label: '系统设置', path: '/system', icon: Setting, bgColor: '#ECEFF1', iconColor: '#607D8B' },
-      { label: '数据导出', path: '/schedule', icon: DataAnalysis, bgColor: '#FCE4EC', iconColor: '#E91E63' },
-    )
+  const actions: Array<{
+    label: string; path: string; icon: any;
+    bgColor: string; iconColor: string
+  }> = []
+
+  // 自动排班 — 需要排班创建权限
+  if (authStore.hasPermission('schedule', 'create')) {
+    actions.push({
+      label: '自动排班', path: '/schedule?auto=1',
+      icon: MagicStick, bgColor: '#EBF5FF', iconColor: '#0A63D8'
+    })
   }
+
+  // 排班日历 — 需要排班查看权限
+  if (authStore.hasPermission('schedule', 'read')) {
+    actions.push({
+      label: '排班日历', path: '/schedule',
+      icon: List, bgColor: '#E8F8F0', iconColor: '#28A745'
+    })
+  }
+
+  // 调班申请 — 需要调班查看权限
+  if (authStore.hasPermission('swap', 'read')) {
+    actions.push({
+      label: '调班申请', path: '/swap',
+      icon: Switch, bgColor: '#FFF8E1', iconColor: '#FFC107'
+    })
+  }
+
+  // 消息中心 — 需要消息查看权限
+  if (authStore.hasPermission('message', 'read')) {
+    actions.push({
+      label: '消息中心', path: '/message',
+      icon: Message, bgColor: '#F3E5F5', iconColor: '#9C27B0'
+    })
+  }
+
+  // 系统设置 — admin 专属
+  if (authStore.hasRole('admin')) {
+    actions.push({
+      label: '系统设置', path: '/system',
+      icon: Setting, bgColor: '#ECEFF1', iconColor: '#607D8B'
+    })
+  }
+
   return actions
 })
 

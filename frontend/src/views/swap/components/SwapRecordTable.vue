@@ -43,26 +43,43 @@
     </el-table-column>
     <el-table-column label="操作" width="200" fixed="right">
       <template #default="{ row }">
-        <el-button type="primary" text size="small" @click="$emit('detail', row)">
+        <!-- 详情：需要 swap read 权限 -->
+        <el-button
+          v-if="authStore.hasPermission('swap', 'read')"
+          type="primary" text size="small"
+          @click="$emit('detail', row)"
+        >
           详情
         </el-button>
-        <!-- 待确认：被换人可确认/拒绝 -->
+        <!-- 待确认：被换人可确认/拒绝，需要 swap create 权限 -->
         <template v-if="row.status === 'pending_confirm' && row.target_id === currentUserId">
-          <el-button type="success" text size="small" @click="$emit('confirm', row)">
+          <el-button
+            v-if="authStore.hasPermission('swap', 'create')"
+            type="success" text size="small"
+            @click="$emit('confirm', row)"
+          >
             确认
           </el-button>
-          <el-button type="danger" text size="small" @click="$emit('refuse', row)">
+          <el-button
+            v-if="authStore.hasPermission('swap', 'create')"
+            type="danger" text size="small"
+            @click="$emit('refuse', row)"
+          >
             拒绝
           </el-button>
         </template>
-        <!-- 待认领：其他人可认领 -->
+        <!-- 待认领：其他人可认领，需要 swap create 权限 -->
         <template v-if="row.status === 'pending_claim' && row.requester_id !== currentUserId">
-          <el-button type="success" text size="small" @click="$emit('claim', row)">
+          <el-button
+            v-if="authStore.hasPermission('swap', 'create')"
+            type="success" text size="small"
+            @click="$emit('claim', row)"
+          >
             认领
           </el-button>
         </template>
-        <!-- 待审批：管理员可审批 -->
-        <template v-if="row.status === 'pending_approve' && isAdmin">
+        <!-- 待审批：需要 swap approve 权限 -->
+        <template v-if="row.status === 'pending_approve' && authStore.hasPermission('swap', 'approve')">
           <el-button type="success" text size="small" @click="$emit('approve', row)">
             通过
           </el-button>
@@ -70,9 +87,13 @@
             拒绝
           </el-button>
         </template>
-        <!-- 待确认/待认领/待审批：发起人可撤回 -->
+        <!-- 待确认/待认领/待审批：发起人可撤回，需要 swap create 权限 -->
         <template v-if="['pending_confirm', 'pending_claim', 'pending_approve'].includes(row.status) && row.requester_id === currentUserId">
-          <el-button type="warning" text size="small" @click="$emit('cancel', row)">
+          <el-button
+            v-if="authStore.hasPermission('swap', 'create')"
+            type="warning" text size="small"
+            @click="$emit('cancel', row)"
+          >
             撤回
           </el-button>
         </template>
@@ -116,6 +137,7 @@ defineEmits<{
 
 const authStore = useAuthStore()
 const currentUserId = computed(() => authStore.userId)
+// isAdmin 保留用于兼容，但审批按钮已改为权限判断
 const isAdmin = computed(() => authStore.hasRole('admin') || authStore.hasRole('scheduler'))
 
 const currentPage = ref(1)

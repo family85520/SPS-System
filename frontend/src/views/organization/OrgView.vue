@@ -9,7 +9,13 @@
           clearable
           prefix-icon="Search"
         />
-        <el-button type="primary" @click="handleCreateRoot" style="margin-top: 8px; width: 100%">
+        <!-- 新建顶级组织：需要 organization create 权限 -->
+        <el-button
+          v-if="authStore.hasPermission('organization', 'create')"
+          type="primary"
+          @click="handleCreateRoot"
+          style="margin-top: 8px; width: 100%"
+        >
           <el-icon><Plus /></el-icon>
           新建顶级组织
         </el-button>
@@ -57,7 +63,13 @@
           v-loading="saving"
         >
           <el-form-item label="组织名称" prop="name">
-            <el-input v-model="formData.name" placeholder="请输入组织名称" maxlength="100" show-word-limit />
+            <el-input
+              v-model="formData.name"
+              placeholder="请输入组织名称"
+              maxlength="100"
+              show-word-limit
+              :disabled="!canEdit"
+            />
           </el-form-item>
 
           <el-form-item label="上级组织">
@@ -70,7 +82,7 @@
               check-strictly
               :render-after-expand="false"
               style="width: 100%"
-              :disabled="!isCreate"
+              :disabled="!isCreate || !canEdit"
             />
           </el-form-item>
 
@@ -80,16 +92,22 @@
               :min="0"
               :max="9999"
               controls-position="right"
+              :disabled="!canEdit"
             />
           </el-form-item>
 
+          <!-- 启用状态：需要 organization update 权限 -->
           <el-form-item v-if="!isCreate" label="启用状态">
             <el-switch
+              v-if="authStore.hasPermission('organization', 'update')"
               :model-value="formData.status === 1"
               active-text="启用"
               inactive-text="停用"
               @change="handleToggleStatus"
             />
+            <el-tag v-else :type="formData.status === 1 ? 'success' : 'info'" size="small">
+              {{ formData.status === 1 ? '启用' : '停用' }}
+            </el-tag>
           </el-form-item>
 
           <el-form-item v-if="!isCreate" label="层级深度">
@@ -102,9 +120,29 @@
 
           <el-form-item>
             <div class="form-actions">
-              <el-button type="primary" @click="handleSave">保存</el-button>
-              <el-button @click="handleCreateChild">新增下级</el-button>
-              <el-button v-if="!isCreate" type="danger" @click="handleDelete">删除</el-button>
+              <!-- 保存：新建需要 create，编辑需要 update -->
+              <el-button
+                v-if="authStore.hasPermission('organization', isCreate ? 'create' : 'update')"
+                type="primary"
+                @click="handleSave"
+              >
+                保存
+              </el-button>
+              <!-- 新增下级：需要 organization create 权限 -->
+              <el-button
+                v-if="authStore.hasPermission('organization', 'create')"
+                @click="handleCreateChild"
+              >
+                新增下级
+              </el-button>
+              <!-- 删除：需要 organization delete 权限 -->
+              <el-button
+                v-if="!isCreate && authStore.hasPermission('organization', 'delete')"
+                type="danger"
+                @click="handleDelete"
+              >
+                删除
+              </el-button>
               <el-button @click="handleCancel">取消</el-button>
             </div>
           </el-form-item>
@@ -123,6 +161,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type ElTree } from 'element-plus'
 import { Plus, OfficeBuilding } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
 import {
   getOrgTree,
   createOrg,
@@ -131,6 +170,14 @@ import {
   type OrgNode,
   type OrgCreateForm,
 } from '@/api/organization'
+
+const authStore = useAuthStore()
+
+// 编辑权限：新建时需要 create，编辑时需要 update
+const canEdit = computed(() => {
+  if (isCreate.value) return authStore.hasPermission('organization', 'create')
+  return authStore.hasPermission('organization', 'update')
+})
 
 // ==================== 树配置 ====================
 
@@ -257,7 +304,6 @@ async function handleSave() {
       })
       ElMessage.success('保存成功')
       await loadTree()
-      // 重新选中更新后的节点
       const refreshed = findNodeById(treeData.value, updated.id)
       if (refreshed) handleNodeClick(refreshed)
     }
@@ -360,7 +406,6 @@ onMounted(() => {
   min-width: 700px;
 }
 
-/* 左侧树 */
 .left-panel {
   width: 320px;
   min-width: 280px;
@@ -414,7 +459,6 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* 右侧表单 */
 .right-panel {
   flex: 1;
   min-width: 400px;

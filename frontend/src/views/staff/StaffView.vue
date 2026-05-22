@@ -18,6 +18,7 @@
             @clear="handleSearch"
           />
           <el-button
+            v-if="authStore.hasPermission('staff', 'update')"
             type="warning"
             :disabled="selectedStaffIds.length === 0"
             @click="handleBatchResetPwd"
@@ -25,7 +26,11 @@
             批量重置密码
           </el-button>
         </div>
-        <el-button type="primary" @click="handleCreate">
+        <el-button
+          v-if="authStore.hasPermission('staff', 'create')"
+          type="primary"
+          @click="handleCreate"
+        >
           <el-icon><Plus /></el-icon>
           新增人员
         </el-button>
@@ -99,16 +104,41 @@
         </el-table-column>
         <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
-            <!-- 系统账号（admin）：只能重置密码 -->
+            <!-- ========== 修改点1：系统账号重置密码仅限admin角色 ========== -->
             <template v-if="row.is_system_account">
-              <el-button link type="warning" size="small" @click="handleResetSingle(row)">重置密码</el-button>
+              <el-button
+                v-if="authStore.hasRole('admin')"
+                link type="warning" size="small"
+                @click="handleResetSingle(row)"
+              >
+                重置密码
+              </el-button>
             </template>
             <!-- 普通人员：正常操作 -->
             <template v-else>
-              <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-              <el-button link type="primary" size="small" @click="handleAccount(row)">账号</el-button>
-              <el-button link type="primary" size="small" @click="handleSpecialRule(row)">特殊规则</el-button>
               <el-button
+                v-if="authStore.hasPermission('staff', 'update')"
+                link type="primary" size="small"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="authStore.hasPermission('staff', 'update')"
+                link type="primary" size="small"
+                @click="handleAccount(row)"
+              >
+                账号
+              </el-button>
+              <el-button
+                v-if="authStore.hasPermission('staff', 'update')"
+                link type="primary" size="small"
+                @click="handleSpecialRule(row)"
+              >
+                特殊规则
+              </el-button>
+              <el-button
+                v-if="authStore.hasPermission('staff', 'update')"
                 link
                 :type="row.status === 1 ? 'warning' : 'success'"
                 size="small"
@@ -116,7 +146,13 @@
               >
                 {{ row.status === 1 ? '停用' : '启用' }}
               </el-button>
-              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+              <el-button
+                v-if="authStore.hasPermission('staff', 'delete')"
+                link type="danger" size="small"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
             </template>
           </template>
         </el-table-column>
@@ -244,11 +280,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
 import SpecialRuleDrawer from './components/SpecialRuleDrawer.vue'
 import AccountDrawer from './components/AccountDrawer.vue'
 import api from '@/api/index'
 import { getSpecialRules, type SpecialRule } from '@/api/special-rule'
 import request from '@/utils/request'
+
+const authStore = useAuthStore()
+
+// ========== 新增：辅助判断是否为admin角色 ==========
+const isAdmin = computed(() => authStore.hasRole('admin'))
 
 // 状态
 const loading = ref(false)
@@ -341,7 +383,9 @@ async function loadStaff() {
     staffList.value = list
     total.value = res.total || list.length
     await loadAllRules()
-    await loadSystemAccounts()
+    if (isAdmin.value) {
+      await loadSystemAccounts()
+    }
   } catch (e) {
     staffList.value = []
   } finally {
@@ -350,10 +394,10 @@ async function loadStaff() {
 }
 
 async function loadSystemAccounts() {
+  if (!isAdmin.value) return
   try {
     const res: any = await api.get('/staffs/system-accounts')
     systemAccounts.value = res.items || []
-    // 将系统账号插入列表顶部
     const allItems = [...systemAccounts.value, ...staffList.value]
     staffList.value = allItems
   } catch {
@@ -363,8 +407,9 @@ async function loadSystemAccounts() {
 
 async function loadOrgs() {
   try {
-    const res = await api.get('/organizations')
-    orgList.value = Array.isArray(res) ? res : []
+    const res: any = await api.get('/options/organizations')
+    const list = Array.isArray(res) ? res : (res.data || [])
+    orgList.value = list
     orgList.value.forEach((org: any) => {
       orgNameMap.value[org.id] = org.name
     })
@@ -375,8 +420,9 @@ async function loadOrgs() {
 
 async function loadRoles() {
   try {
-    const res = await api.get('/roles')
-    roleList.value = Array.isArray(res) ? res : []
+    const res: any = await api.get('/roles/options')
+    const list = Array.isArray(res) ? res : (res.data || [])
+    roleList.value = list
   } catch (e) {
     roleList.value = []
   }
@@ -446,7 +492,6 @@ function handleSelectionChange(rows: any[]) {
 }
 
 function isRowSelectable(row: any) {
-  // 系统账号（admin）不可被批量选择
   return !row.is_system_account
 }
 
@@ -454,8 +499,13 @@ function tableRowClassName({ row }: { row: any }) {
   return row.is_system_account ? 'system-account-row' : ''
 }
 
-// 单个重置密码
+// ========== 修改点2：单个重置密码增加admin角色二次校验 ==========
 async function handleResetSingle(row: any) {
+  // 系统账号重置密码必须是admin角色
+  if (row.is_system_account && !isAdmin.value) {
+    ElMessage.error('系统账号密码仅允许管理员重置')
+    return
+  }
   try {
     await ElMessageBox.confirm(
       `确认将 "${row.name}" 的密码重置为默认密码（123456）？重置后首次登录需修改密码。`,
@@ -464,7 +514,6 @@ async function handleResetSingle(row: any) {
     )
     let res: any
     if (row.is_system_account) {
-      // admin 等系统账号：直接调用接口
       res = await request.post(`/api/staffs/reset-password-by-user/${row.user_id}`)
     } else {
       res = await request.post(`/api/staffs/${row.id}/reset-password`)
@@ -475,7 +524,7 @@ async function handleResetSingle(row: any) {
   } catch {}
 }
 
-// 批量重置密码
+// ========== 修改点3：批量重置密码排除系统账号（双重保险） ==========
 async function handleBatchResetPwd() {
   if (selectedStaffIds.value.length === 0) {
     ElMessage.warning('请先选择要重置的人员')
@@ -510,7 +559,6 @@ function onAccountToggle(val: boolean) {
 
 async function refreshAccountData() {
   await loadStaff()
-  // 从刷新后的列表中同步最新数据到账号抽屉
   if (accountStaff.value) {
     const fresh = staffList.value.find((s: any) => s.id === accountStaff.value.id)
     if (fresh) {

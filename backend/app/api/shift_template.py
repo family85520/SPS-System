@@ -4,8 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from app.database import get_db
-from app.api.auth import get_current_user
-from app.api.deps import require_permissions
+from app.api.deps import get_current_user, require_permissions
 from app.models import SysUser
 from app.schemas.shift_template import (
     ShiftTemplateCreate,
@@ -28,6 +27,40 @@ async def list_shift_templates(
     """获取班次模板列表"""
     templates = await ShiftTemplateService.list_templates(db, org_id=org_id, status=status, keyword=keyword)
     return templates
+
+
+# ==================== 选项数据（供排班等页面下拉使用，只需登录权限） ====================
+
+@router.get("/options", summary="获取班次模板选项列表")
+async def get_shift_template_options(
+    org_id: Optional[int] = Query(None, description="组织ID筛选"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    """获取启用状态的班次模板选项（仅返回下拉所需字段，无需额外权限）"""
+    from app.models.shift_template import SchShiftTemplate
+    stmt = (
+        select(SchShiftTemplate)
+        .where(SchShiftTemplate.status == 1)
+        .order_by(SchShiftTemplate.id)
+    )
+    if org_id is not None:
+        stmt = stmt.where(
+            (SchShiftTemplate.org_id == org_id) | (SchShiftTemplate.org_id.is_(None))
+        )
+    result = await db.execute(stmt)
+    templates = result.scalars().all()
+    data = [
+        {
+            "id": t.id,
+            "name": t.name,
+            "start_time": t.start_time,
+            "end_time": t.end_time,
+            "color": t.color,
+        }
+        for t in templates
+    ]
+    return {"code": 200, "data": data, "message": "success"}
 
 
 @router.get("/{template_id}", response_model=ShiftTemplateResponse)

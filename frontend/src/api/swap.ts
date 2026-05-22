@@ -89,5 +89,5 @@ export function refuseSwap(id: number, comment?: string) {
 }
 
 export function getMySchedules(params: { staff_id?: number; start_date?: string; end_date?: string; status?: number }) {
-  return request.get('/api/schedules', { params })
+  return request.get('/api/schedules/by-staff', { params })
 }

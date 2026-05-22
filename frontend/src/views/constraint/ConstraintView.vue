@@ -4,7 +4,12 @@
     <div class="left-panel">
       <div class="panel-header">
         <h3>约束规则</h3>
-        <el-button type="primary" size="small" @click="handleCreate">
+        <!-- 新建规则：需要 constraint create 权限 -->
+        <el-button
+          v-if="authStore.hasPermission('constraint', 'create')"
+          type="primary" size="small"
+          @click="handleCreate"
+        >
           <el-icon><Plus /></el-icon>
           新建规则
         </el-button>
@@ -22,7 +27,9 @@
             <span class="priority-badge">{{ item.priority }}</span>
             <span class="rule-name">{{ item.rule_name }}</span>
             <el-tag v-if="item.is_preset" size="small" type="info">预置</el-tag>
+            <!-- 启停切换：需要 constraint update 权限 -->
             <el-switch
+              v-if="authStore.hasPermission('constraint', 'update')"
               :model-value="item.enabled"
               size="small"
               inline-prompt
@@ -60,6 +67,7 @@
               placeholder="请输入规则名称"
               maxlength="100"
               show-word-limit
+              :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')"
             />
           </el-form-item>
 
@@ -80,23 +88,51 @@
           </el-form-item>
 
           <el-form-item label="启用状态">
-            <el-switch v-model="formData.enabled" active-text="启用" inactive-text="停用" />
+            <el-switch
+              v-model="formData.enabled"
+              active-text="启用"
+              inactive-text="停用"
+              :disabled="!authStore.hasPermission('constraint', 'update')"
+            />
           </el-form-item>
 
           <el-form-item label="优先级" prop="priority">
-            <el-input-number v-model="formData.priority" :min="1" :max="999" controls-position="right" />
+            <el-input-number
+              v-model="formData.priority"
+              :min="1"
+              :max="999"
+              controls-position="right"
+              :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')"
+            />
             <span class="priority-tip">数字越小越优先</span>
           </el-form-item>
 
           <el-form-item label="适用范围" prop="scope_type">
-            <el-radio-group v-model="formData.scope_type">
+            <el-radio-group
+              v-model="formData.scope_type"
+              :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')"
+            >
               <el-radio value="all">全部组织</el-radio>
               <el-radio value="org">指定组织</el-radio>
             </el-radio-group>
           </el-form-item>
 
           <el-form-item v-if="formData.scope_type === 'org'" label="指定组织">
-            <el-input v-model="formData.scope_ids" placeholder="输入组织ID，逗号分隔" />
+            <el-select
+              v-model="formData.scope_ids"
+              multiple
+              filterable
+              placeholder="选择适用的组织"
+              style="width: 100%"
+              :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')"
+            >
+              <el-option
+                v-for="org in orgList"
+                :key="org.id"
+                :label="org.name"
+                :value="org.id"
+              />
+            </el-select>
           </el-form-item>
 
           <el-divider content-position="left">规则参数</el-divider>
@@ -104,7 +140,7 @@
           <!-- 连续工作上限 -->
           <template v-if="formData.rule_type === 'MAX_CONTINUOUS_DAYS'">
             <el-form-item label="最多连续上班天数">
-              <el-input-number v-model="formData.params.max_days" :min="1" :max="30" controls-position="right" />
+              <el-input-number v-model="formData.params.max_days" :min="1" :max="30" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">天</span>
             </el-form-item>
           </template>
@@ -112,7 +148,7 @@
           <!-- 连续工作后最少休息 -->
           <template v-if="formData.rule_type === 'MIN_REST_AFTER_CONTINUOUS'">
             <el-form-item label="最少休息天数">
-              <el-input-number v-model="formData.params.rest_days" :min="1" :max="14" controls-position="right" />
+              <el-input-number v-model="formData.params.rest_days" :min="1" :max="14" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">天</span>
             </el-form-item>
           </template>
@@ -120,7 +156,7 @@
           <!-- 班次最少间隔 -->
           <template v-if="formData.rule_type === 'MIN_SHIFT_INTERVAL'">
             <el-form-item label="最少间隔小时数">
-              <el-input-number v-model="formData.params.hours" :min="1" :max="48" controls-position="right" />
+              <el-input-number v-model="formData.params.hours" :min="1" :max="48" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">小时</span>
             </el-form-item>
           </template>
@@ -128,7 +164,7 @@
           <!-- 夜班后最少休息 -->
           <template v-if="formData.rule_type === 'MIN_REST_AFTER_NIGHT'">
             <el-form-item label="最少休息小时数">
-              <el-input-number v-model="formData.params.hours" :min="1" :max="72" controls-position="right" />
+              <el-input-number v-model="formData.params.hours" :min="1" :max="72" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">小时</span>
             </el-form-item>
           </template>
@@ -136,7 +172,7 @@
           <!-- 每天最多上班数 -->
           <template v-if="formData.rule_type === 'MAX_SHIFTS_PER_DAY'">
             <el-form-item label="每天最多排几个班">
-              <el-input-number v-model="formData.params.count" :min="1" :max="5" controls-position="right" />
+              <el-input-number v-model="formData.params.count" :min="1" :max="5" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">个</span>
             </el-form-item>
           </template>
@@ -144,7 +180,7 @@
           <!-- 每周最多工作时长 -->
           <template v-if="formData.rule_type === 'MAX_WEEKLY_HOURS'">
             <el-form-item label="每周累计小时上限">
-              <el-input-number v-model="formData.params.hours" :min="1" :max="168" controls-position="right" />
+              <el-input-number v-model="formData.params.hours" :min="1" :max="168" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">小时</span>
             </el-form-item>
           </template>
@@ -152,7 +188,7 @@
           <!-- 节假日模式 -->
           <template v-if="formData.rule_type === 'HOLIDAY_MODE'">
             <el-form-item label="节假日排班模式">
-              <el-radio-group v-model="formData.params.mode">
+              <el-radio-group v-model="formData.params.mode" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')">
                 <el-radio value="normal">正常轮转</el-radio>
                 <el-radio value="special">特殊安排</el-radio>
               </el-radio-group>
@@ -162,14 +198,14 @@
           <!-- 周末差异化 -->
           <template v-if="formData.rule_type === 'WEEKEND_DIFF'">
             <el-form-item label="启用周末差异化">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" />
+              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
             </el-form-item>
           </template>
 
           <!-- 连续夜班上限 -->
           <template v-if="formData.rule_type === 'MAX_CONSECUTIVE_NIGHTS'">
             <el-form-item label="最多连续夜班天数">
-              <el-input-number v-model="formData.params.max_days" :min="1" :max="14" controls-position="right" />
+              <el-input-number v-model="formData.params.max_days" :min="1" :max="14" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">天</span>
             </el-form-item>
           </template>
@@ -177,7 +213,7 @@
           <!-- 夜班之间最少间隔 -->
           <template v-if="formData.rule_type === 'MIN_INTERVAL_BETWEEN_NIGHTS'">
             <el-form-item label="夜班之间最少间隔">
-              <el-input-number v-model="formData.params.days" :min="1" :max="14" controls-position="right" />
+              <el-input-number v-model="formData.params.days" :min="1" :max="14" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">天</span>
             </el-form-item>
           </template>
@@ -185,7 +221,7 @@
           <!-- 每月最多夜班次数 -->
           <template v-if="formData.rule_type === 'MAX_NIGHTS_PER_MONTH'">
             <el-form-item label="每月最多夜班次数">
-              <el-input-number v-model="formData.params.count" :min="1" :max="31" controls-position="right" />
+              <el-input-number v-model="formData.params.count" :min="1" :max="31" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">次</span>
             </el-form-item>
           </template>
@@ -193,10 +229,10 @@
           <!-- 工作量均衡分配 -->
           <template v-if="formData.rule_type === 'EQUAL_DISTRIBUTION'">
             <el-form-item label="启用工作量均衡">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" />
+              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
             </el-form-item>
             <el-form-item v-if="formData.params.enabled" label="允许偏差天数">
-              <el-input-number v-model="formData.params.tolerance_days" :min="0" :max="10" controls-position="right" />
+              <el-input-number v-model="formData.params.tolerance_days" :min="0" :max="10" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">天</span>
             </el-form-item>
           </template>
@@ -204,17 +240,17 @@
           <!-- 值班领导轮换均衡 -->
           <template v-if="formData.rule_type === 'LEADER_ROTATION'">
             <el-form-item label="启用领导轮换均衡">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" />
+              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
             </el-form-item>
           </template>
 
           <!-- 周末轮转均衡 -->
           <template v-if="formData.rule_type === 'WEEKEND_ROTATION'">
             <el-form-item label="启用周末轮转均衡">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" />
+              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
             </el-form-item>
             <el-form-item v-if="formData.params.enabled" label="每人每月最少周末班次">
-              <el-input-number v-model="formData.params.min_times_per_month" :min="1" :max="10" controls-position="right" />
+              <el-input-number v-model="formData.params.min_times_per_month" :min="1" :max="10" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
               <span class="param-unit">次</span>
             </el-form-item>
           </template>
@@ -222,14 +258,28 @@
           <!-- 新员工搭配老员工 -->
           <template v-if="formData.rule_type === 'NEW_STAFF_PAIRING'">
             <el-form-item label="启用新员工搭配">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" />
+              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
             </el-form-item>
           </template>
 
           <el-form-item>
             <div class="form-actions">
-              <el-button type="primary" @click="handleSave">保存</el-button>
-              <el-button v-if="!isCreate && canDelete" type="danger" @click="handleDelete">删除</el-button>
+              <!-- 保存：新建时需要 create，编辑时需要 update -->
+              <el-button
+                v-if="authStore.hasPermission('constraint', isCreate ? 'create' : 'update')"
+                type="primary"
+                @click="handleSave"
+              >
+                保存
+              </el-button>
+              <!-- 删除：需要 constraint delete 权限 -->
+              <el-button
+                v-if="!isCreate && canDelete && authStore.hasPermission('constraint', 'delete')"
+                type="danger"
+                @click="handleDelete"
+              >
+                删除
+              </el-button>
               <el-button @click="handleCancel">取消</el-button>
             </div>
           </el-form-item>
@@ -248,6 +298,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Setting } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
 import {
   getConstraints,
   createConstraint,
@@ -258,6 +309,20 @@ import {
   type ConstraintUpdate,
   type ConstraintCreate,
 } from '@/api/constraint'
+import api from '@/api/index'
+
+const authStore = useAuthStore()
+
+const orgList = ref<any[]>([])
+
+async function loadOrgs() {
+  try {
+    const res: any = await api.get('/options/organizations')
+    orgList.value = Array.isArray(res) ? res : (res.data || [])
+  } catch {
+    orgList.value = []
+  }
+}
 
 // 预置规则类型
 const presetRuleTypes = new Set([
@@ -279,25 +344,20 @@ const presetRuleTypes = new Set([
 ])
 
 const customRuleTypes = [
-  // 基础工时约束
   { value: 'MAX_CONTINUOUS_DAYS', label: '连续工作上限' },
   { value: 'MIN_REST_AFTER_CONTINUOUS', label: '连续工作后最少休息' },
   { value: 'MIN_SHIFT_INTERVAL', label: '班次最少间隔' },
   { value: 'MAX_SHIFTS_PER_DAY', label: '每天最多上班数' },
   { value: 'MAX_WEEKLY_HOURS', label: '每周最多工作时长' },
-  // 夜班约束
   { value: 'MIN_REST_AFTER_NIGHT', label: '夜班后最少休息' },
   { value: 'MAX_CONSECUTIVE_NIGHTS', label: '连续夜班上限' },
   { value: 'MIN_INTERVAL_BETWEEN_NIGHTS', label: '夜班之间最少间隔天数' },
   { value: 'MAX_NIGHTS_PER_MONTH', label: '每月最多夜班次数' },
-  // 均衡轮转
   { value: 'EQUAL_DISTRIBUTION', label: '工作量均衡分配' },
   { value: 'LEADER_ROTATION', label: '值班领导轮换均衡' },
   { value: 'WEEKEND_ROTATION', label: '周末轮转均衡' },
-  // 节假日与周末
   { value: 'HOLIDAY_MODE', label: '节假日排班模式' },
   { value: 'WEEKEND_DIFF', label: '周末差异化' },
-  // 特殊约束
   { value: 'NEW_STAFF_PAIRING', label: '新员工必须搭配老员工' },
 ]
 
@@ -306,13 +366,11 @@ function isPreset(ruleType: string): boolean {
 }
 
 const canDelete = computed(() => {
-  // 全局预置规则不可删除
   if (formData.value.is_preset) {
     return false
   }
   return true
 })
-
 
 // 状态
 const loading = ref(false)
@@ -347,7 +405,7 @@ const formData = ref<{
   params: Record<string, any>
   priority: number
   scope_type: string
-  scope_ids: any
+  scope_ids: number[]
   enabled: boolean
   is_preset: boolean
 }>({
@@ -356,7 +414,7 @@ const formData = ref<{
   params: {},
   priority: 1,
   scope_type: 'all',
-  scope_ids: null,
+  scope_ids: [],
   enabled: true,
   is_preset: false,
 })
@@ -374,7 +432,6 @@ const rules: FormRules = {
   ],
 }
 
-// 加载列表
 async function loadList() {
   loading.value = true
   try {
@@ -386,10 +443,16 @@ async function loadList() {
   }
 }
 
-// 选择规则
 function handleSelect(item: Constraint) {
   isCreate.value = false
   selectedId.value = item.id
+  // scope_ids 统一为数组格式
+  let scopeIds = item.scope_ids
+  if (typeof scopeIds === 'string') {
+    try { scopeIds = JSON.parse(scopeIds) } catch { scopeIds = [] }
+  }
+  if (!Array.isArray(scopeIds)) scopeIds = scopeIds ? [scopeIds] : []
+
   formData.value = {
     id: item.id,
     rule_type: item.rule_type,
@@ -397,13 +460,12 @@ function handleSelect(item: Constraint) {
     params: { ...item.params },
     priority: item.priority,
     scope_type: item.scope_type,
-    scope_ids: item.scope_ids,
+    scope_ids: scopeIds,
     enabled: item.enabled,
     is_preset: item.is_preset,
   }
 }
 
-// 新建规则
 function handleCreate() {
   isCreate.value = true
   selectedId.value = -1
@@ -413,7 +475,7 @@ function handleCreate() {
     params: { max_days: 5 },
     priority: 0,
     scope_type: 'all',
-    scope_ids: null,
+    scope_ids: [],
     enabled: true,
     is_preset: false,
   }
@@ -423,7 +485,6 @@ function handleTypeChange(value: string) {
   formData.value.params = { ...defaultParams[value] }
 }
 
-// 保存
 async function handleSave() {
   if (!formRef.value) return
   const valid = await formRef.value.validate().catch(() => false)
@@ -438,7 +499,7 @@ async function handleSave() {
         params: formData.value.params,
         priority: formData.value.priority,
         scope_type: formData.value.scope_type,
-        scope_ids: formData.value.scope_type === 'org' ? String(formData.value.scope_ids).split(',').map(Number) : null,
+        scope_ids: formData.value.scope_type === 'org' ? formData.value.scope_ids : null,
         enabled: formData.value.enabled,
       }
       await createConstraint(payload)
@@ -451,7 +512,7 @@ async function handleSave() {
         params: formData.value.params,
         priority: formData.value.priority,
         scope_type: formData.value.scope_type,
-        scope_ids: formData.value.scope_type === 'org' ? String(formData.value.scope_ids).split(',').map(Number) : null,
+        scope_ids: formData.value.scope_type === 'org' ? formData.value.scope_ids : null,
         enabled: formData.value.enabled,
       }
       await updateConstraint(formData.value.id!, payload)
@@ -465,7 +526,6 @@ async function handleSave() {
   }
 }
 
-// 删除
 async function handleDelete() {
   if (!formData.value.id) return
   try {
@@ -486,13 +546,11 @@ async function handleDelete() {
   }
 }
 
-// 切换启用状态
 async function handleToggle(item: Constraint) {
   try {
     await toggleConstraint(item.id)
     ElMessage.success(item.enabled ? '已禁用' : '已启用')
     await loadList()
-    // 如果当前正在编辑该规则，刷新表单数据
     if (selectedId.value === item.id) {
       const updated = ruleList.value.find(r => r.id === item.id)
       if (updated) handleSelect(updated)
@@ -502,13 +560,13 @@ async function handleToggle(item: Constraint) {
   }
 }
 
-// 取消
 function handleCancel() {
   selectedId.value = null
 }
 
 onMounted(() => {
   loadList()
+  loadOrgs()
 })
 </script>
 
@@ -523,7 +581,6 @@ onMounted(() => {
   min-width: 700px;
 }
 
-/* 左侧列表 */
 .left-panel {
   width: 340px;
   min-width: 300px;
@@ -608,7 +665,6 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-/* 右侧编辑 */
 .right-panel {
   flex: 1;
   background: #FFFFFF;
