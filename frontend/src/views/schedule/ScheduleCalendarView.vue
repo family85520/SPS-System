@@ -234,7 +234,12 @@
         </template>
         <template #footer>
           <el-button @click="validationDialogVisible = false">关闭</el-button>
-          <el-button v-if="authStore.hasPermission('schedule', 'publish')" type="primary" :disabled="validationResult && !validationResult.is_valid" @click="handlePublish; validationDialogVisible = false">
+          <el-button
+            v-if="authStore.hasPermission('schedule', 'publish')"
+            type="primary"
+            :disabled="!validationResult || validationResult.failed_count > 0"
+            @click="handlePublishFromValidation"
+          >
             确认发布
           </el-button>
         </template>
@@ -259,6 +264,15 @@
       :schedule="currentSchedule"
       :calendar-shift="currentCalendarShift"
       @refresh="handleRefresh"
+    />
+
+    <!-- 导出弹窗 -->
+    <ExportDialog
+      v-model:visible="exportDialogVisible"
+      :start-date="currentMonthRange.start"
+      :end-date="currentMonthRange.end"
+      :org-id="filterOrgId"
+      :org-list="orgList"
     />
 
     <!-- 新建排班对话框 -->
@@ -309,7 +323,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -342,6 +356,7 @@ import {
 import CalendarGrid from './components/CalendarGrid.vue'
 import ShiftDetailDrawer from './components/ShiftDetailDrawer.vue'
 import StatisticsPanel from './components/StatisticsPanel.vue'
+import ExportDialog from './components/ExportDialog.vue'
 
 // ==================== 日历状态 ====================
 
@@ -632,10 +647,25 @@ async function handleAutoGenerate() {
   }
 }
 
+// ==================== 当月日期范围（不含跨月） ====================
+
+const currentMonthRange = computed(() => {
+  const y = currentYear.value
+  const m = currentMonth.value
+  const start = new Date(y, m, 1)
+  const end = new Date(y, m + 1, 0)
+  return {
+    start: formatDateStr(start),
+    end: formatDateStr(end),
+  }
+})
+
 // ==================== 导出排班 ====================
 
+const exportDialogVisible = ref(false)
+
 function handleExport() {
-  ElMessage.info('导出排班功能将在后续版本中实现')
+  exportDialogVisible.value = true
 }
 
 // ==================== 约束校验 ====================
@@ -769,16 +799,6 @@ async function handleReject() {
   }
 }
 
-// 判断当前视图中是否有可编辑的排班（草稿或已撤回）
-function hasEditableSchedules(): boolean {
-  for (const day of calendarData.value) {
-    for (const shift of day.shifts) {
-      if (shift.status === 0 || shift.status === 2) return true
-    }
-  }
-  return false
-}
-
 async function handleDeleteDrafts() {
   try {
     await ElMessageBox({
@@ -815,6 +835,13 @@ function collectScheduleIdsByStatus(status: number): number[] {
     }
   }
   return [...new Set(ids)]
+}
+
+// ==================== 校验报告中发布 ====================
+
+async function handlePublishFromValidation() {
+  validationDialogVisible.value = false
+  await handlePublish()
 }
 
 // ==================== 工具函数 ====================
@@ -887,12 +914,19 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   padding: 12px 16px;
   background: #FFFFFF;
   border-radius: 6px;
   box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
   margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
 }
 

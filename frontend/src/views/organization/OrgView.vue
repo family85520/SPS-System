@@ -36,6 +36,8 @@
           <template #default="{ node, data }">
             <div class="tree-node" :class="{ disabled: data.status === 0 }">
               <span class="node-name">{{ data.name }}</span>
+              <span v-if="data.code" class="node-code">{{ data.code }}</span>
+              <span v-else class="node-code-empty">未设置</span>
               <el-tag v-if="data.status === 0" size="small" type="info">停用</el-tag>
               <span class="node-level">L{{ data.level }}</span>
             </div>
@@ -70,6 +72,27 @@
               show-word-limit
               :disabled="!canEdit"
             />
+          </el-form-item>
+
+          <el-form-item label="组织代码" prop="code">
+            <el-input
+              v-model="formData.code"
+              :placeholder="isCreate ? '留空自动生成（拼音首字母）' : '未设置'"
+              maxlength="50"
+              show-word-limit
+              :disabled="!canEdit"
+            />
+            <div v-if="isCreate" style="font-size: 12px; color: #909399; margin-top: 4px;">
+              留空将根据组织名称自动生成（拼音首字母简称）
+            </div>
+            <div v-else style="font-size: 12px; color: #909399; margin-top: 4px;">
+              <template v-if="formData.code">
+                修改后将影响后续生成的工号前缀
+              </template>
+              <template v-else>
+                该组织尚未生成代码，保存时留空将自动生成
+              </template>
+            </div>
           </el-form-item>
 
           <el-form-item label="上级组织">
@@ -203,6 +226,7 @@ const formRef = ref<FormInstance>()
 const defaultForm: OrgCreateForm & { status: number } = {
   name: '',
   parent_id: null,
+  code: '',
   sort_order: 0,
   status: 1,
 }
@@ -251,6 +275,7 @@ function handleNodeClick(data: OrgNode) {
   selectedOrg.value = data
   formData.value = {
     name: data.name,
+    code: data.code || '',
     parent_id: data.parent_id,
     sort_order: data.sort_order,
     status: data.status,
@@ -274,6 +299,7 @@ function handleCreateChild() {
   formData.value = {
     name: '',
     parent_id: selectedOrg.value.id,
+    code: '',
     sort_order: 0,
     status: 1,
   }
@@ -292,16 +318,22 @@ async function handleSave() {
       await createOrg({
         name: formData.value.name,
         parent_id: formData.value.parent_id,
+        code: formData.value.code || undefined,
         sort_order: formData.value.sort_order,
       })
       ElMessage.success('创建成功')
       await loadTree()
       selectedOrg.value = null
     } else {
-      const updated = await updateOrg(selectedOrg.value!.id, {
+      const updateData: any = {
         name: formData.value.name,
         sort_order: formData.value.sort_order,
-      })
+      }
+      // code 为空时不传（后端不会覆盖），有值时传递
+      if (formData.value.code) {
+        updateData.code = formData.value.code
+      }
+      const updated = await updateOrg(selectedOrg.value!.id, updateData)
       ElMessage.success('保存成功')
       await loadTree()
       const refreshed = findNodeById(treeData.value, updated.id)
@@ -457,6 +489,25 @@ onMounted(() => {
   padding: 0 6px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+
+.node-code {
+  font-size: 11px;
+  color: #0A63D8;
+  background: #EBF5FF;
+  padding: 0 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.node-code-empty {
+  font-size: 11px;
+  color: #C0C4CC;
+  background: #F5F7FA;
+  padding: 0 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  font-style: italic;
 }
 
 .right-panel {

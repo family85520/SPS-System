@@ -121,8 +121,6 @@ frontend
 │   │   │   └── MessageView.vue
 │   │   ├── organization
 │   │   │   └── OrgView.vue
-│   │   ├── placeholder
-│   │   │   └── PlaceholderView.vue
 │   │   ├── role
 │   │   │   └── RoleView.vue
 │   │   ├── schedule
@@ -130,7 +128,8 @@ frontend
 │   │   │   │   ├── CalendarGrid.vue
 │   │   │   │   ├── ShiftCell.vue
 │   │   │   │   ├── ShiftDetailDrawer.vue
-│   │   │   │   └── StaffSelector.vue
+│   │   │   │   ├── StaffSelector.vue
+│   │   │   │   └── StatisticsPanel.vue
 │   │   │   └── ScheduleCalendarView.vue
 │   │   ├── shift-template
 │   │   │   └── ShiftTemplateView.vue

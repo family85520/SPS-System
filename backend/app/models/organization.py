@@ -14,6 +14,7 @@ class OrgOrganization(Base, TimestampMixin):
     )
     level: Mapped[int] = mapped_column(SmallInteger, default=1, nullable=False, comment="层级深度")
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False, comment="同级排序序号")
+    code: Mapped[str | None] = mapped_column(String(50), unique=True, nullable=True, index=True, comment="部门代码（自动生成，可编辑）")
     status: Mapped[int] = mapped_column(SmallInteger, default=1, nullable=False, comment="0=停用 1=启用")
 
     children = relationship("OrgOrganization", back_populates="parent", lazy="selectin")

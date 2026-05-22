@@ -3,6 +3,7 @@ import api from './index'
 export interface OrgNode {
   id: number
   name: string
+  code: string | null
   parent_id: number | null
   level: number
   sort_order: number
@@ -15,11 +16,13 @@ export interface OrgNode {
 export interface OrgCreateForm {
   name: string
   parent_id: number | null
+  code?: string
   sort_order?: number
 }
 
 export interface OrgUpdateForm {
   name?: string
+  code?: string
   sort_order?: number
   status?: number
 }

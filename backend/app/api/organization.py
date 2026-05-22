@@ -8,6 +8,7 @@ from app.models import OrgOrganization, OrgStaff
 from app.schemas.organization import OrgCreate, OrgUpdate, OrgResponse, OrgTreeResponse
 from app.api.deps import get_current_user, require_permissions
 from app.models import SysUser
+from app.utils.employee_no import generate_org_code
 
 router = APIRouter(prefix="/organizations", tags=["组织架构管理"])
 
@@ -29,6 +30,7 @@ def _build_tree(orgs: List[OrgOrganization], parent_id: Optional[int] = None) ->
             node = {
                 "id": org.id,
                 "name": org.name,
+                "code": getattr(org, "code", None),
                 "parent_id": org.parent_id,
                 "level": org.level,
                 "sort_order": org.sort_order,
@@ -105,8 +107,21 @@ async def create_org(
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="同级组织名称已存在")
 
+    # 部门代码：优先使用传入值，否则自动生成
+    code = data.code
+    if not code:
+        code = await generate_org_code(db, data.name)
+    else:
+        # 检查手动输入的 code 唯一性
+        dup = (await db.execute(
+            select(OrgOrganization).where(OrgOrganization.code == code)
+        )).scalars().first()
+        if dup:
+            raise HTTPException(status_code=400, detail=f"部门代码 '{code}' 已存在")
+
     org = OrgOrganization(
         name=data.name,
+        code=code,
         parent_id=data.parent_id,
         level=level,
         sort_order=data.sort_order,
@@ -140,6 +155,19 @@ async def update_org(
         if result.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="同级组织名称已存在")
         org.name = data.name
+
+    if data.code is not None:
+        code = data.code.strip()
+        if code:
+            dup = (await db.execute(
+                select(OrgOrganization).where(
+                    OrgOrganization.code == code,
+                    OrgOrganization.id != org_id,
+                )
+            )).scalars().first()
+            if dup:
+                raise HTTPException(status_code=400, detail=f"部门代码 '{code}' 已存在")
+            org.code = code
 
     if data.sort_order is not None:
         org.sort_order = data.sort_order

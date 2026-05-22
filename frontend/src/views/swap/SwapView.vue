@@ -7,7 +7,7 @@
           <el-tabs v-model="activeTab" @tab-change="handleTabChange">
             <el-tab-pane label="我的申请" name="mine" />
             <el-tab-pane label="待我处理" name="pending" />
-            <el-tab-pane v-if="isAdmin" label="全部记录" name="all" />
+            <el-tab-pane v-if="canViewAll && authStore.hasPermission('swap', 'read')" label="全部记录" name="all" />
           </el-tabs>
         </div>
         <div class="toolbar-right">
@@ -97,7 +97,7 @@ import SwapRequestForm from './components/SwapRequestForm.vue'
 import SwapDetailPanel from './components/SwapDetailPanel.vue'
 
 const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.hasRole('admin') || authStore.hasRole('scheduler') || authStore.hasRole('leader'))
+const canViewAll = computed(() => authStore.hasRole('admin') || authStore.hasRole('scheduler') || authStore.hasRole('leader'))
 
 const activeTab = ref('mine')
 const statusFilter = ref('')

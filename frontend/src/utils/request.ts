@@ -22,15 +22,29 @@ request.interceptors.request.use(
 // 响应拦截器：统一错误处理
 request.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response) {
       const { status, data } = error.response
+
+      // 处理 blob 类型的错误响应（导出接口返回 JSON 错误时，data 是 Blob）
+      let detail = ''
+      if (data instanceof Blob && data.type?.includes('application/json')) {
+        try {
+          const text = await data.text()
+          const json = JSON.parse(text)
+          detail = json.detail || json.message || ''
+        } catch {
+          // 解析失败，忽略
+        }
+      } else {
+        detail = data?.detail || data?.message || ''
+      }
+
       if (status === 401) {
         localStorage.removeItem('token')
         router.push('/login')
         ElMessage.error('登录已过期，请重新登录')
       } else if (status === 403) {
-        const detail = data?.detail || ''
         if (detail.includes('权限')) {
           ElMessage.warning(detail)
         } else {
@@ -39,7 +53,7 @@ request.interceptors.response.use(
       } else if (status === 500) {
         ElMessage.error('服务器错误')
       } else {
-        ElMessage.error(data?.detail || data?.message || '请求失败')
+        ElMessage.error(detail || '请求失败')
       }
     } else {
       ElMessage.error('网络连接失败')

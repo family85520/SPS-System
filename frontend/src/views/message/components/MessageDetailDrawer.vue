@@ -117,12 +117,24 @@ const handleMarkRead = async () => {
 }
 
 const handleJumpSchedule = () => {
-  router.push('/schedule/calendar')
+  if (!props.message) return
+  const relationId = props.message.relation_id
+  if (relationId) {
+    router.push({ path: '/schedule', query: { highlight: String(relationId) } })
+  } else {
+    router.push('/schedule')
+  }
   emit('update:visible', false)
 }
 
 const handleJumpSwap = () => {
-  router.push('/swap')
+  if (!props.message) return
+  const relationId = props.message.relation_id
+  if (relationId) {
+    router.push({ path: '/swap', query: { highlight: String(relationId) } })
+  } else {
+    router.push('/swap')
+  }
   emit('update:visible', false)
 }
 </script>

@@ -4,28 +4,25 @@
     <div class="filter-bar">
       <span class="filter-label">统计周期</span>
       <el-date-picker
-        v-model="filterStartDate"
-        type="date"
-        placeholder="开始日期"
+        v-model="dateRange"
+        type="daterange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
         format="YYYY-MM-DD"
         value-format="YYYY-MM-DD"
-        style="width: 140px"
-      />
-      <span style="color: #909399;">至</span>
-      <el-date-picker
-        v-model="filterEndDate"
-        type="date"
-        placeholder="结束日期"
-        format="YYYY-MM-DD"
-        value-format="YYYY-MM-DD"
-        style="width: 140px"
+        style="width: 200px"
+        size="small"
       />
       <span class="filter-label" style="margin-left: 8px;">组织</span>
       <el-select v-model="filterOrgId" placeholder="全部组织" clearable style="width: 160px">
         <el-option v-for="org in orgList" :key="org.id" :label="org.name" :value="org.id" />
       </el-select>
       <el-button type="primary" @click="loadStatistics">查询</el-button>
-      <el-button @click="handleExport">导出 Excel</el-button>
+      <el-button v-if="authStore.hasPermission('export', 'read')" @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出
+      </el-button>
     </div>
 
     <!-- 汇总卡片 -->
@@ -59,6 +56,12 @@
           {{ statisticsData.summary.total_night_shifts }}<span class="summary-unit">班</span>
         </div>
         <div class="summary-label">夜班总次数</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value" style="color: #9C27B0;">
+          {{ statisticsData.summary.total_holiday_shifts || 0 }}<span class="summary-unit">班</span>
+        </div>
+        <div class="summary-label">节假日班次</div>
       </div>
     </div>
 
@@ -119,6 +122,11 @@
             <span class="td-badge badge-leader">{{ row.leader_shifts }}</span>
           </template>
         </el-table-column>
+        <el-table-column prop="holiday_shifts" label="节假日" sortable width="90" align="center">
+          <template #default="{ row }">
+            <span class="td-badge badge-holiday">{{ row.holiday_shifts || 0 }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="weight_score" label="权重分" sortable width="160" align="right">
           <template #default="{ row }">
             <div class="weight-cell">
@@ -140,28 +148,44 @@
         :image-size="80"
       />
     </div>
+
+    <!-- 导出统计报表弹窗 -->
+    <ExportStatisticsDialog
+      v-model:visible="exportDialogVisible"
+      :start-date="dateRange[0] || ''"
+      :end-date="dateRange[1] || ''"
+      :org-id="filterOrgId"
+      :org-list="orgList"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Download } from '@element-plus/icons-vue'
 import api from '@/api/index'
+import { useAuthStore } from '@/stores/auth'
 import { getScheduleStatistics } from '@/api/schedule'
 import type { ScheduleStatisticsResponse } from '@/api/schedule'
+import ExportStatisticsDialog from './ExportStatisticsDialog.vue'
 
 // ==================== 筛选状态 ====================
 
 const now = new Date()
 const y = now.getFullYear()
 const m = now.getMonth()
-const filterStartDate = ref(`${y}-${String(m + 1).padStart(2, '0')}-01`)
 const lastDay = new Date(y, m + 1, 0).getDate()
-const filterEndDate = ref(`${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`)
+const dateRange = ref<string[]>([
+  `${y}-${String(m + 1).padStart(2, '0')}-01`,
+  `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+])
 const filterOrgId = ref<number | undefined>(undefined)
+const exportDialogVisible = ref(false)
 
 // ==================== 数据 ====================
 
+const authStore = useAuthStore()
 const loading = ref(false)
 const statisticsData = ref<ScheduleStatisticsResponse | null>(null)
 const orgList = ref<any[]>([])
@@ -183,15 +207,15 @@ async function loadOrgs() {
 }
 
 async function loadStatistics() {
-  if (!filterStartDate.value || !filterEndDate.value) {
+  if (!dateRange.value || dateRange.value.length < 2) {
     ElMessage.warning('请选择统计周期')
     return
   }
   loading.value = true
   try {
     const params: any = {
-      start_date: filterStartDate.value,
-      end_date: filterEndDate.value,
+      start_date: dateRange.value[0],
+      end_date: dateRange.value[1],
     }
     if (filterOrgId.value) params.org_id = filterOrgId.value
     statisticsData.value = await getScheduleStatistics(params)
@@ -218,7 +242,7 @@ function getWeightBarStyle(score: number) {
 }
 
 function handleExport() {
-  ElMessage.info('导出功能将在后续版本中实现')
+  exportDialogVisible.value = true
 }
 
 // ==================== 初始化 ====================
@@ -259,7 +283,7 @@ onMounted(async () => {
 /* 汇总卡片 */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 16px;
   padding: 20px;
 }
@@ -287,6 +311,7 @@ onMounted(async () => {
 .summary-card:nth-child(3)::before { background: #17A2B8; }
 .summary-card:nth-child(4)::before { background: #FFC107; }
 .summary-card:nth-child(5)::before { background: #DC3545; }
+.summary-card:nth-child(6)::before { background: #9C27B0; }
 
 .summary-value {
   font-size: 28px;
@@ -344,6 +369,7 @@ onMounted(async () => {
 .badge-night { background: #E3F2FD; color: #1565C0; }
 .badge-weekend { background: #F3E5F5; color: #7B1FA2; }
 .badge-leader { background: #FFF3E0; color: #E65100; }
+.badge-holiday { background: #F3E5F5; color: #7B1FA2; }
 
 /* 排名徽章 */
 .rank-badge {

@@ -174,6 +174,7 @@ export interface ScheduleStatisticsItem {
   night_shifts: number
   weekend_shifts: number
   leader_shifts: number
+  holiday_shifts: number
   weight_score: number
 }
 
@@ -183,6 +184,7 @@ export interface ScheduleStatisticsSummary {
   avg_shifts_per_person: number
   avg_hours_per_person: number
   total_night_shifts: number
+  total_holiday_shifts: number
 }
 
 export interface ScheduleStatisticsResponse {
