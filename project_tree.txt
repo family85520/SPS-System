@@ -8,6 +8,7 @@ backend
 │   │   ├── constraint.py
 │   │   ├── dashboard.py
 │   │   ├── deps.py
+│   │   ├── export.py
 │   │   ├── message.py
 │   │   ├── organization.py
 │   │   ├── role.py
@@ -53,6 +54,7 @@ backend
 │   │   ├── __init__.py
 │   │   ├── constraint_service.py
 │   │   ├── dashboard_service.py
+│   │   ├── export_service.py
 │   │   ├── message_service.py
 │   │   ├── role_service.py
 │   │   ├── schedule_service.py
@@ -83,6 +85,7 @@ frontend
 │   │   ├── auth.ts
 │   │   ├── constraint.ts
 │   │   ├── dashboard.ts
+│   │   ├── export.ts
 │   │   ├── index.ts
 │   │   ├── message.ts
 │   │   ├── organization.ts
@@ -126,6 +129,8 @@ frontend
 │   │   ├── schedule
 │   │   │   ├── components
 │   │   │   │   ├── CalendarGrid.vue
+│   │   │   │   ├── ExportDialog.vue
+│   │   │   │   ├── ExportStatisticsDialog.vue
 │   │   │   │   ├── ShiftCell.vue
 │   │   │   │   ├── ShiftDetailDrawer.vue
 │   │   │   │   ├── StaffSelector.vue
