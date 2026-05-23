@@ -1,9 +1,14 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select, func, text, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
 from app.database import get_db
 from app.models import OrgStaff, OrgOrganization, SysUser, SysRole, SysUserRole
+from app.models.schedule import SchSchedule, SchScheduleDetail
+from app.models.special_rule import SchSpecialRule
+from app.models.audit_log import SysAuditLog
+from app.models.swap import SchSwapRequest
+from app.models.message import SysMessage, SysAnnouncement
 from app.schemas.staff import StaffCreate, StaffUpdate, StaffResponse, StaffListResponse, StaffAccountUpdate
 from app.api.deps import get_current_user, require_permissions, require_roles
 from app.utils.security import hash_password
@@ -580,24 +585,70 @@ async def delete_staff(
     db: AsyncSession = Depends(get_db),
     current_user: SysUser = Depends(require_permissions("staff", "delete")),
 ):
-    """删除人员（同步删除关联账号）"""
+    """删除人员（级联清理所有外键引用后删除关联账号）"""
     staff = (await db.execute(select(OrgStaff).where(OrgStaff.id == staff_id))).scalars().first()
     if not staff:
         raise HTTPException(status_code=404, detail="人员不存在")
 
-    # 同步删除关联账号
     user = (await db.execute(select(SysUser).where(SysUser.staff_id == staff_id))).scalars().first()
-    if user:
-        if user.username == "admin":
-            raise HTTPException(status_code=400, detail="admin 账号关联的人员不可删除")
-        # 清除角色关联
-        urs = (await db.execute(select(SysUserRole).where(SysUserRole.user_id == user.id))).scalars().all()
-        for ur in urs:
-            await db.delete(ur)
-        await db.delete(user)
+    if user and user.username == "admin":
+        raise HTTPException(status_code=400, detail="admin 账号关联的人员不可删除")
 
-    await db.delete(staff)
-    return {"message": "删除成功"}
+    try:
+        # ── 1. 清理排班相关（org_staff FK）──
+        # 删除特殊规则
+        await db.execute(sa_delete(SchSpecialRule).where(SchSpecialRule.staff_id == staff_id))
+        # 删除排班明细
+        await db.execute(sa_delete(SchScheduleDetail).where(SchScheduleDetail.staff_id == staff_id))
+        # 排班主记录：leader_staff_id 置空
+        await db.execute(
+            update(SchSchedule).where(SchSchedule.leader_staff_id == staff_id).values(leader_staff_id=None)
+        )
+
+        # ── 2. 清理用户相关（sys_user FK）──
+        if user:
+            uid = user.id
+            # 排班发布人置空
+            await db.execute(
+                update(SchSchedule).where(SchSchedule.published_by == uid).values(published_by=None)
+            )
+            # 消息通知（sys_user FK）
+            await db.execute(sa_delete(SysMessage).where(SysMessage.receiver_id == uid))
+            await db.execute(sa_delete(SysMessage).where(SysMessage.sender_id == uid))
+            # 公告（sys_user FK）
+            await db.execute(sa_delete(SysAnnouncement).where(SysAnnouncement.publisher_id == uid))
+            # 调班申请：requester_id NOT NULL → 必须删除
+            await db.execute(sa_delete(SchSwapRequest).where(SchSwapRequest.requester_id == uid))
+            # 调班申请：其余 nullable 字段置空
+            await db.execute(
+                update(SchSwapRequest).where(SchSwapRequest.target_id == uid).values(target_id=None)
+            )
+            await db.execute(
+                update(SchSwapRequest).where(SchSwapRequest.claimer_id == uid).values(claimer_id=None)
+            )
+            await db.execute(
+                update(SchSwapRequest).where(SchSwapRequest.approved_by == uid).values(approved_by=None)
+            )
+            # 消息通知：receiver_id / sender_id 引用 sys_user
+            await db.execute(sa_delete(SysMessage).where(SysMessage.receiver_id == uid))
+            await db.execute(sa_delete(SysMessage).where(SysMessage.sender_id == uid))
+            # 审计日志：user_id NOT NULL → 必须删除
+            await db.execute(sa_delete(SysAuditLog).where(SysAuditLog.user_id == uid))
+            # 用户角色关联
+            await db.execute(sa_delete(SysUserRole).where(SysUserRole.user_id == uid))
+            # 删除用户
+            await db.delete(user)
+
+        # ── 3. 删除人员 ──
+        await db.delete(staff)
+        await db.flush()
+
+        return {"message": "删除成功"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"删除人员失败：{str(e)}")
 
 
 # ========== 私有辅助函数 ==========

@@ -312,30 +312,54 @@ async def recall_schedules(
 
 @router.post("/delete-drafts", summary="一键删除草稿排班")
 async def delete_draft_schedules(
-    org_id: int = Query(None, description="组织ID（可选）"),
-    start_date: str = Query(None, description="起始日期（可选）"),
-    end_date: str = Query(None, description="结束日期（可选）"),
+    org_id: int | None = Query(None, description="组织ID（可选）"),
+    start_date: str | None = Query(None, description="起始日期（可选）"),
+    end_date: str | None = Query(None, description="结束日期（可选）"),
     db: AsyncSession = Depends(get_db),
     current_user: SysUser = Depends(require_permissions("schedule", "delete")),
 ):
-    query = select(SchSchedule).where(SchSchedule.status.in_([0, 2]))
-    if org_id:
-        query = query.where(SchSchedule.org_id == org_id)
-    if start_date:
-        query = query.where(SchSchedule.date >= _parse_date(start_date, "start_date"))
-    if end_date:
-        query = query.where(SchSchedule.date <= _parse_date(end_date, "end_date"))
+    from app.models.swap import SchSwapRequest
 
-    schedules = list((await db.execute(query)).scalars().all())
-    if not schedules:
-        return {"message": "没有可删除的草稿排班", "count": 0}
+    try:
+        query = select(SchSchedule).where(SchSchedule.status.in_([0, 2]))
+        if org_id is not None:
+            query = query.where(SchSchedule.org_id == org_id)
+        if start_date:
+            query = query.where(SchSchedule.date >= _parse_date(start_date, "start_date"))
+        if end_date:
+            query = query.where(SchSchedule.date <= _parse_date(end_date, "end_date"))
 
-    schedule_ids = [s.id for s in schedules]
-    await db.execute(delete(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(schedule_ids)))
-    await db.execute(delete(SchSchedule).where(SchSchedule.id.in_(schedule_ids)))
-    await db.flush()
+        schedules = list((await db.execute(query)).scalars().all())
+        if not schedules:
+            return {"message": "没有可删除的草稿排班", "count": 0}
 
-    return {"message": f"已删除 {len(schedule_ids)} 条草稿排班", "count": len(schedule_ids)}
+        schedule_ids = [s.id for s in schedules]
+
+        # 1. 清理关联的调班申请（外键约束：sch_swap_request → sch_schedule）
+        await db.execute(
+            delete(SchSwapRequest).where(SchSwapRequest.requester_schedule_id.in_(schedule_ids))
+        )
+        await db.execute(
+            delete(SchSwapRequest).where(SchSwapRequest.target_schedule_id.in_(schedule_ids))
+        )
+
+        # 2. 清理排班明细
+        await db.execute(
+            delete(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(schedule_ids))
+        )
+
+        # 3. 清理排班主记录
+        await db.execute(
+            delete(SchSchedule).where(SchSchedule.id.in_(schedule_ids))
+        )
+        await db.flush()
+
+        return {"message": f"已删除 {len(schedule_ids)} 条草稿排班", "count": len(schedule_ids)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"删除草稿排班失败：{str(e)}")
 
 
 # ==================== 人员统计 ====================

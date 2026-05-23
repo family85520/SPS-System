@@ -1,8 +1,10 @@
-from sqlalchemy import select, and_, or_, func
+from sqlalchemy import select, and_, or_, func, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from app.models import SchShiftTemplate, SchSchedule
+from app.models.shift_template import SchRotationGroup
+from app.models.duty_team import SchDutyTeam
 from app.schemas.shift_template import ShiftTemplateCreate, ShiftTemplateUpdate
 
 
@@ -80,7 +82,7 @@ class ShiftTemplateService:
         )
 
         db.add(template)
-        await db.commit()
+        await db.flush()
         await db.refresh(template)
         return template
 
@@ -122,25 +124,34 @@ class ShiftTemplateService:
                 template.start_time, template.end_time
             )
 
-        await db.commit()
+        await db.flush()
         await db.refresh(template)
         return template
 
     @staticmethod
     async def delete_template(db: AsyncSession, template_id: int):
-        """删除班次模板"""
+        """删除班次模板（含轮换组和值班组）"""
         template = await ShiftTemplateService.get_template(db, template_id)
         if not template:
             raise ValueError("班次模板不存在")
 
-        count_stmt = select(func.count()).select_from(SchSchedule).where(SchSchedule.shift_id == template_id)
-        count_result = await db.execute(count_stmt)
-        related_count = count_result.scalar()
-        if related_count > 0:
+        # 检查是否关联排班记录
+        schedule_count = (await db.execute(
+            select(func.count()).select_from(SchSchedule).where(SchSchedule.shift_id == template_id)
+        )).scalar()
+        if schedule_count and schedule_count > 0:
             raise ValueError("该班次模板已关联排班记录，不允许删除，请使用停用功能")
 
+        # 先删除关联的轮换组和值班组
+        await db.execute(
+            sa_delete(SchRotationGroup).where(SchRotationGroup.shift_template_id == template_id)
+        )
+        await db.execute(
+            sa_delete(SchDutyTeam).where(SchDutyTeam.shift_template_id == template_id)
+        )
+
         await db.delete(template)
-        await db.commit()
+        await db.flush()
 
     @staticmethod
     async def copy_template(db: AsyncSession, template_id: int) -> SchShiftTemplate:
@@ -168,7 +179,7 @@ class ShiftTemplateService:
         )
 
         db.add(new_template)
-        await db.commit()
+        await db.flush()
         await db.refresh(new_template)
         return new_template
 
@@ -180,7 +191,7 @@ class ShiftTemplateService:
             raise ValueError("班次模板不存在")
 
         template.status = 0 if template.status == 1 else 1
-        await db.commit()
+        await db.flush()
         await db.refresh(template)
         return template
 

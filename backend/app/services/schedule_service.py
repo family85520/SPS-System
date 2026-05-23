@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import OrgOrganization, OrgStaff
 from app.models.schedule import SchSchedule, SchScheduleDetail
+from app.models.swap import SchSwapRequest
 from app.models.shift_template import SchShiftTemplate
 from app.services.message_service import MessageService
 from app.utils.time_helper import to_local_str as _to_local_str
@@ -263,8 +264,20 @@ class ScheduleService:
 
     @staticmethod
     async def delete(db: AsyncSession, schedule_id: int) -> None:
-        """删除排班记录"""
+        """删除排班记录（含级联清理调班申请）"""
         schedule = await _get_writable_schedule(db, schedule_id, "删除")
+
+        # 清理引用该排班的调班申请（外键约束）
+        from sqlalchemy import update as sa_update
+        await db.execute(
+            delete(SchSwapRequest).where(SchSwapRequest.requester_schedule_id == schedule_id)
+        )
+        await db.execute(
+            sa_update(SchSwapRequest).where(
+                SchSwapRequest.target_schedule_id == schedule_id
+            ).values(target_schedule_id=None)
+        )
+
         await db.delete(schedule)
         await db.flush()
 
@@ -1040,6 +1053,14 @@ async def _cleanup_existing_schedules(db, org_id, start_date, end_date):
 
     delete_ids = [s.id for s in existing if s.status in SchSchedule.EDITABLE_STATUSES]
     if delete_ids:
+        # 清理关联的调班申请（外键约束）
+        await db.execute(delete(SchSwapRequest).where(SchSwapRequest.requester_schedule_id.in_(delete_ids)))
+        from sqlalchemy import update as sa_update
+        await db.execute(
+            sa_update(SchSwapRequest).where(
+                SchSwapRequest.target_schedule_id.in_(delete_ids)
+            ).values(target_schedule_id=None)
+        )
         await db.execute(delete(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(delete_ids)))
         await db.execute(delete(SchSchedule).where(SchSchedule.id.in_(delete_ids)))
         await db.flush()

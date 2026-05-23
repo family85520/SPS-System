@@ -5,6 +5,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models import OrgOrganization, OrgStaff
+from app.models.schedule import SchSchedule
 from app.schemas.organization import OrgCreate, OrgUpdate, OrgResponse, OrgTreeResponse
 from app.api.deps import get_current_user, require_permissions
 from app.models import SysUser
@@ -209,8 +210,16 @@ async def delete_org(
         select(func.count()).select_from(OrgStaff).where(OrgStaff.org_id == org_id)
     )
     if staff_count.scalar() > 0:
-        raise HTTPException(status_code=400, detail="该组织下有人员，无法删除")
+        raise HTTPException(status_code=400, detail="该组织下有人员，请先删除组织下的人员再删除组织")
+
+    # 检查是否有排班记录
+    schedule_count = await db.execute(
+        select(func.count()).select_from(SchSchedule).where(SchSchedule.org_id == org_id)
+    )
+    if schedule_count.scalar() > 0:
+        raise HTTPException(status_code=400, detail="该组织下存在排班记录，无法删除")
 
     await db.delete(org)
+    await db.flush()
 
     return {"message": "删除成功"}
