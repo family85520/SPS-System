@@ -22,13 +22,13 @@ from app.models.special_rule import SchSpecialRule
 class ScheduleResult:
     """单条排班结果"""
 
-    __slots__ = ("date", "shift_id", "org_id", "leader_id", "member_ids", "conflicts")
+    __slots__ = ("date", "shift_id", "org_id", "leader_ids", "member_ids", "conflicts")
 
     def __init__(self, date_str: str, shift_id: int, org_id: int):
         self.date = date_str
         self.shift_id = shift_id
         self.org_id = org_id
-        self.leader_id: Optional[int] = None
+        self.leader_ids: list[int] = []
         self.member_ids: list[int] = []
         self.conflicts: list[str] = []
 
@@ -242,7 +242,8 @@ class IndividualStrategy(ScheduleStrategy):
         if shift.leader_enabled and shift.leader_min > 0:
             leaders, lc = self.s._assign_leaders(shift, date_str, available_ids, is_night, is_weekend)
             for lid in leaders:
-                result.leader_id = result.leader_id or lid
+                if lid not in result.leader_ids:
+                    result.leader_ids.append(lid)
                 result.member_ids.append(lid)
             conflicts.extend(lc)
 
@@ -253,8 +254,9 @@ class IndividualStrategy(ScheduleStrategy):
             conflicts.extend(sc)
 
         # 排成员（排除已分配的人 + 整个特殊人员池）
+        leader_set = set(result.leader_ids)
         already_non_leader = [
-            sid for sid in result.member_ids if sid != result.leader_id
+            sid for sid in result.member_ids if sid not in leader_set
         ]
         remaining_slots = max(0, shift.member_max - len(already_non_leader))
         members, mc = self._assign_members(
@@ -754,9 +756,10 @@ class AutoScheduler:
                 is_monthly = (shift.member_rotation_frequency or 'day') in ('week', 'month')
                 if is_monthly and not self._monthly_locked and result.member_ids:
                     special_ids = set(shift.special_pool or []) if shift.special_enabled else set()
+                    leader_set = set(result.leader_ids)
                     locked = [
                         sid for sid in result.member_ids
-                        if sid != result.leader_id and sid not in special_ids
+                        if sid not in leader_set and sid not in special_ids
                     ]
                     if locked:
                         self._monthly_locked.update(locked)
@@ -923,8 +926,9 @@ class AutoScheduler:
     def _truncate_members(result: ScheduleResult, shift: SchShiftTemplate) -> list[int]:
         """截断超出上限的成员，但特殊人员不会被截断。"""
         members = result.member_ids
-        leader_part = [lid for lid in members if lid == result.leader_id]
-        non_leader = [mid for mid in members if mid != result.leader_id]
+        leader_set = set(result.leader_ids)
+        leader_part = [lid for lid in members if lid in leader_set]
+        non_leader = [mid for mid in members if mid not in leader_set]
 
         special_ids: set[int] = set()
         if shift.special_enabled:

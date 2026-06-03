@@ -920,18 +920,19 @@ class ScheduleService:
                 date=date.fromisoformat(sr.date),
                 shift_id=sr.shift_id,
                 org_id=sr.org_id,
-                leader_staff_id=sr.leader_id,
+                leader_staff_id=sr.leader_ids[0] if sr.leader_ids else None,
                 status=STATUS_DRAFT,
                 source="auto",
             )
             db.add(schedule)
             await db.flush()
 
+            leader_set = set(sr.leader_ids)
             for mid in sr.member_ids:
                 db.add(SchScheduleDetail(
                     schedule_id=schedule.id,
                     staff_id=mid,
-                    role_type="leader" if mid == sr.leader_id else "member",
+                    role_type="leader" if mid in leader_set else "member",
                 ))
             created_schedules.append(schedule)
 
@@ -951,8 +952,8 @@ class ScheduleService:
                 "shift_name": getattr(shift, "name", ""),
                 "shift_color": getattr(shift, "color", ""),
                 "org_id": sr.org_id,
-                "leader_id": sr.leader_id,
-                "leader_name": staff_name_map.get(sr.leader_id) if sr.leader_id else None,
+                "leader_ids": sr.leader_ids,
+                "leader_names": [staff_name_map.get(lid, f"ID:{lid}") for lid in sr.leader_ids],
                 "member_ids": sr.member_ids,
                 "member_names": [staff_name_map.get(mid, f"ID:{mid}") for mid in sr.member_ids],
                 "conflicts": sr.conflicts,
