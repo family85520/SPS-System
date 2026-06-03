@@ -998,6 +998,10 @@ def _serialize_schedule_list_item(s, shift_map, org_map, leader_map, detail_map,
     shift = shift_map.get(s.shift_id)
     org = org_map.get(s.org_id)
     details_list = detail_map.get(s.id, [])
+    leaders = [
+        {"staff_id": d.staff_id, "name": staff_map.get(d.staff_id, "未知"), "role_type": "leader"}
+        for d in details_list if d.role_type == "leader"
+    ]
     return {
         "id": s.id,
         "date": s.date,
@@ -1010,6 +1014,8 @@ def _serialize_schedule_list_item(s, shift_map, org_map, leader_map, detail_map,
         "org_name": getattr(org, "name", None),
         "leader_staff_id": s.leader_staff_id,
         "leader_name": leader_map.get(s.leader_staff_id) if s.leader_staff_id else None,
+        "leader": leaders[0] if leaders else None,
+        "leaders": leaders,
         "status": s.status,
         "source": s.source,
         "published_at": _to_local_str(s.published_at),
