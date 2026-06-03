@@ -135,8 +135,9 @@ async def _query_schedule_rows(
             role_tags = info.get("role_tags", [])
             old_tags = info.get("tags", [])
 
-            is_duty_leader = bool(role_tags) or bool(old_tags)  # 有身份标识（新角色标签 或 旧 tags）
-            is_group_leader = "组长" in role_tags     # 角色标签（新标识体系）
+            # 值班领导：使用排班明细的 role_type（来自自动排班引擎）
+            is_duty_leader = d.role_type == "leader"
+            is_group_leader = "组长" in role_tags
 
             if is_duty_leader:
                 leaders.append(name)
