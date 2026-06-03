@@ -937,11 +937,13 @@ class AutoScheduler:
         special_in = [mid for mid in non_leader if mid in special_ids]
         regular_in = [mid for mid in non_leader if mid not in special_ids]
 
-        effective_max = shift.leader_max + shift.member_max + len(special_in)
+        # 领导上限取 leader_max 和 leader_count 中较大者，确保 selected 不会被截掉
+        leader_cap = max(shift.leader_max, shift.leader_count, len(leader_part))
+        effective_max = leader_cap + shift.member_max + len(special_in)
 
         if len(members) > effective_max:
             regular_in = regular_in[:shift.member_max]
-            return leader_part[:shift.leader_max] + special_in + regular_in
+            return leader_part[:leader_cap] + special_in + regular_in
 
         if len(regular_in) > shift.member_max:
             regular_in = regular_in[:shift.member_max]
