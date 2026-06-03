@@ -51,6 +51,7 @@ export interface CalendarShift {
   start_time: string
   end_time: string
   leader: StaffInfo | null
+  leaders: StaffInfo[]
   members: StaffInfo[]
   status: number
   source: string

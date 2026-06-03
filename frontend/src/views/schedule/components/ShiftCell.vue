@@ -9,7 +9,10 @@
     @click.stop="$emit('click', shift)"
   >
     <!-- 领导标签 -->
-    <div v-if="shift.leader" class="leader-tag" :style="{ background: shift.shift_color }">
+    <div v-if="shift.leaders?.length" class="leader-tag" :style="{ background: shift.shift_color }">
+      {{ shift.leaders.map((l: any) => l.name).join('、') }}
+    </div>
+    <div v-else-if="shift.leader" class="leader-tag" :style="{ background: shift.shift_color }">
       {{ shift.leader.name }}
     </div>
 
