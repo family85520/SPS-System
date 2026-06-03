@@ -113,25 +113,23 @@ class ScheduleService:
                 date_dict[date_str] = {"date": date_str, "shifts": []}
 
             shift = shift_map.get(s.shift_id)
-            leader_info = None
-            if s.leader_staff_id and s.leader_staff_id in leader_map:
-                leader_info = {
-                    "staff_id": s.leader_staff_id,
-                    "name": leader_map[s.leader_staff_id],
-                    "role_type": "leader",
-                }
-
+            leaders = []
             members = []
             for d in detail_map.get(s.id, []):
-                if d.role_type == "leader" and leader_info:
-                    continue
-                members.append({
-                    "staff_id": d.staff_id,
-                    "name": staff_map.get(d.staff_id, "未知"),
-                    "role_type": d.role_type,
-                    "is_substitute": d.is_substitute,
-                    "note": d.note,
-                })
+                if d.role_type == "leader":
+                    leaders.append({
+                        "staff_id": d.staff_id,
+                        "name": staff_map.get(d.staff_id, "未知"),
+                        "role_type": "leader",
+                    })
+                else:
+                    members.append({
+                        "staff_id": d.staff_id,
+                        "name": staff_map.get(d.staff_id, "未知"),
+                        "role_type": d.role_type,
+                        "is_substitute": d.is_substitute,
+                        "note": d.note,
+                    })
 
             date_dict[date_str]["shifts"].append({
                 "schedule_id": s.id,
@@ -140,7 +138,8 @@ class ScheduleService:
                 "shift_color": getattr(shift, "color", "#999999"),
                 "start_time": getattr(shift, "start_time", ""),
                 "end_time": getattr(shift, "end_time", ""),
-                "leader": leader_info,
+                "leader": leaders[0] if leaders else None,
+                "leaders": leaders,
                 "members": members,
                 "status": s.status,
                 "source": s.source,
