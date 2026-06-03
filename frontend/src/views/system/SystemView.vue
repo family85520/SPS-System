@@ -52,6 +52,19 @@
           <div class="form-tip">开启后管理员将收到所有排班发布、撤回等通知，无论是否参与排班</div>
         </el-form-item>
 
+        <el-form-item label="全局排班人数比例">
+          <el-input-number
+            v-model="formData.daily_max_scheduled_ratio"
+            :min="0.1"
+            :max="1.0"
+            :step="0.05"
+            :precision="2"
+            controls-position="right"
+            style="width: 200px"
+          />
+          <div class="form-tip">每日排班人数占在岗人员的默认比例上限（如0.70=70%），各组织可在组织管理中覆盖此值</div>
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" :loading="saving" @click="handleSave">保存配置</el-button>
         </el-form-item>
@@ -75,7 +88,8 @@ const formData = ref<SystemConfig>({
   swap_approval_enabled: true,
   schedule_approval_enabled: false,
   admin_receive_all_notifications: 'true',
-})
+  daily_max_scheduled_ratio: 0.7,
+} as any)
 
 async function loadConfig() {
   loading.value = true

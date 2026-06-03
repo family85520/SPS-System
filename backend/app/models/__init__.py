@@ -1,8 +1,9 @@
 from app.models.base import TimestampMixin
 from app.models.user import SysUser, SysRole, SysUserRole
 from app.models.organization import OrgOrganization
-from app.models.staff import OrgStaff
-from app.models.shift_template import SchShiftTemplate, SchRotationGroup
+from app.models.staff import OrgStaff, OrgStaffRole
+from app.models.shift_template import SchShiftTemplate
+from app.models.export_template import ExportTemplate
 from app.models.duty_team import SchDutyTeam
 from app.models.constraint import SchConstraint
 from app.models.schedule import SchSchedule, SchScheduleDetail
@@ -18,8 +19,9 @@ __all__ = [
     "SysUserRole",
     "OrgOrganization",
     "OrgStaff",
+    "OrgStaffRole",
     "SchShiftTemplate",
-    "SchRotationGroup",
+    "ExportTemplate",
     "SchDutyTeam",
     "SchConstraint",
     "SchSchedule",

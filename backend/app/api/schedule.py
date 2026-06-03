@@ -297,7 +297,7 @@ async def reject_schedules(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/recall", summary="撤回排班")
+@router.post("/recall", summary="撤回排班（按ID）")
 async def recall_schedules(
     data: BatchPublishRequest,
     db: AsyncSession = Depends(get_db),
@@ -305,6 +305,21 @@ async def recall_schedules(
 ):
     try:
         count = await ScheduleService.recall(db, data.schedule_ids, current_user.id)
+        return {"message": f"成功撤回 {count} 条排班", "count": count}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/recall-month", summary="按月撤回排班")
+async def recall_schedules_by_month(
+    org_id: int = Query(..., description="组织ID"),
+    year: int = Query(..., description="年份"),
+    month: int = Query(..., description="月份 1-12"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("schedule", "publish")),
+):
+    try:
+        count = await ScheduleService.recall_by_month(db, org_id, year, month, current_user.id)
         return {"message": f"成功撤回 {count} 条排班", "count": count}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -386,7 +401,6 @@ async def auto_generate_schedule(
     org_id: int = Query(..., description="组织ID"),
     shift_template_ids: str = Query(..., description="班次模板ID列表，逗号分隔"),
     staff_ids: str = Query(..., description="人员ID列表，逗号分隔"),
-    include_leader: bool = Query(True, description="是否需要领导参与排班"),
     db: AsyncSession = Depends(get_db),
     current_user: SysUser = Depends(require_permissions("schedule", "create")),
 ):
@@ -407,7 +421,6 @@ async def auto_generate_schedule(
             org_id=org_id,
             shift_template_ids=s_ids,
             staff_ids=st_ids,
-            include_leader=include_leader,
             current_user_id=current_user.id,
         )
     except ValueError as e:

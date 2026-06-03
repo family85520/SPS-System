@@ -14,11 +14,23 @@ export interface ShiftTemplate {
   member_min: number
   member_max: number
   apply_days: number[]
-  rotation_frequency: string
-  schedule_mode: string
   status: number
   created_at: string | null
   updated_at: string | null
+  allow_multi_template: boolean
+  leader_enabled: boolean
+  leader_rotation_frequency: string
+  leader_count: number
+  leader_use_tag: boolean
+  leader_tag_name: string | null
+  member_enabled: boolean
+  member_rotation_frequency: string
+  special_enabled: boolean
+  special_rotation_frequency: string
+  special_count: number
+  special_pool: number[] | null
+  special_exclude_from_member: boolean
+  constraint_ids: number[] | null
 }
 
 export interface ShiftTemplateForm {
@@ -33,8 +45,20 @@ export interface ShiftTemplateForm {
   member_min: number
   member_max: number
   apply_days: number[]
-  rotation_frequency: string
-  schedule_mode: string
+  allow_multi_template?: boolean
+  leader_enabled?: boolean
+  leader_rotation_frequency?: string
+  leader_count?: number
+  leader_use_tag?: boolean
+  leader_tag_name?: string | null
+  member_enabled?: boolean
+  member_rotation_frequency?: string
+  special_enabled?: boolean
+  special_rotation_frequency?: string
+  special_count?: number
+  special_pool?: number[] | null
+  special_exclude_from_member?: boolean
+  constraint_ids?: number[] | null
 }
 
 export function getShiftTemplates(params?: {

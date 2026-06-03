@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date
-from typing import Optional
 
 from app.models.schedule import SchSchedule, SchScheduleDetail
 from app.models.shift_template import SchShiftTemplate
@@ -27,6 +26,7 @@ class FairnessScorer:
     _PENALTY_CONSECUTIVE = 50.0
     _PENALTY_GAP_1_DAY = 25.0
     _PENALTY_GAP_2_DAY = 10.0
+    _PENALTY_SAME_SHIFT_TYPE = 30.0  # 白夜交替：同类型班次惩罚
 
     def __init__(
         self,
@@ -41,6 +41,9 @@ class FairnessScorer:
         self.staff_hours: dict[int, float] = defaultdict(float)
         self.staff_night_count: dict[int, int] = defaultdict(int)
         self.staff_weekend_count: dict[int, int] = defaultdict(int)
+
+        # 白夜交替：记录每人最后排的班次类型
+        self.staff_last_shift_type: dict[int, str] = {}
 
         # 构建 schedule_id -> SchSchedule 索引，消除 O(n) 遍历
         self._schedule_index: dict[int, SchSchedule] = {
@@ -83,6 +86,11 @@ class FairnessScorer:
         # 5. 连续排班惩罚
         s -= self._calc_proximity_penalty(staff_id, target_date)
 
+        # 6. 白夜交替惩罚：相同班次类型降低优先级，促使白→夜→白交替
+        target_type = "night" if is_night_shift else "day"
+        if self.staff_last_shift_type.get(staff_id) == target_type:
+            s -= self._PENALTY_SAME_SHIFT_TYPE
+
         return s
 
     def record_assignment(self, staff_id: int, target_date: str, shift_id: int) -> None:
@@ -99,6 +107,12 @@ class FairnessScorer:
 
         if self._is_weekend(target_date):
             self.staff_weekend_count[staff_id] += 1
+
+        # 记录本次班次类型，供下一轮白夜交替决策
+        if shift:
+            self.staff_last_shift_type[staff_id] = (
+                "night" if self._is_night(shift.start_time, shift.end_time) else "day"
+            )
 
     # ------------------------------------------------------------------ #
     #  内部方法
@@ -124,6 +138,22 @@ class FairnessScorer:
 
             if self._is_weekend(date_str):
                 self.staff_weekend_count[d.staff_id] += 1
+
+        # 推断每人最后一次排班的班次类型（用于白夜交替判断）
+        staff_latest: dict[int, tuple] = {}  # staff_id -> (date, shift_id)
+        for d in details:
+            schedule = self._schedule_index.get(d.schedule_id)
+            if not schedule:
+                continue
+            existing = staff_latest.get(d.staff_id)
+            if not existing or schedule.date > existing[0]:
+                staff_latest[d.staff_id] = (schedule.date, schedule.shift_id)
+        for staff_id, (_, shift_id) in staff_latest.items():
+            shift = self.shifts.get(shift_id)
+            if shift:
+                self.staff_last_shift_type[staff_id] = (
+                    "night" if self._is_night(shift.start_time, shift.end_time) else "day"
+                )
 
     def _calc_proximity_penalty(self, staff_id: int, target_date: str) -> float:
         """计算目标日期与最近排班日期的邻近惩罚。"""

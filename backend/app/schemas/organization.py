@@ -17,6 +17,7 @@ class OrgUpdate(BaseModel):
     code: Optional[str] = Field(None, max_length=50, description="部门代码")
     sort_order: Optional[int] = None
     status: Optional[int] = Field(None, description="0=停用 1=启用")
+    daily_max_scheduled_ratio: Optional[float] = Field(None, ge=0.1, le=1.0, description="每日排班人数上限比例（0.1~1.0），null则使用全局默认")
 
 
 class OrgResponse(BaseModel):
@@ -28,6 +29,7 @@ class OrgResponse(BaseModel):
     level: int
     sort_order: int
     status: int
+    daily_max_scheduled_ratio: Optional[float] = None
     created_at: datetime
     updated_at: datetime
     children: List["OrgResponse"] = []
@@ -45,6 +47,7 @@ class OrgTreeResponse(BaseModel):
     level: int
     sort_order: int
     status: int
+    daily_max_scheduled_ratio: Optional[float] = None
     staff_count: int = 0
     children: List["OrgTreeResponse"] = []
 

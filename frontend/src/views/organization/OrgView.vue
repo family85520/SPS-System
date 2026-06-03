@@ -119,6 +119,22 @@
             />
           </el-form-item>
 
+          <el-form-item v-if="!isCreate" label="排班人数上限">
+            <el-input-number
+              v-model="formData.daily_max_scheduled_ratio"
+              :min="0.1"
+              :max="1.0"
+              :step="0.05"
+              :precision="2"
+              controls-position="right"
+              :disabled="!canEdit"
+              style="width: 200px"
+            />
+            <div style="font-size: 12px; color: #909399; margin-top: 4px;">
+              每日排班人数占在岗人员的比例上限（如0.70=70%），留空则使用系统默认值
+            </div>
+          </el-form-item>
+
           <!-- 启用状态：需要 organization update 权限 -->
           <el-form-item v-if="!isCreate" label="启用状态">
             <el-switch
@@ -223,12 +239,13 @@ const isCreate = ref(false)
 const saving = ref(false)
 const formRef = ref<FormInstance>()
 
-const defaultForm: OrgCreateForm & { status: number } = {
+const defaultForm: OrgCreateForm & { status: number; daily_max_scheduled_ratio: number | null } = {
   name: '',
   parent_id: null,
   code: '',
   sort_order: 0,
   status: 1,
+  daily_max_scheduled_ratio: null,
 }
 
 const formData = ref({ ...defaultForm })
@@ -279,6 +296,7 @@ function handleNodeClick(data: OrgNode) {
     parent_id: data.parent_id,
     sort_order: data.sort_order,
     status: data.status,
+    daily_max_scheduled_ratio: data.daily_max_scheduled_ratio ?? null,
   }
 }
 
@@ -302,6 +320,7 @@ function handleCreateChild() {
     code: '',
     sort_order: 0,
     status: 1,
+    daily_max_scheduled_ratio: null,
   }
 }
 
@@ -328,6 +347,7 @@ async function handleSave() {
       const updateData: any = {
         name: formData.value.name,
         sort_order: formData.value.sort_order,
+        daily_max_scheduled_ratio: formData.value.daily_max_scheduled_ratio,
       }
       // code 为空时不传（后端不会覆盖），有值时传递
       if (formData.value.code) {

@@ -22,3 +22,12 @@ class OrgStaff(Base, TimestampMixin):
     organization = relationship("OrgOrganization", back_populates="staffs", lazy="selectin")
     user = relationship("SysUser", back_populates="staff", uselist=False, lazy="selectin")
     special_rules = relationship("SchSpecialRule", back_populates="staff", lazy="selectin")
+
+
+class OrgStaffRole(Base):
+    """人员标识关联表 — 无 relationship，全部手动查询"""
+    __tablename__ = "org_staff_role"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, comment="主键")
+    staff_id: Mapped[int] = mapped_column(Integer, ForeignKey("org_staff.id", ondelete="CASCADE"), nullable=False, index=True, comment="人员ID")
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("sys_role.id", ondelete="CASCADE"), nullable=False, index=True, comment="标识角色ID")

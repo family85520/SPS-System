@@ -22,6 +22,8 @@
             <span class="role-name">{{ role.name }}</span>
             <el-icon v-if="role.is_system" color="#909399" :size="14"><Lock /></el-icon>
             <el-tag v-if="role.is_system" size="small" type="info">内置</el-tag>
+            <el-tag v-if="role.role_type === 'tag'" size="small" type="warning">标识</el-tag>
+            <el-tag v-else-if="!role.is_system" size="small" type="success">角色</el-tag>
           </div>
           <div class="role-item-code">{{ role.code }}</div>
         </div>
@@ -35,8 +37,9 @@
       <template v-if="selectedId !== null && formData">
         <div class="panel-header">
           <h3>
-            {{ isCreate ? '新建角色' : formData.name }}
+            {{ isCreate ? (formData.role_type === 'tag' ? '新建标识' : '新建角色') : formData.name }}
             <el-tag v-if="!isCreate && formData.is_system" size="small" type="info" style="margin-left: 8px">内置</el-tag>
+            <el-tag v-if="!isCreate && formData.role_type === 'tag'" size="small" type="warning" style="margin-left: 8px">标识</el-tag>
           </h3>
         </div>
 
@@ -62,9 +65,19 @@
             <el-form-item v-else label="角色编码">
               <el-input :model-value="formData.code" disabled />
             </el-form-item>
+            <el-form-item v-if="isCreate || !formData.is_system" label="类型" :prop="isCreate ? 'role_type' : undefined">
+              <el-radio-group v-model="formData.role_type" @change="handleTypeChange">
+                <el-radio value="role">角色（可配置权限）</el-radio>
+                <el-radio value="tag">标识（仅标记人员身份）</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-else label="类型">
+              <el-tag type="success">角色</el-tag>
+            </el-form-item>
           </el-form>
 
-          <!-- 权限矩阵 -->
+          <!-- 权限矩阵（标识类型隐藏） -->
+          <template v-if="formData.role_type !== 'tag'">
           <div class="permission-section">
             <h4>权限配置</h4>
             <el-table :data="permissionModules" border size="small" style="width: 100%">
@@ -79,6 +92,14 @@
                 </template>
               </el-table-column>
             </el-table>
+          </div>
+
+          </template>
+
+          <div v-if="formData.role_type === 'tag'" class="tag-hint">
+            <el-alert type="info" :closable="false" show-icon>
+              标识类型的角色仅用于在排班时识别人员身份（如"领导"、"新员工"），无需配置权限。创建后可在"人员管理"中为人员分配此标识。
+            </el-alert>
           </div>
 
           <div class="form-actions">
@@ -161,6 +182,7 @@ const permissionMap = reactive<Record<string, Record<string, boolean>>>(createEm
 const defaultForm = {
   name: '',
   code: '',
+  role_type: 'role' as string,
   permissions: {} as Record<string, any>,
   is_system: false,
 }
@@ -262,10 +284,13 @@ function handleSelect(role: Role) {
   formData.value = {
     name: role.name,
     code: role.code,
+    role_type: role.role_type || 'role',
     permissions: role.permissions || {},
     is_system: role.is_system,
   }
-  loadPermissionsToMap(role.permissions)
+  if (role.role_type !== 'tag') {
+    loadPermissionsToMap(role.permissions)
+  }
 }
 
 // 新建
@@ -290,7 +315,8 @@ async function handleSave() {
       const payload: RoleCreate = {
         name: formData.value.name,
         code: formData.value.code,
-        permissions,
+        role_type: formData.value.role_type,
+        permissions: formData.value.role_type === 'tag' ? undefined : permissions,
       }
       await createRole(payload)
       ElMessage.success('创建成功')
@@ -299,7 +325,8 @@ async function handleSave() {
     } else {
       const payload: RoleUpdate = {
         name: formData.value.name,
-        permissions,
+        role_type: formData.value.role_type,
+        permissions: formData.value.role_type === 'tag' ? undefined : permissions,
       }
       await updateRole(selectedId.value!, payload)
       ElMessage.success('保存成功')
@@ -336,6 +363,13 @@ async function handleDelete() {
 // 取消
 function handleCancel() {
   selectedId.value = null
+}
+
+function handleTypeChange() {
+  // 切换类型时清空权限矩阵
+  if (formData.value.role_type === 'tag') {
+    Object.assign(permissionMap, createEmptyPermissionMap())
+  }
 }
 
 onMounted(async () => {
@@ -474,5 +508,9 @@ onMounted(async () => {
 .empty-state p {
   margin-top: 16px;
   font-size: 14px;
+}
+
+.tag-hint {
+  margin-bottom: 24px;
 }
 </style>

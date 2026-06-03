@@ -16,8 +16,29 @@ class ShiftTemplateCreate(BaseModel):
     member_min: int = 1
     member_max: int = 1
     apply_days: list[int]
-    rotation_frequency: str = "day"
-    schedule_mode: str = "individual"
+
+    # ===== 排他性 =====
+    allow_multi_template: bool = False
+
+    # ===== 值班领导组 =====
+    leader_enabled: bool = False
+    leader_rotation_frequency: str = "week"
+    leader_count: int = 1
+    leader_use_tag: bool = True
+    leader_tag_name: Optional[str] = None
+
+    # ===== 值班组 =====
+    member_enabled: bool = True
+    member_rotation_frequency: str = "day"
+
+    # ===== 特殊人员组 =====
+    special_enabled: bool = False
+    special_rotation_frequency: str = "month"
+    special_count: int = 1
+    special_pool: Optional[list[int]] = None
+    special_exclude_from_member: bool = True
+
+    constraint_ids: Optional[list[int]] = None
 
     @field_validator("name")
     @classmethod
@@ -107,6 +128,18 @@ class ShiftTemplateCreate(BaseModel):
         if duration <= 0:
             raise ValueError("班次时长必须大于0")
 
+        # 特殊人员组校验
+        if self.special_enabled and (not self.special_pool or len(self.special_pool) == 0):
+            raise ValueError("启用特殊人员组时必须指定候选人员")
+        if self.special_count > 0 and self.special_pool and self.special_count > len(self.special_pool):
+            raise ValueError("特殊组选出人数不能超过候选池大小")
+
+        # 频次校验
+        for freq_field in ("leader_rotation_frequency", "member_rotation_frequency", "special_rotation_frequency"):
+            freq_val = getattr(self, freq_field, None)
+            if freq_val is not None and freq_val not in ("day", "week", "month"):
+                raise ValueError(f"{freq_field} 必须是 day/week/month")
+
         return self
 
 
@@ -123,8 +156,29 @@ class ShiftTemplateUpdate(BaseModel):
     member_min: Optional[int] = None
     member_max: Optional[int] = None
     apply_days: Optional[list[int]] = None
-    rotation_frequency: Optional[str] = None
-    schedule_mode: Optional[str] = None
+
+    # ===== 排他性 =====
+    allow_multi_template: Optional[bool] = None
+
+    # ===== 值班领导组 =====
+    leader_enabled: Optional[bool] = None
+    leader_rotation_frequency: Optional[str] = None
+    leader_count: Optional[int] = None
+    leader_use_tag: Optional[bool] = None
+    leader_tag_name: Optional[str] = None
+
+    # ===== 值班组 =====
+    member_enabled: Optional[bool] = None
+    member_rotation_frequency: Optional[str] = None
+
+    # ===== 特殊人员组 =====
+    special_enabled: Optional[bool] = None
+    special_rotation_frequency: Optional[str] = None
+    special_count: Optional[int] = None
+    special_pool: Optional[list[int]] = None
+    special_exclude_from_member: Optional[bool] = None
+
+    constraint_ids: Optional[list[int]] = None
 
     @field_validator("name")
     @classmethod
@@ -190,56 +244,35 @@ class ShiftTemplateResponse(BaseModel):
     member_min: int
     member_max: int
     apply_days: list[int]
-    rotation_frequency: str = "day"
-    schedule_mode: str = "individual"
     status: int
+
+    # ===== 排他性 =====
+    allow_multi_template: bool = False
+
+    # ===== 值班领导组 =====
+    leader_enabled: bool = False
+    leader_rotation_frequency: Optional[str] = "week"
+    leader_count: int = 1
+    leader_use_tag: bool = True
+    leader_tag_name: Optional[str] = None
+
+    # ===== 值班组 =====
+    member_enabled: bool = True
+    member_rotation_frequency: Optional[str] = "day"
+
+    # ===== 特殊人员组 =====
+    special_enabled: bool = False
+    special_rotation_frequency: Optional[str] = "month"
+    special_count: int = 1
+    special_pool: Optional[list[int]] = None
+    special_exclude_from_member: bool = True
+
+    constraint_ids: Optional[list[int]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
-
-
-# ==================== 轮换组 Schema ====================
-
-class RotationGroupCreate(BaseModel):
-    """轮换组创建/更新"""
-    name: str
-    staff_ids: list[int] = []
-    rotation_unit: str = "month"
-    slot_count: int = 1
-    priority: int = 10
-    enabled: bool = True
-
-
-class RotationGroupResponse(BaseModel):
-    """轮换组响应"""
-    id: int
-    shift_template_id: int
-    name: str
-    staff_ids: list[int]
-    rotation_unit: str
-    slot_count: int
-    priority: int
-    enabled: bool
-
-    @field_validator("staff_ids", mode="before")
-    @classmethod
-    def parse_staff_ids(cls, v):
-        if isinstance(v, str):
-            import json
-            try:
-                return json.loads(v)
-            except (json.JSONDecodeError, TypeError):
-                return []
-        if isinstance(v, list):
-            return v
-        return []
-
-    @field_validator("enabled", mode="before")
-    @classmethod
-    def parse_enabled(cls, v):
-        return bool(v)
 
 # ==================== 值班组 Schema ====================
 

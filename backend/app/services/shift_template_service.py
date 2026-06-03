@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from app.models import SchShiftTemplate, SchSchedule
-from app.models.shift_template import SchRotationGroup
 from app.models.duty_team import SchDutyTeam
 from app.schemas.shift_template import ShiftTemplateCreate, ShiftTemplateUpdate
 
@@ -75,9 +74,22 @@ class ShiftTemplateService:
             leader_min=data.leader_min,
             leader_max=data.leader_max,
             leader_pool=data.leader_pool,
+            leader_enabled=data.leader_enabled,
+            leader_rotation_frequency=data.leader_rotation_frequency,
+            leader_count=data.leader_count,
+            leader_use_tag=data.leader_use_tag,
+            leader_tag_name=data.leader_tag_name,
             member_min=data.member_min,
             member_max=data.member_max,
+            member_enabled=data.member_enabled,
+            member_rotation_frequency=data.member_rotation_frequency,
             apply_days=data.apply_days,
+            special_enabled=data.special_enabled,
+            special_rotation_frequency=data.special_rotation_frequency,
+            special_count=data.special_count,
+            special_pool=data.special_pool,
+            special_exclude_from_member=data.special_exclude_from_member,
+            constraint_ids=data.constraint_ids,
             status=1,
         )
 
@@ -142,10 +154,7 @@ class ShiftTemplateService:
         if schedule_count and schedule_count > 0:
             raise ValueError("该班次模板已关联排班记录，不允许删除，请使用停用功能")
 
-        # 先删除关联的轮换组和值班组
-        await db.execute(
-            sa_delete(SchRotationGroup).where(SchRotationGroup.shift_template_id == template_id)
-        )
+        # 删除关联的值班组
         await db.execute(
             sa_delete(SchDutyTeam).where(SchDutyTeam.shift_template_id == template_id)
         )

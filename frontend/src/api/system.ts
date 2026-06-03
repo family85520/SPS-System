@@ -6,6 +6,7 @@ export interface SystemConfig {
   swap_approval_enabled: boolean
   schedule_approval_enabled: boolean
   admin_receive_all_notifications: string
+  daily_max_scheduled_ratio: number
   [key: string]: any
 }
 
@@ -15,6 +16,7 @@ export interface SystemConfigUpdate {
   swap_approval_enabled?: boolean
   schedule_approval_enabled?: boolean
   admin_receive_all_notifications?: string
+  daily_max_scheduled_ratio?: number
   [key: string]: any
 }
 

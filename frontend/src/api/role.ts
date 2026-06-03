@@ -4,6 +4,7 @@ export interface Role {
   id: number
   name: string
   code: string
+  role_type: string
   permissions: Record<string, any> | null
   is_system: boolean
   created_at: string | null
@@ -12,16 +13,25 @@ export interface Role {
 export interface RoleCreate {
   name: string
   code: string
+  role_type?: string
   permissions?: Record<string, any>
 }
 
 export interface RoleUpdate {
   name?: string
+  role_type?: string
   permissions?: Record<string, any>
 }
 
 export interface UserRoleAssign {
   role_ids: number[]
+}
+
+export interface StaffTagInfo {
+  id: number
+  name: string
+  code: string
+  role_type: string
 }
 
 export function getPermissionSchema(): Promise<{
@@ -57,4 +67,20 @@ export function getUserRoles(userId: number): Promise<Role[]> {
 
 export function assignUserRoles(userId: number, data: UserRoleAssign): Promise<any> {
   return api.post(`/roles/user/${userId}`, data)
+}
+
+export function getTagOptions(): Promise<{ code: number; data: StaffTagInfo[]; message: string }> {
+  return api.get('/roles/options', { params: { type: 'tag' } })
+}
+
+export function getStaffTags(staffId: number): Promise<StaffTagInfo[]> {
+  return api.get(`/roles/staff/${staffId}/tags`)
+}
+
+export function assignStaffTags(staffId: number, roleIds: number[]): Promise<any> {
+  return api.post(`/roles/staff/${staffId}/tags`, { role_ids: roleIds })
+}
+
+export function removeStaffTag(staffId: number, roleId: number): Promise<any> {
+  return api.delete(`/roles/staff/${staffId}/tags/${roleId}`)
 }

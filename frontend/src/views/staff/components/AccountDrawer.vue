@@ -161,7 +161,8 @@ async function loadRoles() {
   try {
     const res: any = await api.get('/roles/options')
     const list = Array.isArray(res) ? res : (res.data || [])
-    allRoles.value = list
+    // 只取角色类型，排除标识类型
+    allRoles.value = list.filter((r: any) => r.role_type === 'role')
   } catch {
     allRoles.value = []
   }

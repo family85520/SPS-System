@@ -159,14 +159,6 @@
               </el-checkbox>
             </el-checkbox-group>
           </el-form-item>
-          <el-form-item label="领导排班">
-            <el-checkbox v-model="autoScheduleForm.include_leader">
-              需要领导参与排班
-            </el-checkbox>
-            <div style="font-size: 12px; color: #909399; margin-top: 4px;">
-              候选范围：班次模板中指定的领导候选人员 > 标记为"带班领导"标签的人员 > 全部人员
-            </div>
-          </el-form-item>
           <el-form-item label="排班人员" required>
             <el-select
               v-model="autoScheduleForm.staff_ids"
@@ -347,6 +339,7 @@ import {
   createSchedule,
   publishSchedules,
   recallSchedules,
+  recallSchedulesByMonth,
   approveSchedules,
   rejectSchedules,
   type CalendarDate,
@@ -563,7 +556,6 @@ const autoScheduleForm = reactive({
   org_id: null as number | null,
   shift_template_ids: [] as number[],
   staff_ids: [] as number[],
-  include_leader: true,
 })
 const autoScheduleLoading = ref(false)
 const allStaffList = ref<any[]>([])
@@ -573,7 +565,26 @@ async function loadAllStaff() {
     const params: any = {}
     if (autoScheduleForm.org_id) params.org_id = autoScheduleForm.org_id
     const res: any = await api.get('/staffs/options', { params })
-    const list = Array.isArray(res) ? res : (res.data || res.items || [])
+    let list = Array.isArray(res) ? res : (res.data || res.items || [])
+
+    // 收集需要从排班人员列表中排除的候选人ID
+    const excludeIds = new Set<number>()
+    const selectedIds = autoScheduleForm.shift_template_ids
+    for (const t of shiftTemplateList.value) {
+      if (!selectedIds.includes(t.id)) continue
+      if (t.special_enabled && t.special_pool) {
+        for (const sid of t.special_pool) excludeIds.add(sid)
+      }
+      if (t.leader_enabled && t.leader_pool) {
+        for (const sid of t.leader_pool) excludeIds.add(sid)
+      }
+    }
+
+    // 过滤掉特殊人员组和值班领导组候选人
+    if (excludeIds.size > 0) {
+      list = list.filter((s: any) => !excludeIds.has(s.id))
+    }
+
     allStaffList.value = list
     // 清除不在当前列表中的已选人员
     const validIds = allStaffList.value.map((s: any) => s.id)
@@ -624,7 +635,6 @@ async function handleAutoGenerate() {
       org_id: autoScheduleForm.org_id,
       shift_template_ids: autoScheduleForm.shift_template_ids.join(','),
       staff_ids: autoScheduleForm.staff_ids.join(','),
-      include_leader: autoScheduleForm.include_leader,
     }
     const res: any = await api.post('/schedules/auto-generate', null, { params })
 
@@ -728,23 +738,31 @@ async function handlePublish() {
 }
 
 async function handleRecall() {
-  const publishedIds = collectScheduleIdsByStatus(1)
-  if (publishedIds.length === 0) {
-    ElMessage.info('当前视图中没有已发布的排班')
+  const orgId = filterOrgId.value
+  if (!orgId) {
+    ElMessage.warning('请先选择组织')
     return
   }
+
+  const y = currentYear.value
+  const m = currentMonth.value + 1 // 0-indexed → 1-indexed
+  const monthLabel = `${y}年${m}月`
 
   try {
     await ElMessageBox({
       title: '确认撤回？',
-      message: `确认撤回当前视图中的 ${publishedIds.length} 条排班？撤回后排班将变为草稿，相关人员将收到通知。`,
+      message: `确认撤回 ${monthLabel} 所有已发布/待审核的排班？撤回后排班将变为草稿。`,
       showCancelButton: true,
       confirmButtonText: '确认撤回',
       cancelButtonText: '取消',
       type: 'warning',
     })
-    const res = await recallSchedules(publishedIds)
-    ElMessage.success(`成功撤回 ${res.count ?? publishedIds.length} 条排班`)
+    const res = await recallSchedulesByMonth(orgId, y, m)
+    if (res.count === 0) {
+      ElMessage.info(`${monthLabel} 没有可撤回的排班`)
+    } else {
+      ElMessage.success(`成功撤回 ${monthLabel} ${res.count} 条排班`)
+    }
     await loadCalendar()
   } catch (e) {
     // 用户取消或接口错误

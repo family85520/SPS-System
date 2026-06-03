@@ -125,158 +125,167 @@
             </div>
           </el-form-item>
 
-          <el-divider content-position="left">值班领导</el-divider>
+          <el-divider content-position="left">值班领导组</el-divider>
 
-          <el-form-item label="最少人数" prop="leader_min">
-            <el-input-number v-model="formData.leader_min" :min="0" :max="99" controls-position="right" :disabled="!canEdit" />
+          <el-form-item label="启用领导组">
+            <el-switch v-model="formData.leader_enabled" :disabled="!canEdit" />
+            <div class="cross-night-tip">关闭后自动排班不分配值班领导；打开后优先级：候选池 > "带班领导"身份标识 > 空缺</div>
           </el-form-item>
 
-          <el-form-item label="最多人数" prop="leader_max">
-            <el-input-number v-model="formData.leader_max" :min="formData.leader_min" :max="99" controls-position="right" :disabled="!canEdit" />
+          <template v-if="formData.leader_enabled">
+            <el-form-item label="最少人数" prop="leader_min">
+              <el-input-number v-model="formData.leader_min" :min="0" :max="99" controls-position="right" :disabled="!canEdit" />
+            </el-form-item>
+
+            <el-form-item label="最多人数" prop="leader_max">
+              <el-input-number v-model="formData.leader_max" :min="formData.leader_min" :max="99" controls-position="right" :disabled="!canEdit" />
+            </el-form-item>
+
+            <el-form-item label="每次选出人数">
+              <el-input-number v-model="formData.leader_count" :min="1" :max="formData.leader_max || 99" controls-position="right" :disabled="!canEdit" />
+              <div class="cross-night-tip">独立于最少/最多人数，控制每次轮换实际选出的领导数</div>
+            </el-form-item>
+
+            <el-form-item label="独立轮换频次">
+              <el-select v-model="formData.leader_rotation_frequency" style="width: 100%" :disabled="!canEdit">
+                <el-option label="按天轮换" value="day" />
+                <el-option label="按周轮换" value="week" />
+                <el-option label="按月轮换" value="month" />
+              </el-select>
+              <div class="cross-night-tip">领导组轮换周期，默认按周轮换</div>
+            </el-form-item>
+            <el-form-item label="候选人员">
+              <el-select
+                v-model="formData.leader_pool"
+                multiple
+                filterable
+                placeholder="选择领导候选人员（最高优先级）"
+                style="width: 100%"
+                :disabled="!canEdit"
+              >
+                <el-option
+                  v-for="s in staffList"
+                  :key="s.id"
+                  :label="s.name"
+                  :value="s.id"
+                >
+                  <span style="float: left">{{ s.name }}</span>
+                  <span style="float: right; color: #909399; font-size: 12px">{{ s.employee_no }}</span>
+                </el-option>
+              </el-select>
+              <div class="cross-night-tip">优先级1：候选池 → 优先级2：标识"领导/带班" → 优先级3：空着不选</div>
+            </el-form-item>
+
+            <el-form-item label="标识回退">
+              <el-switch v-model="formData.leader_use_tag" :disabled="!canEdit" />
+              <div class="cross-night-tip">候选池为空时，是否回退到指定身份标识的人员</div>
+            </el-form-item>
+
+            <el-form-item label="标识名称" v-if="formData.leader_use_tag">
+              <el-input v-model="formData.leader_tag_name" placeholder="领导" style="width: 200px" :disabled="!canEdit" />
+              <div class="cross-night-tip">候选池为空时，用此标识名匹配人员（默认"领导"，可自定义）</div>
+            </el-form-item>
+          </template>
+
+          <el-divider content-position="left">值班人员组</el-divider>
+
+          <el-form-item label="启用人员组">
+            <el-switch v-model="formData.member_enabled" :disabled="!canEdit" />
+            <div class="cross-night-tip">关闭后自动排班不会分配值班人员（仅特殊人员+领导）</div>
           </el-form-item>
 
-          <el-form-item label="候选人员">
+          <template v-if="formData.member_enabled">
+            <el-form-item label="最少人数" prop="member_min">
+              <el-input-number v-model="formData.member_min" :min="1" :max="99" controls-position="right" :disabled="!canEdit" />
+            </el-form-item>
+
+            <el-form-item label="最多人数" prop="member_max">
+              <el-input-number v-model="formData.member_max" :min="formData.member_min" :max="99" controls-position="right" :disabled="!canEdit" />
+            </el-form-item>
+
+            <el-form-item label="轮换频次">
+              <el-select v-model="formData.member_rotation_frequency" style="width: 100%" :disabled="!canEdit">
+                <el-option label="按天轮换" value="day" />
+                <el-option label="按周轮换" value="week" />
+                <el-option label="按月轮换" value="month" />
+              </el-select>
+              <div class="cross-night-tip">值班人员组的轮换周期，默认按天轮换</div>
+            </el-form-item>
+
+            <el-form-item label="跨模板共排">
+              <el-switch v-model="formData.allow_multi_template" :disabled="!canEdit" />
+              <div class="cross-night-tip">开启后本模板人员当天可同时参与其他模板的班次</div>
+            </el-form-item>
+          </template>
+
+          <el-divider content-position="left">特殊人员组（可选）</el-divider>
+
+          <el-form-item label="启用特殊人员">
+            <el-switch v-model="formData.special_enabled" :disabled="!canEdit" />
+            <div class="cross-night-tip">开启后从候选池中按轮换频次选人，优先级最高</div>
+          </el-form-item>
+
+          <template v-if="formData.special_enabled">
+            <el-form-item label="候选人员" prop="special_pool">
+              <el-select
+                v-model="formData.special_pool"
+                multiple
+                filterable
+                placeholder="选择特殊人员候选池"
+                style="width: 100%"
+                :disabled="!canEdit"
+              >
+                <el-option
+                  v-for="s in staffList"
+                  :key="s.id"
+                  :label="s.name"
+                  :value="s.id"
+                >
+                  <span style="float: left">{{ s.name }}</span>
+                  <span style="float: right; color: #909399; font-size: 12px">{{ s.employee_no }}</span>
+                </el-option>
+              </el-select>
+              <div class="cross-night-tip">例如：行政值班中固定轮换的2名特殊人员</div>
+            </el-form-item>
+
+            <el-form-item label="每次选出人数">
+              <el-input-number v-model="formData.special_count" :min="1" :max="(formData.special_pool || []).length || 1" controls-position="right" :disabled="!canEdit" />
+            </el-form-item>
+
+            <el-form-item label="轮换频次">
+              <el-select v-model="formData.special_rotation_frequency" style="width: 100%" :disabled="!canEdit">
+                <el-option label="按天轮换" value="day" />
+                <el-option label="按周轮换" value="week" />
+                <el-option label="按月轮换" value="month" />
+              </el-select>
+              <div class="cross-night-tip">例如按月轮换：5月A、6月B、7月A、8月B...</div>
+            </el-form-item>
+
+            <el-form-item label="从人员池排除">
+              <el-switch v-model="formData.special_exclude_from_member" :disabled="!canEdit" />
+              <div class="cross-night-tip">开启后特殊人员不会被选入值班人员组（推荐开启）</div>
+            </el-form-item>
+          </template>
+
+          <el-divider content-position="left">约束规则（可选）</el-divider>
+
+          <el-form-item label="指定约束规则">
             <el-select
-              v-model="formData.leader_pool"
+              v-model="formData.constraint_ids"
               multiple
               filterable
-              placeholder="选择领导候选人员（留空则从全部人员中选）"
+              placeholder="留空则使用全部已启用规则"
               style="width: 100%"
               :disabled="!canEdit"
             >
               <el-option
-                v-for="s in staffList"
-                :key="s.id"
-                :label="s.name"
-                :value="s.id"
-              >
-                <span style="float: left">{{ s.name }}</span>
-                <span style="float: right; color: #909399; font-size: 12px">{{ s.employee_no }}</span>
-              </el-option>
+                v-for="c in constraintList"
+                :key="c.id"
+                :label="c.rule_name"
+                :value="c.id"
+              />
             </el-select>
-            <div class="cross-night-tip">不指定则自动排班时从带班领导标签或全部人员中选取</div>
-          </el-form-item>
-
-          <el-divider content-position="left">排班模式</el-divider>
-
-          <el-form-item label="排班模式">
-            <el-select v-model="formData.schedule_mode" style="width: 100%" :disabled="!canEdit">
-              <el-option label="逐人轮询（默认）" value="individual" />
-              <el-option label="值班组轮换" value="team_rotation" />
-              <el-option label="轮换组排班" value="rotation_group" />
-            </el-select>
-            <div class="cross-night-tip">
-              <template v-if="formData.schedule_mode === 'individual'">每个人员独立排班，按排班次数均衡分配</template>
-              <template v-if="formData.schedule_mode === 'team_rotation'">按值班组轮换，今天A组明天B组，适合白班夜班联动</template>
-              <template v-if="formData.schedule_mode === 'rotation_group'">使用轮换组配置，适合行政班等固定人员按月轮换</template>
-            </div>
-          </el-form-item>
-
-          <!-- 值班组配置（team_rotation 模式） -->
-          <template v-if="formData.schedule_mode === 'team_rotation'">
-            <el-divider content-position="left">值班组配置</el-divider>
-
-            <el-form-item label="值班组">
-              <div style="width: 100%;">
-                <div v-for="(team, idx) in dutyTeams" :key="team.id || idx" class="rotation-group-item">
-                  <div class="rotation-group-header">
-                    <el-input v-model="team.name" placeholder="组名称（如：白班A组）" style="width: 200px" :disabled="!canEdit" />
-                    <el-input-number v-model="team.priority" :min="1" :max="100" controls-position="right" style="width: 90px" :disabled="!canEdit" />
-                    <el-switch v-model="team.enabled" :disabled="!canEdit" />
-                    <el-button v-if="canEdit" type="danger" text @click="dutyTeams.splice(idx, 1)">删除</el-button>
-                  </div>
-                  <div class="rotation-group-body">
-                    <el-select
-                      v-model="team.staff_ids"
-                      multiple
-                      filterable
-                      placeholder="选择组内人员（建议新老搭配）"
-                      style="width: 100%"
-                      :disabled="!canEdit"
-                    >
-                      <el-option
-                        v-for="s in staffList"
-                        :key="s.id"
-                        :label="s.name"
-                        :value="s.id"
-                      >
-                        <span style="float: left">{{ s.name }}</span>
-                        <span style="float: right; color: #909399; font-size: 12px">
-                          {{ (s.tags || []).join(',') || '无标签' }}
-                        </span>
-                      </el-option>
-                    </el-select>
-                  </div>
-                </div>
-                <el-button v-if="canEdit" @click="addDutyTeam" style="margin-top: 8px;">+ 添加值班组</el-button>
-                <div style="font-size: 12px; color: #909399; margin-top: 4px;">
-                  值班组按日期轮流值班，同组人员在同一天排班。建议每组2人，新老员工搭配。
-                </div>
-              </div>
-            </el-form-item>
-          </template>
-
-          <el-divider content-position="left">整体轮换频次</el-divider>
-
-          <el-form-item label="轮换频次">
-            <el-select v-model="formData.rotation_frequency" style="width: 100%" :disabled="!canEdit">
-              <el-option label="按天轮换" value="day" />
-              <el-option label="按周轮换" value="week" />
-              <el-option label="按月轮换" value="month" />
-            </el-select>
-            <div class="cross-night-tip">控制该班次整体的轮换周期，不影响轮换组内各自的频次</div>
-          </el-form-item>
-
-          <el-divider content-position="left">值班人员</el-divider>
-
-          <el-form-item label="最少人数" prop="member_min">
-            <el-input-number v-model="formData.member_min" :min="1" :max="99" controls-position="right" :disabled="!canEdit" />
-          </el-form-item>
-
-          <el-form-item label="最多人数" prop="member_max">
-            <el-input-number v-model="formData.member_max" :min="formData.member_min" :max="99" controls-position="right" :disabled="!canEdit" />
-          </el-form-item>
-
-          <el-divider content-position="left">轮换组（可选）</el-divider>
-
-          <el-form-item label="轮换组">
-            <div style="width: 100%;">
-              <div v-for="(group, idx) in rotationGroups" :key="group.id || idx" class="rotation-group-item">
-                <div class="rotation-group-header">
-                  <el-input v-model="group.name" placeholder="组名称" style="width: 150px" :disabled="!canEdit" />
-                  <el-select v-model="group.rotation_unit" style="width: 110px" :disabled="!canEdit">
-                    <el-option label="按天" value="day" />
-                    <el-option label="按周" value="week" />
-                    <el-option label="按月" value="month" />
-                  </el-select>
-                  <el-input-number v-model="group.slot_count" :min="1" :max="10" controls-position="right" style="width: 90px" :disabled="!canEdit" />
-                  <el-input-number v-model="group.priority" :min="1" :max="100" controls-position="right" style="width: 90px" :disabled="!canEdit" />
-                  <el-switch v-model="group.enabled" :disabled="!canEdit" />
-                  <el-button v-if="canEdit" type="danger" text @click="rotationGroups.splice(idx, 1)">删除</el-button>
-                </div>
-                <div class="rotation-group-body">
-                  <el-select
-                    v-model="group.staff_ids"
-                    multiple
-                    filterable
-                    placeholder="选择轮换人员（按顺序轮换）"
-                    style="width: 100%"
-                    :disabled="!canEdit"
-                  >
-                    <el-option
-                      v-for="s in staffList"
-                      :key="s.id"
-                      :label="s.name"
-                      :value="s.id"
-                    />
-                  </el-select>
-                </div>
-              </div>
-              <el-button v-if="canEdit" @click="addRotationGroup" style="margin-top: 8px;">+ 添加轮换组</el-button>
-              <div style="font-size: 12px; color: #909399; margin-top: 4px;">
-                轮换组内的人员按顺序在指定周期内循环值班，剩余名额从全员中公平轮值
-              </div>
-            </div>
+            <div class="cross-night-tip">指定后自动排班仅使用选中的约束规则，留空则使用所有已启用规则</div>
           </el-form-item>
 
           <el-divider content-position="left">适用日期</el-divider>
@@ -424,70 +433,18 @@ async function saveDutyTeams(templateId: number) {
   }
 }
 
-// ==================== 轮换组 ====================
-
-interface RotationGroupForm {
-  id?: number
-  shift_template_id?: number
-  name: string
-  staff_ids: number[]
-  rotation_unit: string
-  slot_count: number
-  priority: number
-  enabled: boolean
-}
-
-const rotationGroups = ref<RotationGroupForm[]>([])
-
-function addRotationGroup() {
-  rotationGroups.value.push({
-    name: '',
-    staff_ids: [],
-    rotation_unit: 'month',
-    slot_count: 1,
-    priority: (rotationGroups.value.length + 1) * 10,
-    enabled: true,
-  })
-}
-
-async function loadRotationGroups(templateId: number) {
-  try {
-    const res = await api.get(`/shift-templates/${templateId}/rotation-groups`)
-    rotationGroups.value = Array.isArray(res) ? res : []
-  } catch {
-    rotationGroups.value = []
-  }
-}
-
-async function saveRotationGroups(templateId: number) {
-  const serverRes = await api.get(`/shift-templates/${templateId}/rotation-groups`)
-  const serverIds = (Array.isArray(serverRes) ? serverRes : []).map((g: any) => g.id)
-  const frontendIds = rotationGroups.value.filter(g => g.id).map(g => g.id)
-
-  for (const sid of serverIds) {
-    if (!frontendIds.includes(sid)) {
-      await api.delete(`/shift-templates/${templateId}/rotation-groups/${sid}`)
-    }
-  }
-
-  for (const group of rotationGroups.value) {
-    const payload = {
-      name: group.name,
-      staff_ids: group.staff_ids,
-      rotation_unit: group.rotation_unit,
-      slot_count: group.slot_count,
-      priority: group.priority,
-      enabled: group.enabled,
-    }
-    if (group.id) {
-      await api.put(`/shift-templates/${templateId}/rotation-groups/${group.id}`, payload)
-    } else {
-      await api.post(`/shift-templates/${templateId}/rotation-groups`, payload)
-    }
-  }
-}
-
 const staffList = ref<any[]>([])
+const constraintList = ref<any[]>([])
+
+async function loadConstraintList() {
+  try {
+    const res: any = await api.get('/constraints')
+    const list = Array.isArray(res) ? res : (res.items || res.data || [])
+    constraintList.value = list.filter((c: any) => c.enabled)
+  } catch {
+    constraintList.value = []
+  }
+}
 
 const dayLabels = ['一', '二', '三', '四', '五', '六', '日']
 
@@ -518,8 +475,20 @@ const defaultForm: ShiftTemplateForm = {
   member_min: 1,
   member_max: 2,
   apply_days: [1, 2, 3, 4, 5],
-  rotation_frequency: 'day',
-  schedule_mode: 'individual',
+  allow_multi_template: false,
+  leader_enabled: false,
+  leader_rotation_frequency: 'week',
+  leader_count: 1,
+  leader_use_tag: true,
+  leader_tag_name: null as string | null,
+  member_enabled: true,
+  member_rotation_frequency: 'day',
+  special_enabled: false,
+  special_rotation_frequency: 'month',
+  special_count: 1,
+  special_pool: null,
+  special_exclude_from_member: true,
+  constraint_ids: null,
 }
 
 const formData = ref<ShiftTemplateForm>({ ...defaultForm })
@@ -600,10 +569,21 @@ function handleSelect(item: ShiftTemplate) {
     member_min: item.member_min,
     member_max: item.member_max,
     apply_days: [...item.apply_days],
-    rotation_frequency: item.rotation_frequency || 'day',
-    schedule_mode: item.schedule_mode || 'individual',
+    allow_multi_template: (item as any).allow_multi_template ?? false,
+    leader_enabled: (item as any).leader_enabled ?? false,
+    leader_rotation_frequency: (item as any).leader_rotation_frequency ?? 'week',
+    leader_count: (item as any).leader_count ?? 1,
+    leader_use_tag: (item as any).leader_use_tag ?? true,
+    leader_tag_name: (item as any).leader_tag_name ?? null,
+    member_enabled: (item as any).member_enabled ?? true,
+    member_rotation_frequency: (item as any).member_rotation_frequency ?? 'day',
+    special_enabled: (item as any).special_enabled ?? false,
+    special_rotation_frequency: (item as any).special_rotation_frequency ?? 'month',
+    special_count: (item as any).special_count ?? 1,
+    special_pool: (item as any).special_pool ?? null,
+    special_exclude_from_member: (item as any).special_exclude_from_member ?? true,
+    constraint_ids: (item as any).constraint_ids ?? null,
   }
-  loadRotationGroups(item.id)
   loadDutyTeams(item.id)
 }
 
@@ -612,7 +592,6 @@ function handleCreate() {
   selectedId.value = -1
   currentStatus.value = 1
   formData.value = { ...defaultForm, apply_days: [...defaultForm.apply_days] }
-  rotationGroups.value = []
   dutyTeams.value = []
 }
 
@@ -626,7 +605,6 @@ async function handleSave() {
     if (isCreate.value) {
       const created = await createShiftTemplate(formData.value)
       if (created && created.id) {
-        if (rotationGroups.value.length > 0) await saveRotationGroups(created.id)
         if (dutyTeams.value.length > 0) await saveDutyTeams(created.id)
       }
       ElMessage.success('创建成功')
@@ -635,7 +613,6 @@ async function handleSave() {
       isCreate.value = false
     } else {
       const updated = await updateShiftTemplate(selectedId.value!, formData.value)
-      await saveRotationGroups(selectedId.value!)
       await saveDutyTeams(selectedId.value!)
       ElMessage.success('保存成功')
       await loadList()
@@ -712,6 +689,7 @@ function handleCancel() {
 onMounted(() => {
   loadList()
   loadStaffList()
+  loadConstraintList()
 })
 </script>
 

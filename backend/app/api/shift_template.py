@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,6 +59,10 @@ async def get_shift_template_options(
             "start_time": t.start_time,
             "end_time": t.end_time,
             "color": t.color,
+            "leader_enabled": t.leader_enabled,
+            "leader_pool": t.leader_pool,
+            "special_enabled": t.special_enabled,
+            "special_pool": t.special_pool,
         }
         for t in templates
     ]
@@ -156,127 +162,6 @@ async def toggle_shift_template_status(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"操作失败: {str(e)}")
 
-import json
-from app.models.shift_template import SchRotationGroup
-from app.schemas.shift_template import RotationGroupCreate, RotationGroupResponse
-
-
-@router.get("/{template_id}/rotation-groups", summary="获取轮换组列表")
-async def get_rotation_groups(
-    template_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("shift_template", "read")),
-):
-    result = await db.execute(
-        select(SchRotationGroup).where(
-            SchRotationGroup.shift_template_id == template_id
-        ).order_by(SchRotationGroup.priority)
-    )
-    groups = result.scalars().all()
-    return [
-        RotationGroupResponse(
-            id=g.id,
-            shift_template_id=g.shift_template_id,
-            name=g.name,
-            staff_ids=json.loads(g.staff_ids) if g.staff_ids else [],
-            rotation_unit=g.rotation_unit,
-            slot_count=g.slot_count,
-            priority=g.priority,
-            enabled=bool(g.enabled),
-        )
-        for g in groups
-    ]
-
-
-@router.post("/{template_id}/rotation-groups", summary="创建轮换组")
-async def create_rotation_group(
-    template_id: int,
-    data: RotationGroupCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
-):
-    group = SchRotationGroup(
-        shift_template_id=template_id,
-        name=data.name,
-        staff_ids=json.dumps(data.staff_ids),
-        rotation_unit=data.rotation_unit,
-        slot_count=data.slot_count,
-        priority=data.priority,
-        enabled=1 if data.enabled else 0,
-    )
-    db.add(group)
-    await db.flush()
-    await db.refresh(group)
-    return RotationGroupResponse(
-        id=group.id,
-        shift_template_id=group.shift_template_id,
-        name=group.name,
-        staff_ids=data.staff_ids,
-        rotation_unit=group.rotation_unit,
-        slot_count=group.slot_count,
-        priority=group.priority,
-        enabled=data.enabled,
-    )
-
-
-@router.put("/{template_id}/rotation-groups/{group_id}", summary="更新轮换组")
-async def update_rotation_group(
-    template_id: int,
-    group_id: int,
-    data: RotationGroupCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("shift_template", "update")),
-):
-    result = await db.execute(
-        select(SchRotationGroup).where(
-            SchRotationGroup.id == group_id,
-            SchRotationGroup.shift_template_id == template_id,
-        )
-    )
-    group = result.scalars().first()
-    if not group:
-        raise HTTPException(status_code=404, detail="轮换组不存在")
-
-    group.name = data.name
-    group.staff_ids = json.dumps(data.staff_ids)
-    group.rotation_unit = data.rotation_unit
-    group.slot_count = data.slot_count
-    group.priority = data.priority
-    group.enabled = 1 if data.enabled else 0
-    await db.flush()
-
-    return RotationGroupResponse(
-        id=group.id,
-        shift_template_id=group.shift_template_id,
-        name=group.name,
-        staff_ids=data.staff_ids,
-        rotation_unit=group.rotation_unit,
-        slot_count=group.slot_count,
-        priority=group.priority,
-        enabled=data.enabled,
-    )
-
-
-@router.delete("/{template_id}/rotation-groups/{group_id}", summary="删除轮换组")
-async def delete_rotation_group(
-    template_id: int,
-    group_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("shift_template", "delete")),
-):
-    result = await db.execute(
-        select(SchRotationGroup).where(
-            SchRotationGroup.id == group_id,
-            SchRotationGroup.shift_template_id == template_id,
-        )
-    )
-    group = result.scalars().first()
-    if not group:
-        raise HTTPException(status_code=404, detail="轮换组不存在")
-
-    await db.delete(group)
-    await db.flush()
-    return {"message": "删除成功"}
 from app.models.duty_team import SchDutyTeam
 from app.schemas.shift_template import DutyTeamCreate, DutyTeamResponse
 

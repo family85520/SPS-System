@@ -57,8 +57,6 @@ async def init_db():
 
 # 声明式定义：需要确保存在的字段（表名, 列名, DDL 类型, 默认值）
 _COLUMN_MIGRATIONS: list[tuple[str, str, str, str | None]] = [
-    ("sch_shift_template", "rotation_frequency", "VARCHAR(20) NOT NULL DEFAULT 'day'", None),
-    ("sch_shift_template", "schedule_mode", "VARCHAR(20) NOT NULL DEFAULT 'individual'", None),
     ("sys_user", "must_change_password", "BOOLEAN NOT NULL DEFAULT FALSE", "false"),
 ]
 

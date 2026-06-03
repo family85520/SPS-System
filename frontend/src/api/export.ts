@@ -69,3 +69,37 @@ export async function downloadStatisticsPdf(params: ExportStatisticsParams) {
   })
   triggerDownload(res, `排班统计_${params.start_date}_${params.end_date}.pdf`)
 }
+
+// ==================== 导出模板管理 ====================
+
+export interface ExportTemplateItem {
+  id: number
+  name: string
+  is_default: boolean
+  description: string | null
+  created_at: string
+}
+
+export async function listTemplates(): Promise<ExportTemplateItem[]> {
+  const res = await api.get('/export/templates')
+  return (res as any).templates ?? []
+}
+
+export async function uploadTemplate(file: File, name: string, isDefault: boolean, desc?: string): Promise<any> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('name', name)
+  form.append('is_default', String(isDefault))
+  if (desc) form.append('description', desc)
+  return api.post('/export/templates/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export async function deleteTemplate(id: number): Promise<any> {
+  return api.delete(`/export/templates/${id}`)
+}
+
+export async function setDefaultTemplate(id: number): Promise<any> {
+  return api.post(`/export/templates/${id}/set-default`)
+}

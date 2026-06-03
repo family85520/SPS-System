@@ -29,6 +29,7 @@ class SysRole(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, comment="主键")
     name: Mapped[str] = mapped_column(String(50), nullable=False, comment="角色名称")
     code: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, comment="角色编码")
+    role_type: Mapped[str] = mapped_column(String(10), default="role", nullable=False, comment="角色类型: role=角色(有权限) tag=标识(仅标记人员)")
     permissions: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="权限列表")
     is_system: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="是否系统内置角色")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False, comment="创建时间")

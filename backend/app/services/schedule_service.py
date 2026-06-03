@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Optional
 
+from collections import defaultdict
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -524,6 +525,45 @@ class ScheduleService:
 
         return count
 
+    @staticmethod
+    async def recall_by_month(
+        db: AsyncSession, org_id: int, year: int, month: int, user_id: int = None,
+    ) -> int:
+        """撤回指定月份的所有已发布/待审核排班。"""
+        from datetime import date as dt_date
+        first_day = dt_date(year, month, 1)
+        if month == 12:
+            last_day = dt_date(year + 1, 1, 1)
+        else:
+            last_day = dt_date(year, month + 1, 1)
+
+        result = await db.execute(
+            select(SchSchedule).where(
+                SchSchedule.org_id == org_id,
+                SchSchedule.date >= first_day,
+                SchSchedule.date < last_day,
+                SchSchedule.status.in_([STATUS_PUBLISHED, STATUS_PENDING_APPROVAL]),
+            )
+        )
+        schedules = result.scalars().all()
+        if not schedules:
+            return 0
+
+        count = 0
+        recalled_ids = []
+        for s in schedules:
+            s.status = STATUS_RECALLED
+            s.published_at = None
+            s.published_by = None
+            recalled_ids.append(s.id)
+            count += 1
+        await db.flush()
+
+        if recalled_ids:
+            await _notify_schedule_recalled(db, recalled_ids)
+
+        return count
+
     # ==================== 人员统计 ====================
 
     @staticmethod
@@ -749,7 +789,6 @@ class ScheduleService:
         org_id: int,
         shift_template_ids: list[int],
         staff_ids: list[int],
-        include_leader: bool = True,
         current_user_id: int,
     ) -> dict:
         """自动排班完整编排：数据准备 → 排班引擎 → 保存结果 → 返回"""
@@ -761,26 +800,50 @@ class ScheduleService:
         # ---- 1. 查询排班模板（含轮换组 & 值班组） ----
         shifts = await _load_shift_templates(db, shift_template_ids)
 
-        # ---- 2. 查询可用人员 ----
+        # ---- 1.5. 收集所有模板的特殊人员池 & 领导候选池 ID（强制参与排班） ----
+        special_pool_ids: set[int] = set()
+        leader_pool_ids: set[int] = set()
+        needs_tagged_leaders = False
+        for shift in shifts:
+            if getattr(shift, 'special_enabled', False) and shift.special_pool:
+                special_pool_ids.update(shift.special_pool)
+            if getattr(shift, 'leader_enabled', False):
+                if shift.leader_pool:
+                    leader_pool_ids.update(shift.leader_pool)
+                else:
+                    needs_tagged_leaders = True
+
+        # 当候选池为空时，纳入全组织在职人员（引擎通过 tags / staff_tag_roles_map 自动筛选）
+        tagged_leader_ids: set[int] = set()
+        if needs_tagged_leaders:
+            from app.models.staff import OrgStaff as OrgStaffModel
+            tagged_rows = (await db.execute(
+                select(OrgStaffModel.id).where(OrgStaffModel.org_id == org_id, OrgStaffModel.status == 1)
+            )).scalars().all()
+            tagged_leader_ids.update(tagged_rows)
+
+        # ---- 2. 查询可用人员（含特殊池 & 领导候选池 & 标识领导人） ----
+        all_staff_ids = list(set(staff_ids) | special_pool_ids | leader_pool_ids | tagged_leader_ids)
         staff_list = list((await db.execute(
-            select(OrgStaff).where(OrgStaff.id.in_(staff_ids), OrgStaff.org_id == org_id)
+            select(OrgStaff).where(OrgStaff.id.in_(all_staff_ids), OrgStaff.org_id == org_id)
         )).scalars().all())
         if not staff_list:
             raise ValueError("所选组织下无可用人员，请检查人员归属")
+        effective_staff_ids = [s.id for s in staff_list]
 
         # ---- 3. 查询约束 & 特殊规则 ----
         constraints = list((await db.execute(
             select(SchConstraint).where(SchConstraint.enabled == True)
         )).scalars().all())
         special_rules = list((await db.execute(
-            select(SchSpecialRule).where(SchSpecialRule.staff_id.in_(staff_ids))
+            select(SchSpecialRule).where(SchSpecialRule.staff_id.in_(effective_staff_ids))
         )).scalars().all())
 
         # ---- 4. 处理已有排班（冲突检查 & 清理可编辑记录） ----
         await _cleanup_existing_schedules(db, org_id, start_date, end_date)
 
-        # ---- 5. 加载历史排班（供公平性计算） ----
-        history_start = start_date - timedelta(days=30)
+        # ---- 5. 加载历史排班（供公平性计算，读取当年度以来所有已发布数据） ----
+        history_start = date(start_date.year, 1, 1)
         existing_schedules = list((await db.execute(
             select(SchSchedule).where(
                 SchSchedule.org_id == org_id,
@@ -793,6 +856,43 @@ class ScheduleService:
             select(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(existing_ids))
         )).scalars().all()) if existing_ids else []
 
+        # ---- 5.5. 加载人员标识数据（新标识体系） ----
+        from app.models import OrgStaffRole, SysRole
+        staff_tag_roles = list((await db.execute(
+            select(OrgStaffRole).where(OrgStaffRole.staff_id.in_(effective_staff_ids))
+        )).scalars().all()) if effective_staff_ids else []
+        all_tag_roles = (await db.execute(
+            select(SysRole).where(SysRole.role_type == "tag")
+        )).scalars().all()
+        tag_role_name_map = {r.id: r.name for r in all_tag_roles}
+        staff_tag_roles_map: dict[int, list[str]] = defaultdict(list)
+        for tr in staff_tag_roles:
+            name = tag_role_name_map.get(tr.role_id)
+            if name:
+                staff_tag_roles_map[tr.staff_id].append(name)
+
+        # ---- 5.6. 加载组织排班人数上限 ----
+        org = (await db.execute(
+            select(OrgOrganization).where(OrgOrganization.id == org_id)
+        )).scalars().first()
+        org_max_ratio = float(org.daily_max_scheduled_ratio) if org and org.daily_max_scheduled_ratio else None
+
+        # ---- 5.7. 计算领导跨月轮换偏移量（ISO 周号基准） ----
+        leader_offsets: dict[int, int] = {}
+        for shift in shifts:
+            if not getattr(shift, 'leader_enabled', False):
+                continue
+            earliest = (await db.execute(
+                select(SchSchedule.date).where(
+                    SchSchedule.shift_id == shift.id,
+                    SchSchedule.leader_staff_id.isnot(None),
+                ).order_by(SchSchedule.date.asc()).limit(1)
+            )).scalars().first()
+            if earliest:
+                leader_offsets[shift.id] = earliest.isocalendar()[1]
+            else:
+                leader_offsets[shift.id] = start_date.isocalendar()[1]
+
         # ---- 6. 执行排班引擎 ----
         scheduler = AutoScheduler(
             staff_list=staff_list,
@@ -801,6 +901,8 @@ class ScheduleService:
             special_rules=special_rules,
             existing_schedules=existing_schedules,
             existing_details=existing_details,
+            staff_tag_roles_map=staff_tag_roles_map,
+            org_max_ratio=org_max_ratio,
         )
         result = scheduler.generate(
             start_date=start_date,
@@ -808,7 +910,7 @@ class ScheduleService:
             org_id=org_id,
             shift_template_ids=shift_template_ids,
             staff_ids=staff_ids,
-            include_leader=include_leader,
+            leader_offsets=leader_offsets,
         )
 
         # ---- 7. 持久化排班结果 ----
@@ -870,6 +972,7 @@ class ScheduleService:
             "schedules": schedule_data,
             "report": report,
             "conflicts": result["conflicts"],
+            "diagnostics": result.get("diagnostics", []),
         }
 
 
@@ -1011,13 +1114,12 @@ async def _get_detail_map(db, schedule_ids):
 
 
 async def _load_shift_templates(db, shift_template_ids):
-    """加载班次模板及其关联的轮换组和值班组。"""
+    """加载班次模板及其关联的值班组。"""
     try:
         from sqlalchemy.orm import selectinload
         result = await db.execute(
             select(SchShiftTemplate)
             .options(
-                selectinload(SchShiftTemplate.rotation_groups_list),
                 selectinload(SchShiftTemplate.duty_teams),
             )
             .where(SchShiftTemplate.id.in_(shift_template_ids))
@@ -1029,7 +1131,6 @@ async def _load_shift_templates(db, shift_template_ids):
         )
         shifts = list(result.scalars().all())
         for t in shifts:
-            t.rotation_groups_list = []
             t.duty_teams = []
         return shifts
 

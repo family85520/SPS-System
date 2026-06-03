@@ -61,18 +61,32 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="角色标签" width="160">
+        <el-table-column label="角色+身份标识" min-width="220">
           <template #default="{ row }">
             <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+              <!-- 角色（绿色） -->
               <el-tag
-                v-for="tag in (row.tags || [])"
-                :key="tag"
+                v-for="role in (row.account_roles || [])"
+                :key="'role-' + role"
+                size="small"
+                type="success"
+              >
+                {{ role }}
+              </el-tag>
+              <!-- 标识（橙色） -->
+              <el-tag
+                v-for="tag in (row.tag_roles || [])"
+                :key="'tag-' + tag.id"
                 size="small"
                 type="warning"
               >
-                {{ tag }}
+                {{ tag.name }}
               </el-tag>
-              <span v-if="!row.tags || row.tags.length === 0" style="color: #909399">-</span>
+              <!-- 无任何角色/标识时显示 - -->
+              <span
+                v-if="(!row.account_roles || row.account_roles.length === 0) && (!row.tag_roles || row.tag_roles.length === 0)"
+                style="color: #909399"
+              >-</span>
             </div>
           </template>
         </el-table-column>
@@ -235,6 +249,25 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="身份标识">
+          <el-select
+            v-model="formData.tag_role_ids"
+            multiple
+            filterable
+            placeholder="选择身份标识"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="tag in tagOptions"
+              :key="tag.id"
+              :label="tag.name"
+              :value="tag.id"
+            />
+          </el-select>
+          <div style="font-size: 12px; color: #909399; margin-top: 4px">
+            标识在"角色管理"中创建，类型选择"标识"
+          </div>
+        </el-form-item>
 
         <template v-if="isCreate">
           <el-divider content-position="left">登录账号</el-divider>
@@ -303,6 +336,7 @@ const pageSize = ref(20)
 const orgList = ref<any[]>([])
 const orgNameMap = ref<Record<number, string>>({})
 const roleList = ref<any[]>([])
+const tagOptions = ref<any[]>([])
 const staffRulesMap = ref<Record<number, SpecialRule[]>>({})
 const drawerVisible = ref(false)
 const isCreate = ref(false)
@@ -329,6 +363,7 @@ const defaultForm = {
   org_id: null as number | null,
   status: 1,
   tags: [] as string[],
+  tag_role_ids: [] as number[],
   create_account: true,
   must_change_password: true,
 }
@@ -422,9 +457,19 @@ async function loadRoles() {
   try {
     const res: any = await api.get('/roles/options')
     const list = Array.isArray(res) ? res : (res.data || [])
-    roleList.value = list
+    // 只取角色类型，排除标识类型
+    roleList.value = list.filter((r: any) => r.role_type === 'role')
   } catch (e) {
     roleList.value = []
+  }
+}
+
+async function loadTagOptions() {
+  try {
+    const res: any = await api.get('/roles/options', { params: { type: 'tag' } })
+    tagOptions.value = Array.isArray(res) ? res : (res.data || [])
+  } catch {
+    tagOptions.value = []
   }
 }
 
@@ -466,7 +511,7 @@ function handleSizeChange(newSize: number) {
 
 function handleCreate() {
   isCreate.value = true
-  formData.value = { ...defaultForm, employee_no: '' }
+  formData.value = { ...defaultForm, employee_no: '', tag_role_ids: [] }
   drawerVisible.value = true
 }
 
@@ -578,6 +623,7 @@ function handleEdit(row: any) {
     org_id: row.org_id,
     status: row.status,
     tags: row.tags || [],
+    tag_role_ids: (row.tag_roles || []).map((t: any) => t.id),
     create_account: true,
     must_change_password: true,
   }
@@ -606,6 +652,7 @@ async function handleSave() {
         phone: formData.value.phone,
         org_id: formData.value.org_id,
         tags: formData.value.tags,
+        tag_role_ids: formData.value.tag_role_ids,
         create_account: formData.value.create_account,
         must_change_password: formData.value.create_account ? formData.value.must_change_password : false,
       })
@@ -618,6 +665,7 @@ async function handleSave() {
         org_id: formData.value.org_id,
         status: formData.value.status,
         tags: formData.value.tags,
+        tag_role_ids: formData.value.tag_role_ids,
       })
       ElMessage.success('保存成功')
     }
@@ -674,6 +722,7 @@ onMounted(() => {
   loadStaff()
   loadOrgs()
   loadRoles()
+  loadTagOptions()
 })
 </script>
 

@@ -8,6 +8,7 @@ export interface OrgNode {
   level: number
   sort_order: number
   status: number
+  daily_max_scheduled_ratio: number | null
   created_at: string
   updated_at: string
   children: OrgNode[]
@@ -25,6 +26,7 @@ export interface OrgUpdateForm {
   code?: string
   sort_order?: number
   status?: number
+  daily_max_scheduled_ratio?: number | null
 }
 
 export function getOrgTree(include_disabled?: boolean): Promise<OrgNode[]> {

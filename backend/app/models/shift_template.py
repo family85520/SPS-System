@@ -1,18 +1,12 @@
-"""班次模板与轮换组模型"""
+"""班次模板模型"""
 
-from sqlalchemy import String, SmallInteger, Integer, ForeignKey, Numeric, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, SmallInteger, Integer, ForeignKey, Numeric
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSON
 from app.database import Base
 from app.models.base import TimestampMixin
 
 
-# 排班模式枚举值（常量，避免魔法字符串）
-SCHEDULE_MODE_INDIVIDUAL = "individual"
-SCHEDULE_MODE_TEAM_ROTATION = "team_rotation"
-SCHEDULE_MODE_ROTATION_GROUP = "rotation_group"
-
-ROTATION_UNITS = ("day", "week", "month")
 VALID_WEEKDAYS = list(range(1, 8))  # 1=周一 ~ 7=周日
 
 
@@ -37,16 +31,31 @@ class SchShiftTemplate(Base, TimestampMixin):
     apply_days: Mapped[list] = mapped_column(
         JSON, default=VALID_WEEKDAYS, nullable=False, comment="适用日期周一~周日"
     )
-    rotation_frequency: Mapped[str] = mapped_column(
-        String(20), default="day", nullable=False, comment="整体轮换频次：day/week/month"
-    )
-    schedule_mode: Mapped[str] = mapped_column(
-        String(20), default=SCHEDULE_MODE_INDIVIDUAL, nullable=False,
-        comment="排班模式：individual/team_rotation/rotation_group",
-    )
     status: Mapped[int] = mapped_column(SmallInteger, default=1, nullable=False, comment="0=停用 1=启用")
 
-    # 轮换组关系（由 SchRotationGroup 的 backref 自动创建）
+    # ===== 排他性控制 =====
+    allow_multi_template: Mapped[bool] = mapped_column(default=False, nullable=False, comment="是否允许本模板人员同日参与其他模板")
+
+    # ===== 值班领导组 =====
+    leader_enabled: Mapped[bool] = mapped_column(default=False, nullable=False, comment="值班领导组开关")
+    leader_rotation_frequency: Mapped[str | None] = mapped_column(String(20), nullable=True, comment="领导组轮换频次：day/week/month")
+    leader_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False, comment="领导组每次选出人数")
+    leader_use_tag: Mapped[bool] = mapped_column(default=True, nullable=False, comment="领导候选池为空时是否回退到标识人员")
+    leader_tag_name: Mapped[str | None] = mapped_column(String(30), nullable=True, comment="标识领导的身份标签名，默认'领导'；仅 leader_use_tag=True 时生效")
+
+    # ===== 值班组 =====
+    member_enabled: Mapped[bool] = mapped_column(default=True, nullable=False, comment="值班人员组开关")
+    member_rotation_frequency: Mapped[str | None] = mapped_column(String(20), nullable=True, comment="人员组轮换频次：day/week/month")
+
+    # ===== 特殊人员组 =====
+    special_enabled: Mapped[bool] = mapped_column(default=False, nullable=False, comment="特殊人员组开关")
+    special_rotation_frequency: Mapped[str | None] = mapped_column(String(20), nullable=True, comment="特殊组轮换频次：day/week/month")
+    special_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False, comment="特殊组每次选出人数")
+    special_pool: Mapped[list | None] = mapped_column(JSON, nullable=True, comment="特殊人员候选ID列表")
+    special_exclude_from_member: Mapped[bool] = mapped_column(default=True, nullable=False, comment="特殊人员是否从值班人员池排除")
+
+    # ===== 约束规则选择 =====
+    constraint_ids: Mapped[list | None] = mapped_column(JSON, nullable=True, comment="关联约束规则ID列表，NULL则使用全部规则")
 
     # ---- 辅助属性 ----
 
@@ -70,25 +79,3 @@ class SchShiftTemplate(Base, TimestampMixin):
             return dur + 24 if dur <= 0 else dur
         except (ValueError, AttributeError):
             return 0.0
-
-
-class SchRotationGroup(Base):
-    """班次轮换组 - 配置固定轮换人员"""
-    __tablename__ = "sch_rotation_group"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    shift_template_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("sch_shift_template.id"), nullable=False, comment="所属班次模板ID"
-    )
-    name: Mapped[str] = mapped_column(String(50), nullable=False, comment="轮换组名称")
-    staff_ids: Mapped[str] = mapped_column(Text, nullable=False, default="[]", comment="轮换人员ID列表JSON")
-    rotation_unit: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="month", comment="轮换周期：day/week/month"
-    )
-    slot_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="该组占位数")
-    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=10, comment="优先级，数字越小越优先")
-    enabled: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="是否启用 1=是 0=否")
-
-    shift_template: Mapped["SchShiftTemplate"] = relationship(
-        backref="rotation_groups_list", lazy="selectin",
-    )

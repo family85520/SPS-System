@@ -150,6 +150,10 @@ export function recallSchedules(scheduleIds: number[]): Promise<any> {
   return api.post('/schedules/recall', { schedule_ids: scheduleIds })
 }
 
+export function recallSchedulesByMonth(orgId: number, year: number, month: number): Promise<any> {
+  return api.post('/schedules/recall-month', null, { params: { org_id: orgId, year, month } })
+}
+
 export function approveSchedules(scheduleIds: number[]): Promise<any> {
   return api.post('/schedules/approve', { schedule_ids: scheduleIds })
 }

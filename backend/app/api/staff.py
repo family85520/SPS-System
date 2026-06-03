@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, text, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.models import OrgStaff, OrgOrganization, SysUser, SysRole, SysUserRole
+from app.models import OrgStaff, OrgOrganization, SysUser, SysRole, SysUserRole, OrgStaffRole
 from app.models.schedule import SchSchedule, SchScheduleDetail
 from app.models.special_rule import SchSpecialRule
 from app.models.audit_log import SysAuditLog
@@ -378,6 +378,14 @@ async def create_staff(
     await db.flush()
     await db.refresh(staff)
 
+    # 分配标识（新标识体系）
+    if data.tag_role_ids:
+        for rid in data.tag_role_ids:
+            role = (await db.execute(select(SysRole).where(SysRole.id == rid))).scalars().first()
+            if role and role.role_type == "tag":
+                db.add(OrgStaffRole(staff_id=staff.id, role_id=rid))
+        await db.flush()
+
     # 根据开关决定是否创建登录账号
     if data.create_account:
         user = SysUser(
@@ -454,6 +462,20 @@ async def update_staff(
             # 写入新角色
             for rid in role_ids:
                 db.add(SysUserRole(user_id=user.id, role_id=rid))
+
+    # 分配标识（新标识体系）
+    if data.tag_role_ids is not None:
+        # 删除旧标识
+        old_tags = (await db.execute(
+            select(OrgStaffRole).where(OrgStaffRole.staff_id == staff_id)
+        )).scalars().all()
+        for ot in old_tags:
+            await db.delete(ot)
+        # 写入新标识
+        for rid in data.tag_role_ids:
+            role = (await db.execute(select(SysRole).where(SysRole.id == rid))).scalars().first()
+            if role and role.role_type == "tag":
+                db.add(OrgStaffRole(staff_id=staff_id, role_id=rid))
 
     await db.flush()
     await db.refresh(staff)
@@ -598,6 +620,9 @@ async def delete_staff(
         # ── 1. 清理排班相关（org_staff FK）──
         # 删除特殊规则
         await db.execute(sa_delete(SchSpecialRule).where(SchSpecialRule.staff_id == staff_id))
+        # 删除标识关联
+        from app.models import OrgStaffRole
+        await db.execute(sa_delete(OrgStaffRole).where(OrgStaffRole.staff_id == staff_id))
         # 删除排班明细
         await db.execute(sa_delete(SchScheduleDetail).where(SchScheduleDetail.staff_id == staff_id))
         # 排班主记录：leader_staff_id 置空
@@ -677,7 +702,7 @@ async def _match_tags_to_roles(db: AsyncSession, tags: list[str]) -> list[int]:
     return matched_ids
 
 async def _serialize_staff_list(db: AsyncSession, staffs: list) -> list[StaffResponse]:
-    """序列化人员列表（含账号信息）"""
+    """序列化人员列表（含账号信息 + 标识信息）"""
     if not staffs:
         return []
 
@@ -703,11 +728,37 @@ async def _serialize_staff_list(db: AsyncSession, staffs: list) -> list[StaffRes
     for ur in urs:
         user_roles_map.setdefault(ur.user_id, []).append(role_map.get(ur.role_id, ""))
 
+    # ===== 新增：加载标识数据 =====
+    from app.models import OrgStaffRole
+    tag_roles_list = (await db.execute(
+        select(OrgStaffRole).where(OrgStaffRole.staff_id.in_(staff_ids))
+    )).scalars().all() if staff_ids else []
+
+    # 构建 role_id → role_info 映射
+    role_info_map = {r.id: {"id": r.id, "name": r.name, "code": r.code, "role_type": r.role_type} for r in all_roles}
+    staff_tag_roles_map: dict[int, list[dict]] = {}
+    for tr in tag_roles_list:
+        info = role_info_map.get(tr.role_id)
+        if info:
+            staff_tag_roles_map.setdefault(tr.staff_id, []).append(info)
+
     items = []
     for staff in staffs:
-        item = StaffResponse.model_validate(staff)
-        if staff.organization:
-            item.org_name = staff.organization.name
+        # 手动构建响应（避免 model_validate 触发 ORM tag_roles relationship 导致问题）
+        item = StaffResponse(
+            id=staff.id,
+            name=staff.name,
+            employee_no=staff.employee_no,
+            phone=getattr(staff, "phone", None),
+            org_id=staff.org_id,
+            org_name=getattr(staff.organization, "name", None) if staff.organization else None,
+            status=staff.status,
+            tags=getattr(staff, "tags", None),
+            available_posts=getattr(staff, "available_posts", None),
+            tag_roles=staff_tag_roles_map.get(staff.id, []),
+            created_at=staff.created_at,
+            updated_at=staff.updated_at,
+        )
 
         user = staff_user_map.get(staff.id)
         if user:

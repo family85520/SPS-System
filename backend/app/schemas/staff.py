@@ -13,6 +13,7 @@ class StaffCreate(BaseModel):
     available_posts: Optional[List[int]] = Field(None, description="可用岗位ID列表")
     create_account: bool = Field(True, description="是否同时创建登录账号，默认开启")
     must_change_password: bool = Field(True, description="首次登录是否需要修改密码，默认开启")
+    tag_role_ids: Optional[List[int]] = Field(None, description="标识角色ID列表（新标识体系）")
 
 
 class StaffUpdate(BaseModel):
@@ -24,6 +25,7 @@ class StaffUpdate(BaseModel):
     status: Optional[int] = Field(None, description="1=在岗 2=请假 3=外派 0=停用")
     tags: Optional[List[str]] = None
     available_posts: Optional[List[int]] = None
+    tag_role_ids: Optional[List[int]] = Field(None, description="标识角色ID列表（新标识体系）")
 
 
 class StaffAccountUpdate(BaseModel):
@@ -44,6 +46,8 @@ class StaffResponse(BaseModel):
     status: int
     tags: Optional[List[str]]
     available_posts: Optional[List[int]]
+    # 新标识体系
+    tag_roles: Optional[List[dict]] = None  # [{"id": 1, "name": "领导", "code": "leader"}, ...]
     # 账号信息
     has_account: bool = False
     account_username: Optional[str] = None
