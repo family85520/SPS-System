@@ -419,8 +419,16 @@ class IndividualStrategy(ScheduleStrategy):
             return list(candidates)
 
         if freq == "day":
-            # === 日轮：公平排序（本轮总次数 → 本轮同类型次数 → 日轮转偏移） ===
-            # 只用本轮计数，不参杂历史数据，每人从 0 开始公平竞争
+            # === 日轮：严格白夜交替 + 公平排序 ===
+            # 1. 排除上次同类型的候选人（严格交替）
+            alt_candidates = [
+                sid for sid in candidates
+                if self.s._last_shift_type.get(sid) != target_type
+            ]
+            # 2. 如果严格交替后不够人，回退到全部候选人
+            if len(alt_candidates) >= target:
+                candidates = alt_candidates
+            # 3. 公平排序（本轮总次数 → 本轮同类型次数 → 日轮转偏移）
             dt = date.fromisoformat(date_str)
             day_seed = dt.day + dt.month * 31
             combined = sorted(candidates, key=lambda sid: (
@@ -519,6 +527,7 @@ class AutoScheduler:
         # 本轮白班/夜班计数（用于平衡同类型班次分布）
         self._night_shifts: dict[int, int] = defaultdict(int)
         self._day_shifts: dict[int, int] = defaultdict(int)
+        self._last_shift_type: dict[int, str] = {}  # staff_id -> "day" | "night"
 
         # 月轮班次已锁定人员（整月独占，不参与白夜班）
         self._monthly_locked: set[int] = set()
@@ -688,8 +697,10 @@ class AutoScheduler:
                     shift_t = self.shift_templates.get(getattr(s, "shift_id", None))
                     if shift_t and self._is_night_shift(shift_t):
                         self._night_shifts[d.staff_id] = self._night_shifts.get(d.staff_id, 0) + 1
+                        self._last_shift_type[d.staff_id] = "night"
                     elif shift_t:
                         self._day_shifts[d.staff_id] = self._day_shifts.get(d.staff_id, 0) + 1
+                        self._last_shift_type[d.staff_id] = "day"
 
         current = start_date
         while current <= end_date:
@@ -748,13 +759,15 @@ class AutoScheduler:
                 for sid in result.member_ids:
                     self.scorer.record_assignment(sid, date_str, shift.id)
 
-                # 记录白班/夜班计数（用于同类型班次平衡）
-                if self._is_night_shift(shift):
-                    for sid in result.member_ids:
+                # 记录白班/夜班计数与末次类型（用于同类型班次平衡 + 严格交替）
+                is_night = self._is_night_shift(shift)
+                shift_type = "night" if is_night else "day"
+                for sid in result.member_ids:
+                    if is_night:
                         self._night_shifts[sid] = self._night_shifts.get(sid, 0) + 1
-                else:
-                    for sid in result.member_ids:
+                    else:
                         self._day_shifts[sid] = self._day_shifts.get(sid, 0) + 1
+                    self._last_shift_type[sid] = shift_type
 
                 # 兜底截断
                 result.member_ids = self._truncate_members(result, shift)
