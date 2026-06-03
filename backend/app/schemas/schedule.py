@@ -124,6 +124,8 @@ class ScheduleResponse(BaseModel):
     org_name: Optional[str] = None
     leader_staff_id: Optional[int] = None
     leader_name: Optional[str] = None
+    leader: Optional[StaffInfo] = None
+    leaders: list[StaffInfo] = []
     status: int
     source: str
     published_at: Optional[_datetime] = None
@@ -153,6 +155,7 @@ class CalendarShift(BaseModel):
     start_time: str = ""
     end_time: str = ""
     leader: Optional[StaffInfo] = None
+    leaders: list[StaffInfo] = []
     members: list[StaffInfo] = []
     status: int = 0
     source: str = "manual"
