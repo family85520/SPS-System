@@ -7,12 +7,6 @@
     :close-on-click-modal="!exporting"
   >
     <el-form label-width="80px">
-      <el-form-item label="导出格式">
-        <el-radio-group v-model="form.format">
-          <el-radio value="excel">Excel</el-radio>
-          <el-radio value="pdf">PDF</el-radio>
-        </el-radio-group>
-      </el-form-item>
 
       <el-form-item label="日期范围">
         <el-date-picker
@@ -49,7 +43,7 @@
       </el-form-item>
     </el-form>
 
-    <template v-if="form.format === 'excel' && form.dimension === 'org'">
+    <template v-if="form.dimension === 'org'">
     <el-divider content-position="left">
       <span style="display:flex;align-items:center;gap:4px;">
         自定义模板（仅「按组织 + Excel」可用）
@@ -121,7 +115,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Upload } from '@element-plus/icons-vue'
 import {
   downloadScheduleExcel,
-  downloadSchedulePdf,
   listTemplates,
   uploadTemplate,
   deleteTemplate,
@@ -156,7 +149,6 @@ const emit = defineEmits<{
 const exporting = defineModel<boolean>('loading', { default: false })
 
 const form = reactive({
-  format: 'excel' as 'excel' | 'pdf',
   dateRange: [] as string[],
   dimension: 'org' as 'org' | 'person',
   orgId: undefined as number | undefined,
@@ -171,7 +163,6 @@ watch(
         ? [props.startDate, props.endDate]
         : []
       form.orgId = props.orgId
-      form.format = 'excel'
       form.dimension = 'org'
     }
   },
@@ -269,17 +260,10 @@ async function handleExport() {
 
   exporting.value = true
   try {
-    if (form.format === 'excel') {
-      await downloadScheduleExcel({
-        ...baseParams,
-        dimension: form.dimension,
-      })
-    } else {
-      await downloadSchedulePdf({
-        ...baseParams,
-        dimension: form.dimension,
-      })
-    }
+    await downloadScheduleExcel({
+      ...baseParams,
+      dimension: form.dimension,
+    })
     ElMessage.success('导出成功')
     emit('update:visible', false)
   } catch {

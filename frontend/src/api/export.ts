@@ -39,17 +39,6 @@ export async function downloadScheduleExcel(params: ExportScheduleParams) {
   triggerDownload(res, `排班表(${suffix})_${params.start_date}_${params.end_date}.xlsx`)
 }
 
-/** 导出排班表 PDF */
-export async function downloadSchedulePdf(params: ExportScheduleParams) {
-  const res = await api.get('/export/schedule/pdf', {
-    params,
-    responseType: 'blob',
-    timeout: 60000,
-  })
-  const suffix = params.dimension === 'person' ? '按人员' : '按组织'
-  triggerDownload(res, `排班表(${suffix})_${params.start_date}_${params.end_date}.pdf`)
-}
-
 /** 导出统计报表 Excel */
 export async function downloadStatisticsExcel(params: ExportStatisticsParams) {
   const res = await api.get('/export/statistics/excel', {
@@ -58,16 +47,6 @@ export async function downloadStatisticsExcel(params: ExportStatisticsParams) {
     timeout: 60000,
   })
   triggerDownload(res, `排班统计_${params.start_date}_${params.end_date}.xlsx`)
-}
-
-/** 导出统计报表 PDF */
-export async function downloadStatisticsPdf(params: ExportStatisticsParams) {
-  const res = await api.get('/export/statistics/pdf', {
-    params,
-    responseType: 'blob',
-    timeout: 60000,
-  })
-  triggerDownload(res, `排班统计_${params.start_date}_${params.end_date}.pdf`)
 }
 
 // ==================== 导出模板管理 ====================

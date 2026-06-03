@@ -60,39 +60,6 @@ async def export_schedule_excel(
     )
 
 
-@router.get("/schedule/pdf", summary="导出排班表 PDF")
-async def export_schedule_pdf(
-    start_date: str = Query(..., description="开始日期 YYYY-MM-DD"),
-    end_date: str = Query(..., description="结束日期 YYYY-MM-DD"),
-    org_id: int | None = Query(None, description="组织ID"),
-    dimension: str = Query("org", description="维度：org=按组织 / person=按人员"),
-    db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("export", "read")),
-):
-    sd, ed = _parse(start_date, "start_date"), _parse(end_date, "end_date")
-    if ed < sd:
-        raise HTTPException(400, "结束日期不能早于开始日期")
-
-    # 读取单位名称
-    unit_cfg = (await db.execute(
-        select(SysConfig).where(SysConfig.config_key == "unit_name")
-    )).scalars().first()
-    unit_name = unit_cfg.config_value if unit_cfg else ""
-
-    try:
-        buf = await ExportService.schedule_pdf(db, sd, ed, org_id, unit_name, dimension)
-    except ValueError as e:
-        raise HTTPException(404, str(e))
-
-    suffix = "按人员" if dimension == "person" else "按组织"
-    filename = f"排班表({suffix})_{start_date}_{end_date}.pdf"
-    return StreamingResponse(
-        buf,
-        media_type="application/pdf",
-        headers={"Content-Disposition": _content_disposition(filename)},
-    )
-
-
 @router.get("/statistics/excel", summary="导出统计报表 Excel")
 async def export_statistics_excel(
     start_date: str = Query(..., description="开始日期 YYYY-MM-DD"),
@@ -114,31 +81,6 @@ async def export_statistics_excel(
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": _content_disposition(filename)},
-    )
-
-
-@router.get("/statistics/pdf", summary="导出统计报表 PDF")
-async def export_statistics_pdf(
-    start_date: str = Query(..., description="开始日期 YYYY-MM-DD"),
-    end_date: str = Query(..., description="结束日期 YYYY-MM-DD"),
-    org_id: int | None = Query(None, description="组织ID"),
-    db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("export", "read")),
-):
-    sd, ed = _parse(start_date, "start_date"), _parse(end_date, "end_date")
-    if ed < sd:
-        raise HTTPException(400, "结束日期不能早于开始日期")
-
-    try:
-        buf = await ExportService.statistics_pdf(db, sd, ed, org_id)
-    except ValueError as e:
-        raise HTTPException(404, str(e))
-
-    filename = f"排班统计_{start_date}_{end_date}.pdf"
-    return StreamingResponse(
-        buf,
-        media_type="application/pdf",
         headers={"Content-Disposition": _content_disposition(filename)},
     )
 

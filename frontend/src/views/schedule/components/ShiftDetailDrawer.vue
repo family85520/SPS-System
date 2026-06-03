@@ -45,9 +45,7 @@
         />
         <div v-else class="current-leader">
           <template v-if="schedule.leaders?.length">
-            <span v-for="(l, i) in schedule.leaders" :key="i">
-              {{ l.name }}<span v-if="i < schedule.leaders.length - 1">、</span>
-            </span>
+            <span v-for="(l, i) in schedule.leaders" :key="i" class="leader-name-item">{{ l.name }}</span>
           </template>
           <template v-else>{{ schedule.leader_name || '未指定' }}</template>
         </div>
@@ -340,6 +338,13 @@ function handleClose() {
   font-size: 14px;
   color: #556173;
   padding: 4px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.leader-name-item {
+  font-size: 14px;
+  color: #556173;
 }
 
 .member-list {

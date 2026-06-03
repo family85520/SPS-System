@@ -9,11 +9,11 @@
     @click.stop="$emit('click', shift)"
   >
     <!-- 领导标签 -->
-    <div v-if="shift.leaders?.length" class="leader-tag" :style="{ background: shift.shift_color }">
-      {{ shift.leaders.map((l: any) => l.name).join('、') }}
+    <div v-if="shift.leaders?.length" class="leader-list">
+      <span v-for="(l, i) in shift.leaders" :key="i" class="leader-tag-item" :style="{ background: shift.shift_color }">{{ l.name }}</span>
     </div>
-    <div v-else-if="shift.leader" class="leader-tag" :style="{ background: shift.shift_color }">
-      {{ shift.leader.name }}
+    <div v-else-if="shift.leader" class="leader-list">
+      <span class="leader-tag-item" :style="{ background: shift.shift_color }">{{ shift.leader.name }}</span>
     </div>
 
     <!-- 班次名称 + 时间 -->
@@ -75,18 +75,17 @@ defineEmits<{
   border: 1px solid #DC3545;
 }
 
-.leader-tag {
-  display: inline-block;
+.leader-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.leader-tag-item {
   color: #FFFFFF;
-  border-radius: 2px;
   padding: 0 5px;
+  border-radius: 2px;
   font-size: 10px;
   line-height: 16px;
-  margin-bottom: 2px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .shift-header {

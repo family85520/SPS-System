@@ -7,13 +7,6 @@
     :close-on-click-modal="!exporting"
   >
     <el-form label-width="80px">
-      <el-form-item label="导出格式">
-        <el-radio-group v-model="form.format">
-          <el-radio value="excel">Excel</el-radio>
-          <el-radio value="pdf">PDF</el-radio>
-        </el-radio-group>
-      </el-form-item>
-
       <el-form-item label="日期范围">
         <el-date-picker
           v-model="form.dateRange"
@@ -53,7 +46,7 @@
 import { reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
-import { downloadStatisticsExcel, downloadStatisticsPdf } from '@/api/export'
+import { downloadStatisticsExcel } from '@/api/export'
 
 interface OrgOption {
   id: number
@@ -81,7 +74,6 @@ const emit = defineEmits<{
 const exporting = defineModel<boolean>('loading', { default: false })
 
 const form = reactive({
-  format: 'excel' as 'excel' | 'pdf',
   dateRange: [] as string[],
   orgId: undefined as number | undefined,
 })
@@ -94,7 +86,6 @@ watch(
         ? [props.startDate, props.endDate]
         : []
       form.orgId = props.orgId
-      form.format = 'excel'
     }
   },
   { immediate: true },
@@ -115,11 +106,7 @@ async function handleExport() {
 
   exporting.value = true
   try {
-    if (form.format === 'excel') {
-      await downloadStatisticsExcel(params)
-    } else {
-      await downloadStatisticsPdf(params)
-    }
+    await downloadStatisticsExcel(params)
     ElMessage.success('导出成功')
     emit('update:visible', false)
   } catch {

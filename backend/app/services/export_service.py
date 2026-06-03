@@ -657,6 +657,8 @@ def _build_org_excel(rows: list[dict]) -> io.BytesIO:
             }
         shift = rd["shift_name"]
 
+        if shift == "行政":
+            continue
         if shift == "夜班":
             day_map[d]["night_leaders"].extend(rd["group_leaders"])
             day_map[d]["night_members"].extend(rd["members"])
@@ -1087,6 +1089,8 @@ def _build_org_pdf(rows: list[dict], unit_name: str = "") -> io.BytesIO:
                            "night_leaders": [], "night_members": [],
                            "duty_leaders": []}
         shift = rd["shift_name"]
+        if shift == "行政":
+            continue
         if shift == "夜班":
             day_map[d]["night_leaders"].extend(rd["group_leaders"])
             day_map[d]["night_members"].extend(rd["members"])
