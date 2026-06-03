@@ -697,26 +697,31 @@ class AutoScheduler:
         # 标记本轮开始日期，MAX_CONTINUOUS_DAYS 不跨月串联
         self.candidate_filter._run_start_str = str(start_date)
 
-        # 跨月均衡：把上月末最后 7 天的排班继承到本轮初始计数
-        # 7 天覆盖一整周，确保严格交替不因跨月断档
+        # 跨月均衡：继承历史排班计数
+        # 全年数据 → 白/夜班计数（供公平排序连续）
+        # 上月末 7 天 → 末次类型+日期（供严格交替+夜间隔检测）
         tail_start = start_date - timedelta(days=7)
         tail_start_str = str(tail_start)
         start_date_str = str(start_date)
         sched_idx = {s.id: s for s in self.existing_schedules}
         for d in self.existing_details:
             s = sched_idx.get(d.schedule_id)
-            if s:
-                d_str = str(getattr(s, "date", ""))
-                if tail_start_str <= d_str < start_date_str:
-                    shift_t = self.shift_templates.get(getattr(s, "shift_id", None))
-                    if shift_t and self._is_night_shift(shift_t):
-                        self._night_shifts[d.staff_id] = self._night_shifts.get(d.staff_id, 0) + 1
-                        self._last_shift_type[d.staff_id] = "night"
-                        self._last_shift_date[d.staff_id] = d_str
-                    elif shift_t:
-                        self._day_shifts[d.staff_id] = self._day_shifts.get(d.staff_id, 0) + 1
-                        self._last_shift_type[d.staff_id] = "day"
-                        self._last_shift_date[d.staff_id] = d_str
+            if not s:
+                continue
+            d_str = str(getattr(s, "date", ""))
+            shift_t = self.shift_templates.get(getattr(s, "shift_id", None))
+            if not shift_t:
+                continue
+            is_night = self._is_night_shift(shift_t)
+            # 全年计数：用于公平排序
+            if is_night:
+                self._night_shifts[d.staff_id] = self._night_shifts.get(d.staff_id, 0) + 1
+            else:
+                self._day_shifts[d.staff_id] = self._day_shifts.get(d.staff_id, 0) + 1
+            # 末次类型+日期：只用上月末 7 天
+            if tail_start_str <= d_str < start_date_str:
+                self._last_shift_type[d.staff_id] = "night" if is_night else "day"
+                self._last_shift_date[d.staff_id] = d_str
 
         current = start_date
         while current <= end_date:
