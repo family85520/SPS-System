@@ -163,7 +163,7 @@ async def get_template_variables(
         {"name": "{{org_name}}",  "desc": "组织名称",       "category": "全局", "example": "A组织"},
         {"name": "{{start_date}}","desc": "开始日期",       "category": "全局", "example": "2026-06-01"},
         {"name": "{{end_date}}",  "desc": "结束日期",       "category": "全局", "example": "2026-06-30"},
-        {"name": "{{duty_text}}", "desc": "岗位职责说明",    "category": "全局", "example": "排班人员：全体监管人员（除...）"},
+        {"name": "{{export_time}}","desc": "发布时间（排班表发布日期）","category": "全局", "example": "2026-06-03"},
         {"name": "{{footer}}",    "desc": "页脚签名行",      "category": "全局", "example": "分管领导： 科室负责人： 制表人："},
         {"name": "{{date}}",      "desc": "日期（循环行）",  "category": "每日循环", "example": "2026-06-01"},
         {"name": "{{weekday}}",   "desc": "星期（循环行）",  "category": "每日循环", "example": "周一"},

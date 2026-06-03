@@ -300,7 +300,7 @@ class ExportService:
 
         # 副标题
         ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=col_count)
-        c = ws.cell(row=2, column=1, value="24小时值班电话：                    制表时间：{{start_date}}"); c.font = Font(name="楷体", size=11)
+        c = ws.cell(row=2, column=1, value="24小时值班电话：                    制表时间：{{export_time}}"); c.font = Font(name="楷体", size=11)
         c.alignment = Alignment(horizontal="center", vertical="center")
 
         # 表头 row 3-4（统一使用 shift_N_* 变量）
@@ -347,13 +347,8 @@ class ExportService:
             cell = ws.cell(row=data_row, column=ci, value=val)
             cell.font = cell_font; cell.border = thin; cell.alignment = center
 
-        # 职责说明行
-        note_row = data_row + 1
-        ws.merge_cells(start_row=note_row, start_column=1, end_row=note_row, end_column=col_count)
-        ws.cell(row=note_row, column=1, value="{{duty_text}}").font = cell_font
-
         # 页脚
-        footer_row = note_row + 1
+        footer_row = data_row + 1
         ws.merge_cells(start_row=footer_row, start_column=1, end_row=footer_row, end_column=col_count)
         ws.cell(row=footer_row, column=1, value="{{footer}}").font = cell_font
 
@@ -374,7 +369,7 @@ class ExportService:
         """用排班数据填充自定义模板。所有班次统一使用 shift_N_* 变量（N=0,1,2...按开始时间排序）。
 
         变量清单:
-          全局:     {{title}} {{org_name}} {{start_date}} {{end_date}} {{duty_text}} {{footer}}
+          全局:     {{title}} {{org_name}} {{start_date}} {{end_date}} {{export_time}} {{footer}}
           每日期:   {{date}} {{weekday}} {{duty_leader}}
           每班次:   {{shift_N_name}} {{shift_N_time}} {{shift_N_leader}} {{shift_N_members}}
           控制:     {{#each dates}} 标记循环行
@@ -401,7 +396,6 @@ class ExportService:
 
         # ---- 按日分组 ----
         day_map: dict[str, dict] = {}
-        shift_personnel: list[set[str]] = [set() for _ in shift_meta]  # 每个班次的人员（用于duty_text）
         for rd in rows:
             d = rd["date"]
             if d not in day_map:
@@ -416,22 +410,12 @@ class ExportService:
             for mi in rd.get("member_infos", []):
                 if mi.get("phone"): day_map[d]["shifts"][shift]["phones"].append(mi["phone"])
                 if mi.get("employee_no"): day_map[d]["shifts"][shift]["employee_nos"].append(mi["employee_no"])
-            # 收集每个班次的人员
-            for idx, sm in shift_meta.items():
-                if sm["name"] == shift:
-                    shift_personnel[idx].update(rd["group_leaders"])
-                    shift_personnel[idx].update(rd["members"])
             for name in rd["leaders"]:
                 if name not in day_map[d]["duty_leaders"]:
                     day_map[d]["duty_leaders"].append(name)
 
         sorted_dates = sorted(day_map.keys())
         org_name = rows[0]["org_name"] if rows else ""
-        # 收集所有排班人员（用于duty_text排除说明）
-        all_personnel: set[str] = set()
-        for sp in shift_personnel:
-            all_personnel.update(sp)
-        admin_names = "、".join(sorted(all_personnel)) if all_personnel else ""
 
         # ---- 构建单日数据 ----
         def _date_data(d: str) -> dict:
@@ -459,12 +443,14 @@ class ExportService:
             return data
 
         # ---- 全局替换 ----
+        from datetime import datetime
+        now_str = datetime.now().strftime("%Y-%m-%d")
         global_replace = {
             "title": f"{org_name}日常值班工作安排表",
             "org_name": org_name,
             "start_date": str(start_date),
             "end_date": str(end_date),
-            "duty_text": f"排班人员：全体监管人员（除{admin_names}）" if admin_names else "",
+            "export_time": now_str,
             "footer": "分管领导：          科室负责人：           制表人：",
         }
         for idx, sm in shift_meta.items():
@@ -659,7 +645,6 @@ def _build_org_excel(rows: list[dict]) -> io.BytesIO:
 
     # ===== 按日期分组：每天一行 =====
     day_map: dict[str, dict] = {}
-    admin_personnel: set[str] = set()
 
     for rd in rows:
         d = rd["date"]
@@ -668,14 +653,11 @@ def _build_org_excel(rows: list[dict]) -> io.BytesIO:
                 "date": d, "weekday": rd["weekday"], "org_name": rd["org_name"],
                 "day_leaders": [], "day_members": [],
                 "night_leaders": [], "night_members": [],
-                "duty_leaders": [],  # 仅带班领导（身份标识）
+                "duty_leaders": [],
             }
         shift = rd["shift_name"]
 
-        if shift == "行政":
-            admin_personnel.update(rd["members"])
-            admin_personnel.update(rd["group_leaders"])
-        elif shift == "夜班":
+        if shift == "夜班":
             day_map[d]["night_leaders"].extend(rd["group_leaders"])
             day_map[d]["night_members"].extend(rd["members"])
         else:
@@ -708,7 +690,7 @@ def _build_org_excel(rows: list[dict]) -> io.BytesIO:
     # ===== 副标题行 =====
     ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=8)
     c = ws.cell(row=2, column=1,
-                value=f"24小时值班电话：                    制表时间：{datetime.now().strftime('%Y年%m月%d日')}")
+                value=f"24小时值班电话：                    制表时间：{datetime.now().strftime('%Y-%m-%d')}")
     c.font = subtitle_font
     c.alignment = Alignment(horizontal="center", vertical="center")
 
@@ -813,7 +795,6 @@ def _build_org_excel(rows: list[dict]) -> io.BytesIO:
         })
 
     # ===== 岗位职责（合并） =====
-    admin_names = "、".join(sorted(admin_personnel)) if admin_personnel else ""
     duty_text = (
         "一、工作职责：\n"
         "（一）开展应急值守，监测、记录煤矿瓦斯超限、安全事故等异常情况，"
@@ -827,8 +808,7 @@ def _build_org_excel(rows: list[dict]) -> io.BytesIO:
         "遇异常情况及时汇报给带班领导，按局机关信息报送有关规定进行处置。"
         "周末及节假日由一人到监控中心值班，另一人机动备勤。\n"
         "（二）按时接班，确因特殊原因确实不能按时接班，需提前与对方做好沟通，严禁出现空岗。\n"
-        "（三）严格值班纪律，根据需要做好调度工作，严禁出现离岗、脱岗、睡岗。\n\n"
-        f"    排班人员及负责人：全体监管人员（除{admin_names}）"
+        "（三）严格值班纪律，根据需要做好调度工作，严禁出现离岗、脱岗、睡岗。"
     )
     last_data_row = ri - 1
     ws.merge_cells(start_row=DATA_START, start_column=8, end_row=last_data_row, end_column=8)
@@ -1097,9 +1077,8 @@ def _build_org_pdf(rows: list[dict], unit_name: str = "") -> io.BytesIO:
     s_cell = ParagraphStyle('C', fontName=cn, fontSize=7, leading=10, alignment=TA_CENTER)
     s_left = ParagraphStyle('L', fontName=cn, fontSize=7, leading=10, alignment=TA_LEFT)
 
-    # 按日分组（复用 Excel 逻辑）
+    # 按日分组
     day_map: dict[str, dict] = {}
-    admin_personnel: set[str] = set()
     for rd in rows:
         d = rd["date"]
         if d not in day_map:
@@ -1108,9 +1087,7 @@ def _build_org_pdf(rows: list[dict], unit_name: str = "") -> io.BytesIO:
                            "night_leaders": [], "night_members": [],
                            "duty_leaders": []}
         shift = rd["shift_name"]
-        if shift == "行政":
-            admin_personnel.update(rd["members"]); admin_personnel.update(rd["group_leaders"])
-        elif shift == "夜班":
+        if shift == "夜班":
             day_map[d]["night_leaders"].extend(rd["group_leaders"])
             day_map[d]["night_members"].extend(rd["members"])
         else:
@@ -1131,8 +1108,6 @@ def _build_org_pdf(rows: list[dict], unit_name: str = "") -> io.BytesIO:
     for rd in rows:
         if rd["shift_name"] == "白班" and not day_time: day_time = rd["time_range"]
         if rd["shift_name"] == "夜班" and not night_time: night_time = rd["time_range"]
-
-    admin_names = "、".join(sorted(admin_personnel)) if admin_personnel else ""
 
     # 构建表格数据
     hdr = [
@@ -1180,9 +1155,6 @@ def _build_org_pdf(rows: list[dict], unit_name: str = "") -> io.BytesIO:
     ]))
     elements.append(t)
 
-    elements.append(Spacer(1, 4*mm))
-    elements.append(Paragraph(
-        f"排班人员及负责人：全体监管人员（除{admin_names}）", s_left))
     elements.append(Spacer(1, 6*mm))
     elements.append(Paragraph(
         "分管领导：                    科室负责人：                     制表人：", s_left))
