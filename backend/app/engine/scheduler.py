@@ -611,12 +611,19 @@ class AutoScheduler:
             if not shift.leader_enabled:
                 continue
             if shift.leader_pool:
+                pool_added = 0
                 for sid in shift.leader_pool:
                     if sid not in self.staff_map:
                         continue
                     self._all_leader_candidates.add(sid)
                     if sid not in available_ids:
                         available_ids.append(sid)
+                        pool_added += 1
+                self._diag_msgs.append(
+                    f"[诊断-领导池] leader_pool={shift.leader_pool} "
+                    f"in_staff_map={sum(1 for sid in shift.leader_pool if sid in self.staff_map)} "
+                    f"added_to_available={pool_added}"
+                )
             elif shift.leader_use_tag:
                 # 无候选池 → 用排班模板指定的标签名筛选标识人员
                 tag_name = getattr(shift, 'leader_tag_name', None) or '领导'
@@ -863,9 +870,11 @@ class AutoScheduler:
             if not getattr(self, diag_leader_key, False):
                 setattr(self, diag_leader_key, True)
                 self._diag_msgs.append(
-                    f"[诊断-领导] {shift.name} period={period}（{leader_freq}） "
-                    f"full_pool={full_sorted} filtered={sorted(candidates)} "
-                    f"start_idx={start_idx} selected={selected}"
+                    f"[诊断-领导] {shift.name} period={period} freq={leader_freq} "
+                    f"leader_count_cfg={leader_count} full_count={full_count} "
+                    f"filtered_count={len(candidates)} "
+                    f"start_idx={start_idx} selected={selected} "
+                    f"(共计{len(selected)}人)"
                 )
         else:
             # 日轮：打分排序选取

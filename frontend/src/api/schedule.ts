@@ -14,6 +14,8 @@ export interface Schedule {
   org_name: string | null
   leader_staff_id: number | null
   leader_name: string | null
+  leader: { staff_id: number; name: string; role_type: string } | null
+  leaders: { staff_id: number; name: string; role_type: string }[]
   status: number  // 0=草稿 1=已发布 2=已撤回
   source: string  // auto/manual/swap
   published_at: string | null

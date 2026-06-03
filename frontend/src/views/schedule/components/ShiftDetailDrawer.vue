@@ -44,7 +44,12 @@
           @update:model-value="handleLeaderChange"
         />
         <div v-else class="current-leader">
-          {{ schedule.leader_name || '未指定' }}
+          <template v-if="schedule.leaders?.length">
+            <span v-for="(l, i) in schedule.leaders" :key="i">
+              {{ l.name }}<span v-if="i < schedule.leaders.length - 1">、</span>
+            </span>
+          </template>
+          <template v-else>{{ schedule.leader_name || '未指定' }}</template>
         </div>
       </div>
 
