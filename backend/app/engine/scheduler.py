@@ -419,13 +419,25 @@ class IndividualStrategy(ScheduleStrategy):
             return list(candidates)
 
         if freq == "day":
-            # === 日轮：严格白夜交替 + 公平排序 ===
+            # === 日轮：严格交替 + 夜→白间隔检测 + 公平排序 ===
+            dt = date.fromisoformat(date_str)
+            prev_date = str(dt - timedelta(days=1))
+
             # 1. 排除上次同类型的候选人（严格交替）
             alt_candidates = [
                 sid for sid in candidates
                 if self.s._last_shift_type.get(sid) != target_type
             ]
-            # 2. 如果严格交替后不够人，回退到全部候选人
+            # 2. 如果是白班，排除前一天上夜班的人（夜班08:30结束，白班08:30开始，间隔=0）
+            if target_type == "day":
+                alt_candidates = [
+                    sid for sid in alt_candidates
+                    if not (
+                        self.s._last_shift_type.get(sid) == "night"
+                        and self.s._last_shift_date.get(sid) == prev_date
+                    )
+                ]
+            # 3. 如果严格交替后不够人，回退到全部候选人
             if len(alt_candidates) >= target:
                 candidates = alt_candidates
             # 3. 公平排序（本轮总次数 → 本轮同类型次数 → 日轮转偏移）
@@ -528,6 +540,7 @@ class AutoScheduler:
         self._night_shifts: dict[int, int] = defaultdict(int)
         self._day_shifts: dict[int, int] = defaultdict(int)
         self._last_shift_type: dict[int, str] = {}  # staff_id -> "day" | "night"
+        self._last_shift_date: dict[int, str] = {}   # staff_id -> date_str
 
         # 月轮班次已锁定人员（整月独占，不参与白夜班）
         self._monthly_locked: set[int] = set()
@@ -684,8 +697,9 @@ class AutoScheduler:
         # 标记本轮开始日期，MAX_CONTINUOUS_DAYS 不跨月串联
         self.candidate_filter._run_start_str = str(start_date)
 
-        # 跨月均衡：把上月末最后 3 天的排班继承到本轮初始计数
-        tail_start = start_date - timedelta(days=3)
+        # 跨月均衡：把上月末最后 7 天的排班继承到本轮初始计数
+        # 7 天覆盖一整周，确保严格交替不因跨月断档
+        tail_start = start_date - timedelta(days=7)
         tail_start_str = str(tail_start)
         start_date_str = str(start_date)
         sched_idx = {s.id: s for s in self.existing_schedules}
@@ -698,9 +712,11 @@ class AutoScheduler:
                     if shift_t and self._is_night_shift(shift_t):
                         self._night_shifts[d.staff_id] = self._night_shifts.get(d.staff_id, 0) + 1
                         self._last_shift_type[d.staff_id] = "night"
+                        self._last_shift_date[d.staff_id] = d_str
                     elif shift_t:
                         self._day_shifts[d.staff_id] = self._day_shifts.get(d.staff_id, 0) + 1
                         self._last_shift_type[d.staff_id] = "day"
+                        self._last_shift_date[d.staff_id] = d_str
 
         current = start_date
         while current <= end_date:
@@ -759,7 +775,7 @@ class AutoScheduler:
                 for sid in result.member_ids:
                     self.scorer.record_assignment(sid, date_str, shift.id)
 
-                # 记录白班/夜班计数与末次类型（用于同类型班次平衡 + 严格交替）
+                # 记录白班/夜班计数与末次类型+日期（用于同类型班次平衡 + 严格交替 + 间隔检测）
                 is_night = self._is_night_shift(shift)
                 shift_type = "night" if is_night else "day"
                 for sid in result.member_ids:
@@ -768,6 +784,7 @@ class AutoScheduler:
                     else:
                         self._day_shifts[sid] = self._day_shifts.get(sid, 0) + 1
                     self._last_shift_type[sid] = shift_type
+                    self._last_shift_date[sid] = date_str
 
                 # 兜底截断
                 result.member_ids = self._truncate_members(result, shift)
