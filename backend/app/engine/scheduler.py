@@ -419,36 +419,61 @@ class IndividualStrategy(ScheduleStrategy):
             return list(candidates)
 
         if freq == "day":
-            # === 日轮：严格交替 + 夜→白间隔检测 + 公平排序 ===
+            # === 日轮：槽位分组 + 绑定组 + 新老搭配 + 白夜交替 + 班次均衡 ===
             dt = date.fromisoformat(date_str)
-            prev_date = str(dt - timedelta(days=1))
+            rotation_slot = (dt.day - 1) % 3
+            rotation_number = (dt.day - 1) // 3
 
-            # 1. 排除上次同类型的候选人（严格交替）
-            alt_candidates = [
-                sid for sid in candidates
-                if self.s._last_shift_type.get(sid) != target_type
-            ]
-            # 2. 如果是白班，排除前一天上夜班的人（夜班08:30结束，白班08:30开始，间隔=0）
-            if target_type == "day":
-                alt_candidates = [
-                    sid for sid in alt_candidates
-                    if not (
-                        self.s._last_shift_type.get(sid) == "night"
-                        and self.s._last_shift_date.get(sid) == prev_date
-                    )
-                ]
-            # 3. 如果严格交替后不够人，回退到全部候选人
-            if len(alt_candidates) >= target:
-                candidates = alt_candidates
-            # 3. 公平排序（本轮总次数 → 本轮同类型次数 → 日轮转偏移）
-            dt = date.fromisoformat(date_str)
-            day_seed = dt.day + dt.month * 31
-            combined = sorted(candidates, key=lambda sid: (
-                self.s._night_shifts.get(sid, 0) + self.s._day_shifts.get(sid, 0),
-                self.s._night_shifts.get(sid, 0) if is_night else self.s._day_shifts.get(sid, 0),
-                (sid * day_seed) % 997,
-            ))
-            return combined[:target]
+            # 1. 检查绑定组
+            if rotation_slot in self.s._bound_groups:
+                day_grp, night_grp = self.s._bound_groups[rotation_slot]
+                if rotation_number % 2 == 0:
+                    return (day_grp if target_type == "day" else night_grp)[:target]
+                else:
+                    return (night_grp if target_type == "day" else day_grp)[:target]
+
+            # 2. 全部12人统一新老搭配，再分配槽位
+            stable_sorted = sorted(candidates)[:12]
+            if len(stable_sorted) < 12:
+                return []
+
+            # 全局新老分组配对
+            new_ids = [sid for sid in stable_sorted if self.s._is_new_employee(sid)]
+            old_ids = [sid for sid in stable_sorted if not self.s._is_new_employee(sid)]
+
+            # 交叉配对：优先1新+1老，剩余的同类放一起
+            pairs = []
+            while new_ids and old_ids:
+                pairs.append([new_ids.pop(0), old_ids.pop(0)])
+            while len(new_ids) >= 2:
+                pairs.append([new_ids.pop(0), new_ids.pop(0)])
+            while len(old_ids) >= 2:
+                pairs.append([old_ids.pop(0), old_ids.pop(0)])
+
+            # 分配6对到3个槽位（每槽位2对：day_group + night_group）
+            # 槽位按 first_shift_type 排序保持预定顺序不动
+            slot_pairs = {0: [], 1: [], 2: []}
+            for i, pair in enumerate(pairs):
+                slot_pairs[i % 3].append(pair)
+
+            day_group = slot_pairs[0][0]
+            night_group = slot_pairs[0][1] if len(slot_pairs[0]) > 1 else slot_pairs[0][0]
+            self.s._bound_groups[0] = (day_group, night_group)
+            if 1 in slot_pairs:
+                dg = slot_pairs[1][0]
+                ng = slot_pairs[1][1] if len(slot_pairs[1]) > 1 else slot_pairs[1][0]
+                self.s._bound_groups[1] = (dg, ng)
+            if 2 in slot_pairs:
+                dg = slot_pairs[2][0]
+                ng = slot_pairs[2][1] if len(slot_pairs[2]) > 1 else slot_pairs[2][0]
+                self.s._bound_groups[2] = (dg, ng)
+
+            # 返回当前槽位的结果
+            dg, ng = self.s._bound_groups[rotation_slot]
+            if rotation_number % 2 == 0:
+                return (dg if target_type == "day" else ng)[:target]
+            else:
+                return (ng if target_type == "day" else dg)[:target]
 
         # === 周轮/月轮：按 ID 排序 + 周期偏移 → 纯数学轮换，不依赖历史 ===
         stable_sorted = sorted(candidates)
@@ -539,11 +564,14 @@ class AutoScheduler:
         # 本轮白班/夜班计数（用于平衡同类型班次分布）
         self._night_shifts: dict[int, int] = defaultdict(int)
         self._day_shifts: dict[int, int] = defaultdict(int)
-        self._last_shift_type: dict[int, str] = {}  # staff_id -> "day" | "night"
-        self._last_shift_date: dict[int, str] = {}   # staff_id -> date_str
+        self._last_shift_type: dict[int, str] = {}
+        self._last_shift_date: dict[int, str] = {}
 
         # 月轮班次已锁定人员（整月独占，不参与白夜班）
         self._monthly_locked: set[int] = set()
+
+        # 日轮绑定组：key=rotation_slot(0/1/2), value=(day_group, night_group)
+        self._bound_groups: dict[int, tuple] = {}
 
         # 候选人过滤链
         self.candidate_filter = CandidateFilter(
@@ -697,9 +725,9 @@ class AutoScheduler:
         # 标记本轮开始日期，MAX_CONTINUOUS_DAYS 不跨月串联
         self.candidate_filter._run_start_str = str(start_date)
 
-        # 跨月均衡：继承历史排班计数
-        # 全年数据 → 白/夜班计数（供公平排序连续）
-        # 上月末 7 天 → 末次类型+日期（供严格交替+夜间隔检测）
+        # 日轮通过 sorted(candidates)[:12] 自动排除周轮候选人，无需预锁定
+
+        # 跨月交替：上月末7天 → 末次类型+日期
         tail_start = start_date - timedelta(days=7)
         tail_start_str = str(tail_start)
         start_date_str = str(start_date)
@@ -712,14 +740,8 @@ class AutoScheduler:
             shift_t = self.shift_templates.get(getattr(s, "shift_id", None))
             if not shift_t:
                 continue
-            is_night = self._is_night_shift(shift_t)
-            # 全年计数：用于公平排序
-            if is_night:
-                self._night_shifts[d.staff_id] = self._night_shifts.get(d.staff_id, 0) + 1
-            else:
-                self._day_shifts[d.staff_id] = self._day_shifts.get(d.staff_id, 0) + 1
-            # 末次类型+日期：只用上月末 7 天
             if tail_start_str <= d_str < start_date_str:
+                is_night = self._is_night_shift(shift_t)
                 self._last_shift_type[d.staff_id] = "night" if is_night else "day"
                 self._last_shift_date[d.staff_id] = d_str
 
@@ -780,16 +802,13 @@ class AutoScheduler:
                 for sid in result.member_ids:
                     self.scorer.record_assignment(sid, date_str, shift.id)
 
-                # 记录白班/夜班计数与末次类型+日期（用于同类型班次平衡 + 严格交替 + 间隔检测）
-                is_night = self._is_night_shift(shift)
-                shift_type = "night" if is_night else "day"
-                for sid in result.member_ids:
-                    if is_night:
+                # 记录白班/夜班计数（用于同类型班次平衡）
+                if self._is_night_shift(shift):
+                    for sid in result.member_ids:
                         self._night_shifts[sid] = self._night_shifts.get(sid, 0) + 1
-                    else:
+                else:
+                    for sid in result.member_ids:
                         self._day_shifts[sid] = self._day_shifts.get(sid, 0) + 1
-                    self._last_shift_type[sid] = shift_type
-                    self._last_shift_date[sid] = date_str
 
                 # 兜底截断
                 result.member_ids = self._truncate_members(result, shift)
