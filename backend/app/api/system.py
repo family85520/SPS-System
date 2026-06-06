@@ -59,12 +59,29 @@ async def get_system_config(
     schedule_approval = await get_config_value(db, "schedule_approval_enabled", "false")
     admin_receive_all = await get_config_value(db, "admin_receive_all_notifications", "true")
 
+    auto_schedule = await get_config_value(db, "auto_schedule_enabled", "false")
+    auto_status = await get_config_value(db, "auto_schedule_status", "draft")
+    auto_last = await get_config_value(db, "auto_schedule_last_run", "")
+    auto_time = await get_config_value(db, "auto_schedule_time", "23:00")
+    auto_orgs_raw = await get_config_value(db, "auto_schedule_org_ids", "")
+    auto_orgs = [int(x) for x in auto_orgs_raw.split(",") if x.strip()] if auto_orgs_raw else []
+    auto_shifts_raw = await get_config_value(db, "auto_schedule_shift_ids", "")
+    auto_shifts = [int(x) for x in auto_shifts_raw.split(",") if x.strip()] if auto_shifts_raw else []
+    auto_skip = await get_config_value(db, "auto_schedule_skip_existing", "false")
+
     return SystemConfigResponse(
         system_name=system_name,
         org_name=org_name,
         swap_approval_enabled=swap_approval.lower() == "true",
         schedule_approval_enabled=schedule_approval.lower() == "true",
         admin_receive_all_notifications=admin_receive_all,
+        auto_schedule_enabled=auto_schedule,
+        auto_schedule_status=auto_status,
+        auto_schedule_last_run=auto_last,
+        auto_schedule_time=auto_time,
+        auto_schedule_org_ids=auto_orgs,
+        auto_schedule_shift_ids=auto_shifts,
+        auto_schedule_skip_existing=auto_skip,
     )
 
 
@@ -80,6 +97,9 @@ async def update_system_config(
         config_keys = [
             "system_name", "org_name", "swap_approval_enabled",
             "schedule_approval_enabled", "admin_receive_all_notifications",
+            "auto_schedule_enabled", "auto_schedule_status",
+            "auto_schedule_time", "auto_schedule_org_ids",
+            "auto_schedule_shift_ids", "auto_schedule_skip_existing",
         ]
         stmt = select(SysConfig).where(SysConfig.config_key.in_(config_keys))
         result = await db.execute(stmt)
@@ -92,6 +112,12 @@ async def update_system_config(
             "swap_approval_enabled": str(data.swap_approval_enabled).lower() if data.swap_approval_enabled is not None else None,
             "schedule_approval_enabled": str(data.schedule_approval_enabled).lower() if data.schedule_approval_enabled is not None else None,
             "admin_receive_all_notifications": data.admin_receive_all_notifications if getattr(data, "admin_receive_all_notifications", None) is not None else None,
+            "auto_schedule_enabled": data.auto_schedule_enabled if getattr(data, "auto_schedule_enabled", None) is not None else None,
+            "auto_schedule_status": data.auto_schedule_status if getattr(data, "auto_schedule_status", None) is not None else None,
+            "auto_schedule_time": data.auto_schedule_time if getattr(data, "auto_schedule_time", None) is not None else None,
+            "auto_schedule_org_ids": ",".join(str(x) for x in data.auto_schedule_org_ids) if data.auto_schedule_org_ids is not None else None,
+            "auto_schedule_shift_ids": ",".join(str(x) for x in data.auto_schedule_shift_ids) if data.auto_schedule_shift_ids is not None else None,
+            "auto_schedule_skip_existing": data.auto_schedule_skip_existing if getattr(data, "auto_schedule_skip_existing", None) is not None else None,
         }
 
         for key, value in update_map.items():
@@ -99,7 +125,9 @@ async def update_system_config(
                 if key in config_map:
                     config_map[key].config_value = value
                 else:
-                    db.add(SysConfig(config_key=key, config_value=value))
+                    new_cfg = SysConfig(config_key=key, config_value=value)
+                    db.add(new_cfg)
+                    config_map[key] = new_cfg
 
         await db.commit()
 
@@ -110,12 +138,24 @@ async def update_system_config(
         schedule_approval = config_map.get("schedule_approval_enabled")
         admin_receive_all = config_map.get("admin_receive_all_notifications")
 
+        auto_schedule_cfg = config_map.get("auto_schedule_enabled")
+        auto_status_cfg = config_map.get("auto_schedule_status")
+        auto_time_cfg = config_map.get("auto_schedule_time")
+        auto_orgs_cfg = config_map.get("auto_schedule_org_ids")
+        auto_shifts_cfg = config_map.get("auto_schedule_shift_ids")
+        auto_skip_cfg = config_map.get("auto_schedule_skip_existing")
         return SystemConfigResponse(
             system_name=system_name.config_value if system_name else "排班管理系统",
             org_name=org_name.config_value if org_name else "",
             swap_approval_enabled=(swap_approval.config_value.lower() == "true") if swap_approval else True,
             schedule_approval_enabled=(schedule_approval.config_value.lower() == "true") if schedule_approval else False,
             admin_receive_all_notifications=admin_receive_all.config_value if admin_receive_all else "true",
+            auto_schedule_enabled=auto_schedule_cfg.config_value if auto_schedule_cfg else "false",
+            auto_schedule_status=auto_status_cfg.config_value if auto_status_cfg else "draft",
+            auto_schedule_time=auto_time_cfg.config_value if auto_time_cfg else "23:00",
+            auto_schedule_org_ids=[int(x) for x in auto_orgs_cfg.config_value.split(",") if x.strip()] if (auto_orgs_cfg and auto_orgs_cfg.config_value) else [],
+            auto_schedule_shift_ids=[int(x) for x in auto_shifts_cfg.config_value.split(",") if x.strip()] if (auto_shifts_cfg and auto_shifts_cfg.config_value) else [],
+            auto_schedule_skip_existing=auto_skip_cfg.config_value if auto_skip_cfg else "false",
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"保存失败: {str(e)}")
