@@ -432,48 +432,57 @@ class IndividualStrategy(ScheduleStrategy):
                 else:
                     return (night_grp if target_type == "day" else day_grp)[:target]
 
-            # 2. 全部12人统一新老搭配，再分配槽位
-            stable_sorted = sorted(candidates)[:12]
-            if len(stable_sorted) < 12:
-                return []
+            # 2. 结构轮换仅适用于N=12（3槽×4人×2人/组）
+            n_total = len(candidates)
+            if n_total == 12:
+                stable_sorted = sorted(candidates)
 
-            # 全局新老分组配对
-            new_ids = [sid for sid in stable_sorted if self.s._is_new_employee(sid)]
-            old_ids = [sid for sid in stable_sorted if not self.s._is_new_employee(sid)]
+                # 全局新老分组配对
+                new_ids = [sid for sid in stable_sorted if self.s._is_new_employee(sid)]
+                old_ids = [sid for sid in stable_sorted if not self.s._is_new_employee(sid)]
 
-            # 交叉配对：优先1新+1老，剩余的同类放一起
-            pairs = []
-            while new_ids and old_ids:
-                pairs.append([new_ids.pop(0), old_ids.pop(0)])
-            while len(new_ids) >= 2:
-                pairs.append([new_ids.pop(0), new_ids.pop(0)])
-            while len(old_ids) >= 2:
-                pairs.append([old_ids.pop(0), old_ids.pop(0)])
+                # 交叉配对：优先1新+1老，剩余的同类放一起
+                pairs = []
+                while new_ids and old_ids:
+                    pairs.append([new_ids.pop(0), old_ids.pop(0)])
+                while len(new_ids) >= 2:
+                    pairs.append([new_ids.pop(0), new_ids.pop(0)])
+                while len(old_ids) >= 2:
+                    pairs.append([old_ids.pop(0), old_ids.pop(0)])
 
-            # 分配6对到3个槽位（每槽位2对：day_group + night_group）
-            # 槽位按 first_shift_type 排序保持预定顺序不动
-            slot_pairs = {0: [], 1: [], 2: []}
-            for i, pair in enumerate(pairs):
-                slot_pairs[i % 3].append(pair)
+                # 分配6对到3个槽位（每槽位2对：day_group + night_group）
+                slot_pairs = {0: [], 1: [], 2: []}
+                for i, pair in enumerate(pairs):
+                    slot_pairs[i % 3].append(pair)
 
-            day_group = slot_pairs[0][0]
-            night_group = slot_pairs[0][1] if len(slot_pairs[0]) > 1 else slot_pairs[0][0]
-            self.s._bound_groups[0] = (day_group, night_group)
-            if 1 in slot_pairs:
-                dg = slot_pairs[1][0]
-                ng = slot_pairs[1][1] if len(slot_pairs[1]) > 1 else slot_pairs[1][0]
-                self.s._bound_groups[1] = (dg, ng)
-            if 2 in slot_pairs:
-                dg = slot_pairs[2][0]
-                ng = slot_pairs[2][1] if len(slot_pairs[2]) > 1 else slot_pairs[2][0]
-                self.s._bound_groups[2] = (dg, ng)
+                day_group = slot_pairs[0][0]
+                night_group = slot_pairs[0][1] if len(slot_pairs[0]) > 1 else slot_pairs[0][0]
+                self.s._bound_groups[0] = (day_group, night_group)
+                if 1 in slot_pairs:
+                    dg = slot_pairs[1][0]
+                    ng = slot_pairs[1][1] if len(slot_pairs[1]) > 1 else slot_pairs[1][0]
+                    self.s._bound_groups[1] = (dg, ng)
+                if 2 in slot_pairs:
+                    dg = slot_pairs[2][0]
+                    ng = slot_pairs[2][1] if len(slot_pairs[2]) > 1 else slot_pairs[2][0]
+                    self.s._bound_groups[2] = (dg, ng)
 
-            # 返回当前槽位的结果
-            dg, ng = self.s._bound_groups[rotation_slot]
-            if rotation_number % 2 == 0:
-                return (dg if target_type == "day" else ng)[:target]
-            else:
-                return (ng if target_type == "day" else dg)[:target]
+                # 返回当前槽位的结果
+                dg, ng = self.s._bound_groups[rotation_slot]
+                if rotation_number % 2 == 0:
+                    return (dg if target_type == "day" else ng)[:target]
+                else:
+                    return (ng if target_type == "day" else dg)[:target]
+
+            # N != 12 时回退到公平排序
+            dt2 = date.fromisoformat(date_str)
+            day_seed = dt2.day + dt2.month * 31
+            combined = sorted(candidates, key=lambda sid: (
+                self.s._night_shifts.get(sid, 0) + self.s._day_shifts.get(sid, 0),
+                self.s._night_shifts.get(sid, 0) if is_night else self.s._day_shifts.get(sid, 0),
+                (sid * day_seed) % 997,
+            ))
+            return combined[:target]
 
         # === 周轮/月轮：按 ID 排序 + 周期偏移 → 纯数学轮换，不依赖历史 ===
         stable_sorted = sorted(candidates)

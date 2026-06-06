@@ -30,11 +30,24 @@ async def lifespan(app: FastAPI):
     async with async_session_factory() as db:
         await init_default_data(db)
 
+    # 启动每月自动排班调度器（每 30 分钟检查一次，触发时间从系统配置读取）
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from app.services.auto_schedule_job import run_monthly_auto_schedule
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        lambda: asyncio.create_task(run_monthly_auto_schedule(async_session_factory)),
+        'interval', minutes=30,
+        id='auto_schedule_monthly',
+    )
+    scheduler.start()
+    print("自动排班调度器已启动（每 30 分钟检查一次）")
+
     print("系统初始化完成")
 
     yield
 
     # 关闭时执行
+    scheduler.shutdown(wait=False)
     print("系统关闭")
 
 
