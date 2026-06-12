@@ -96,7 +96,9 @@ async def _cleanup_existing_schedules(db, org_id, start_date, end_date):
 
     delete_ids = [s.id for s in existing if s.status in SchSchedule.EDITABLE_STATUSES]
     if delete_ids:
-        # 只删除已完成或已取消的调班申请，保留进行中的
+        # [待确认] 哪些状态的 swap request 应该被删除？
+        # 当前逻辑：completed/cancelled 删除，其他保留
+        # TODO: 确认 SchSwapRequest 的所有可能状态值
         await db.execute(
             delete(SchSwapRequest).where(
                 SchSwapRequest.requester_schedule_id.in_(delete_ids),
@@ -254,6 +256,8 @@ git commit -m "fix: preserve in-progress swap requests during schedule cleanup"
 
 ```python
         # ---- 5.1. 加载上月末尾排班数据（用于跨月连续天数计算） ----
+        # [待确认] 仅当 start_date.day == 1 时加载前序历史
+        # TODO: 确认非月初开始的排班是否也需要跨月连续天数检查
         pre_history: dict[int, list[str]] = {}
         if start_date.day == 1:
             # 从上月最后 max_continuous_days 天加载
@@ -359,7 +363,9 @@ git commit -m "fix: include previous month data in cross-month continuous days c
                     pairs.append([new_ids.pop(0), new_ids.pop(0)])
                 while len(old_ids) >= 2:
                     pairs.append([old_ids.pop(0), old_ids.pop(0)])
-                # 剩余单人加入最后一个配对
+                # [待确认] 剩余单人处理策略
+                # TODO: 确认奇数人数时，剩余单人应加入最后一个配对还是单独成组
+                # 当前策略：加入最后一个配对（形成3人组）
                 if new_ids:
                     if pairs:
                         pairs[-1].append(new_ids.pop(0))
@@ -480,7 +486,9 @@ git commit -m "feat: generalize slot binding from N=12 to N=10-14"
                     joined = curr_all - prev_all     # 新加入的人
 
                     if departed and joined:
-                        # 原槽位替换：新人员进入离开人员的原槽位
+                        # [待确认] 多人同时离开/加入时的匹配策略
+                        # TODO: 确认是否应按 sorted 顺序匹配，还是按新老身份匹配
+                        # 当前策略：按 ID 排序后一一对应
                         departed_list = sorted(departed)
                         joined_list = sorted(joined)
                         replacements = dict(zip(departed_list, joined_list))
@@ -546,7 +554,8 @@ git commit -m "feat: implement cross-month slot replacement mechanism"
         holidays = _get_holiday_set(min_date, max_date)
 
         if mode == "increase":
-            # 节假日比平时多排 N 人
+            # [待确认] normal_count 未配置时如何处理？
+            # TODO: 确认是否应从班次模板的 member_max 推断默认值
             extra_count = params.get("extra_count", 0)
             normal_count = params.get("normal_count", 0)
             if normal_count <= 0:
@@ -635,7 +644,8 @@ git commit -m "feat: implement HOLIDAY_MODE constraint checker"
         violations = []
 
         if mode == "reduced":
-            # 周末减少排班人数
+            # [待确认] weekday_count 未配置时如何处理？
+            # TODO: 确认是否应从历史数据中计算工作日平均排班人数
             reduced_count = params.get("reduced_count", 1)
             weekday_count = params.get("weekday_count", 0)
             if weekday_count <= 0:
@@ -885,7 +895,9 @@ git commit -m "chore: remove unused _tier_rotate_select method"
 修改 `AutoScheduler.__init__` 中 FairnessScorer 的创建（scheduler.py 第 569 行附近）：
 
 ```python
-        # 从约束配置读取公平性权重
+        # [待确认] FAIRNESS_WEIGHTS 的存储方式
+        # TODO: 确认是作为 SchConstraint 的新 rule_type，还是用独立的配置表
+        # 当前方案：复用 SchConstraint 表，rule_type="FAIRNESS_WEIGHTS"
         fairness_weights = self.constraint_params.get("FAIRNESS_WEIGHTS", {})
 
         # 公平性打分器
