@@ -502,6 +502,9 @@ class IndividualStrategy(ScheduleStrategy):
         规则：特殊人员在不同班次间交替轮换。
         上月在白班/夜班的特殊人员，本月应在行政班；
         上月在行政班的特殊人员，本月应在白班/夜班。
+
+        实现：遍历上月所有排班记录，找到使用相同 special_pool 且 shift_id 不同的
+        班次，从该班次的排班明细中提取特殊人员（即 special_pool 中的人）。
         """
         if not self.s.prev_month_schedules:
             return None
@@ -509,24 +512,38 @@ class IndividualStrategy(ScheduleStrategy):
         pool_set = set(pool)
         count = current_shift.special_count
 
-        # 遍历上月所有排班记录，找出使用相同 special_pool 的其他班次
-        for prev_sched in self.s.prev_month_schedules:
-            if prev_sched.shift_id == current_shift.id:
+        # 先收集上月所有使用该 special_pool 的班次ID
+        other_shift_ids = set()
+        for sched in self.s.prev_month_schedules:
+            if sched.shift_id == current_shift.id:
                 continue
-            other_shift = self.s.shift_templates.get(prev_sched.shift_id)
+            other_shift = self.s.shift_templates.get(sched.shift_id)
             if not other_shift or not other_shift.special_enabled:
                 continue
             other_pool = set(other_shift.special_pool or [])
-            if other_pool != pool_set:
-                continue
+            if other_pool == pool_set:
+                other_shift_ids.add(sched.shift_id)
 
-            # 找到同 pool 的其他班次，取其上月特殊人员
-            # 这些人员本月应该轮换到当前班次
-            return [
+        # 对每个其他班次，取该班次上月最后一天的排班记录中的特殊人员
+        for other_shift_id in other_shift_ids:
+            # 找到该班次上月最后的排班记录
+            other_schedules = sorted(
+                [s for s in self.s.prev_month_schedules if s.shift_id == other_shift_id],
+                key=lambda s: str(getattr(s, "date", "")),
+                reverse=True,
+            )
+            if not other_schedules:
+                continue
+            # 取最后一条（即上月最后一天）
+            last_sched = other_schedules[0]
+            # 从该排班的所有明细中提取 special_pool 中的人员
+            other_special = [
                 d.staff_id
                 for d in self.s.existing_details
-                if d.schedule_id == prev_sched.id
-            ][:count]
+                if d.schedule_id == last_sched.id and d.staff_id in pool_set
+            ]
+            if other_special:
+                return other_special[:count]
 
         return None
 
@@ -740,33 +757,59 @@ class IndividualStrategy(ScheduleStrategy):
     ) -> list[int]:
         """获取跨月需要注入的人员列表。
 
-        规则：上月行政班的所有人员（特殊+普通）本月应去白班/夜班。
-        返回需要注入的人员ID列表（按ID排序）。
+        规则：上月行政班的普通人员（非 special_pool）本月应去白班/夜班。
+        上月白班/夜班的普通人员（非 special_pool）本月应去行政班。
+        返回需要注入到当前班次的非特殊人员ID列表（按ID排序）。
         """
         if not self.s.prev_month_schedules:
             return []
 
-        # 找到行政班
+        pool_set = set(shift.special_pool or [])
+
+        # 找到行政班（special_enabled 的班次）
         admin_shift = None
         for sid, s in self.s.shift_templates.items():
             if s.special_enabled:
                 admin_shift = s
                 break
 
-        if not admin_shift or admin_shift.id == shift.id:
+        if not admin_shift:
             return []
 
-        # 上月行政班所有人员（取第一天）
-        admin_staff = []
+        # 确定当前班次是否是行政班
+        is_admin = (admin_shift.id == shift.id)
+
+        # 收集上月行政班和白班/夜班的普通人员
+        admin_regular = []  # 行政班的普通人员
+        slot_regular = []   # 白班/夜班的普通人员
+
+        # 行政班所有人员
         for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
             if sched.shift_id == admin_shift.id:
                 for d in self.s.existing_details:
-                    if d.schedule_id == sched.id:
-                        if d.staff_id not in admin_staff:
-                            admin_staff.append(d.staff_id)
+                    if d.schedule_id == sched.id and d.staff_id not in pool_set:
+                        if d.staff_id not in admin_regular:
+                            admin_regular.append(d.staff_id)
                 break
 
-        return sorted(admin_staff)
+        # 白班/夜班所有人员（排除行政班）
+        for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
+            if sched.shift_id != admin_shift.id:
+                for d in self.s.existing_details:
+                    if d.schedule_id == sched.id and d.staff_id not in pool_set:
+                        if d.staff_id not in slot_regular:
+                            slot_regular.append(d.staff_id)
+                break
+
+        # 跨月轮换规则：
+        # 行政班的普通人员 -> 白班/夜班
+        # 白班/夜班的普通人员 -> 行政班
+        if is_admin:
+            # 当前是行政班，注入白班/夜班的普通人员
+            return sorted(slot_regular)
+        else:
+            # 当前是白班/夜班，注入行政班的普通人员
+            return sorted(admin_regular)
 
     def _get_current_admin_members(self) -> list[int]:
         """获取本月行政班已分配的人员列表"""
@@ -789,12 +832,14 @@ class IndividualStrategy(ScheduleStrategy):
         """跨月原位替换：在上月分组中直接替换人员。
 
         规则：
-        1. 收集上月行政班所有人员（特殊+普通）→ people_from_admin
-        2. 收集上月白班/夜班所有人员 → people_from_slot
-        3. 按ID排序后一一对应替换
+        1. 特殊人员：上月行政班的特殊人员 -> 本月白班/夜班（替换上月白班/夜班的特殊人员）
+        2. 普通人员：上月行政班的普通人员 -> 本月白班/夜班（替换上月白班/夜班的普通人员）
+        3. 按 ID 排序后一一对应替换
         """
         if not groups or not self.s.prev_month_schedules:
             return groups
+
+        pool_set = set(shift.special_pool or [])
 
         # 找到行政班
         admin_shift = None
@@ -828,33 +873,22 @@ class IndividualStrategy(ScheduleStrategy):
         if not people_from_admin or not people_from_slot:
             return groups
 
-        # 收集特殊人员池（用于识别需要替换的特殊人员）
-        special_pool = set()
-        for sid, s in self.s.shift_templates.items():
-            if s.special_enabled and s.special_pool:
-                special_pool.update(s.special_pool)
+        # 特殊人员替换特殊人员（按 ID 排序）
+        admin_sp = sorted([sid for sid in people_from_admin if sid in pool_set])
+        slot_sp = sorted([sid for sid in people_from_slot if sid in pool_set])
 
-        # 只替换特殊人员池成员（他们在班次间轮换）
-        departed_sp = [sid for sid in people_from_slot if sid in special_pool]
-        joined_sp = [sid for sid in people_from_admin if sid in special_pool]
-
-        # 普通人员也轮换（按ID排序后一一对应）
-        departed_reg = [sid for sid in people_from_slot if sid not in special_pool]
-        joined_reg = [sid for sid in people_from_admin if sid not in special_pool]
+        # 普通人员替换普通人员（按 ID 排序）
+        admin_reg = sorted([sid for sid in people_from_admin if sid not in pool_set])
+        slot_reg = sorted([sid for sid in people_from_slot if sid not in pool_set])
 
         # 构建替换映射
-        departed_sp.sort()
-        joined_sp.sort()
-        departed_reg.sort()
-        joined_reg.sort()
-
         replacements = {}
-        for i, old_sid in enumerate(departed_sp):
-            if i < len(joined_sp):
-                replacements[old_sid] = joined_sp[i]
-        for i, old_sid in enumerate(departed_reg):
-            if i < len(joined_reg):
-                replacements[old_sid] = joined_reg[i]
+        for i, old_sid in enumerate(slot_sp):
+            if i < len(admin_sp):
+                replacements[old_sid] = admin_sp[i]
+        for i, old_sid in enumerate(slot_reg):
+            if i < len(admin_reg):
+                replacements[old_sid] = admin_reg[i]
 
         if not replacements:
             return groups
