@@ -126,6 +126,14 @@ class PairingManager:
         """
         all_pairings = await self.get_all_pairings(shift_id)
 
+        # 批量加载新员工信息（移到循环外）
+        joined_staff_map: dict[int, OrgStaff] = {}
+        if joined_regular:
+            joined_staff_list = list((await self.db.execute(
+                select(OrgStaff).where(OrgStaff.id.in_(joined_regular))
+            )).scalars().all())
+            joined_staff_map = {s.id: s for s in joined_staff_list}
+
         for pairing in all_pairings:
             staff_ids = pairing.staff_ids or []
             is_new = pairing.is_new or []
@@ -148,11 +156,6 @@ class PairingManager:
                     idx = sorted(departed_regular).index(sid)
                     if idx < len(joined_regular):
                         new_staff_ids[i] = joined_regular[idx]
-                        # 批量加载新员工信息判断身份
-                        joined_staff_list = list((await self.db.execute(
-                            select(OrgStaff).where(OrgStaff.id.in_(joined_regular))
-                        )).scalars().all())
-                        joined_staff_map = {s.id: s for s in joined_staff_list}
                         joined_staff = joined_staff_map.get(joined_regular[idx])
                         new_is_new[i] = (
                             joined_staff.tags and "新员工" in (joined_staff.tags or [])
