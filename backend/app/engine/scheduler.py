@@ -524,6 +524,10 @@ class IndividualStrategy(ScheduleStrategy):
             if other_pool == pool_set:
                 other_shift_ids.add(sched.shift_id)
 
+        if not other_shift_ids:
+            logger.debug(f"_derive_special: 未找到同 pool 的其他班次，shift_id={current_shift.id}, pool={pool_set}")
+            return None
+
         # 对每个其他班次，取该班次上月最后一天的排班记录中的特殊人员
         for other_shift_id in other_shift_ids:
             # 找到该班次上月最后的排班记录
@@ -543,8 +547,10 @@ class IndividualStrategy(ScheduleStrategy):
                 if d.schedule_id == last_sched.id and d.staff_id in pool_set
             ]
             if other_special:
+                logger.debug(f"_derive_special: 找到上月其他班次特殊人员，shift_id={current_shift.id}, 上月shift_id={other_shift_id}, 特殊人员={other_special[:count]}")
                 return other_special[:count]
 
+        logger.debug(f"_derive_special: 其他班次无特殊人员明细，shift_id={current_shift.id}")
         return None
 
     def _derive_prev_special_from_db(self, shift: SchShiftTemplate) -> list[int] | None:
