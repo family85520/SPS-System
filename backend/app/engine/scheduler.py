@@ -506,11 +506,12 @@ class IndividualStrategy(ScheduleStrategy):
         pool_set = set(pool)
         count = current_shift.special_count
 
-        # 没有上月数据
-        if not self.s.prev_month_schedules:
-            if conflicts is not None:
-                conflicts.append(f"[诊断] {current_shift.name}：无上月排班数据，使用默认顺序")
-            return None
+        # 调试：打印上月有哪些班次
+        prev_shift_ids = set()
+        for sched in self.s.prev_month_schedules:
+            prev_shift_ids.add(sched.shift_id)
+        if conflicts is not None:
+            conflicts.append(f"[诊断] {current_shift.name}：上月有这些班次ID={sorted(prev_shift_ids)}, 当前shift_id={current_shift.id}, pool={pool}")
 
         # 收集上月所有使用该 special_pool 的班次ID
         other_shift_ids = set()
@@ -521,6 +522,8 @@ class IndividualStrategy(ScheduleStrategy):
             if not other_shift or not other_shift.special_enabled:
                 continue
             other_pool = set(other_shift.special_pool or [])
+            if conflicts is not None:
+                conflicts.append(f"[诊断] 其他班次shift_id={sched.shift_id}, 名称={getattr(other_shift,'name','')}, pool={other_pool}, 匹配={other_pool == pool_set}")
             if other_pool == pool_set:
                 other_shift_ids.add(sched.shift_id)
 
