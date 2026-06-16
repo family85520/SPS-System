@@ -502,6 +502,9 @@ class IndividualStrategy(ScheduleStrategy):
         规则：特殊人员在不同班次间交替轮换。
         上月在白班/夜班的特殊人员，本月应在行政班；
         上月在行政班的特殊人员，本月应在白班/夜班。
+
+        实现方式：从 prev_month_schedules 中找出所有包含 pool 中人员的排班记录，
+        排除当前班次，取其中上月最后一天的排班中的 pool 人员。
         """
         pool_set = set(pool)
         count = current_shift.special_count
@@ -513,43 +516,36 @@ class IndividualStrategy(ScheduleStrategy):
         if conflicts is not None:
             conflicts.append(f"[诊断] {current_shift.name}：上月有这些班次ID={sorted(prev_shift_ids)}, 当前shift_id={current_shift.id}, pool={pool}")
 
-        # 收集上月所有使用该 special_pool 的班次ID
-        other_shift_ids = set()
+        # 从 prev_month_schedules 中找出所有包含 pool 中人员的排班记录
+        # 不管它们的 special_pool 字段是什么
+        candidate_schedules = []
         for sched in self.s.prev_month_schedules:
             if sched.shift_id == current_shift.id:
                 continue
-            other_shift = self.s.shift_templates.get(sched.shift_id)
-            if not other_shift or not other_shift.special_enabled:
-                continue
-            other_pool = set(other_shift.special_pool or [])
-            if conflicts is not None:
-                conflicts.append(f"[诊断] 其他班次shift_id={sched.shift_id}, 名称={getattr(other_shift,'name','')}, pool={other_pool}, 匹配={other_pool == pool_set}")
-            if other_pool == pool_set:
-                other_shift_ids.add(sched.shift_id)
+            candidate_schedules.append(sched)
 
-        if not other_shift_ids:
+        if not candidate_schedules:
             if conflicts is not None:
-                conflicts.append(f"[诊断] {current_shift.name}：未找到同pool({pool})的其他班次")
+                conflicts.append(f"[诊断] {current_shift.name}：上月无其他班次")
             return None
 
-        # 对每个其他班次，取该班次上月最后一天的排班记录中的特殊人员
-        for other_shift_id in other_shift_ids:
-            other_schedules = sorted(
-                [s for s in self.s.prev_month_schedules if s.shift_id == other_shift_id],
-                key=lambda s: str(getattr(s, "date", "")),
-                reverse=True,
-            )
-            if not other_schedules:
-                continue
-            last_sched = other_schedules[0]
+        # 按 shift_id 分组，每组取最后一天
+        from collections import defaultdict
+        by_shift: dict[int, list] = defaultdict(list)
+        for sched in candidate_schedules:
+            by_shift[sched.shift_id].append(sched)
+
+        for other_shift_id, schedules in by_shift.items():
+            last_sched = sorted(schedules, key=lambda s: str(getattr(s, "date", "")), reverse=True)[0]
+            # 从 existing_details 中找该排班的 pool 人员
             other_special = [
                 d.staff_id
                 for d in self.s.existing_details
                 if d.schedule_id == last_sched.id and d.staff_id in pool_set
             ]
+            if conflicts is not None:
+                conflicts.append(f"[诊断] 其他班次shift_id={other_shift_id}, 最后一天={getattr(last_sched,'date','')}, pool人员={other_special}")
             if other_special:
-                if conflicts is not None:
-                    conflicts.append(f"[诊断] {current_shift.name}：上月{other_shift_id}特殊人员={other_special[:count]}，本月轮换")
                 return other_special[:count]
 
         if conflicts is not None:
