@@ -148,12 +148,15 @@ class PairingManager:
                     idx = sorted(departed_regular).index(sid)
                     if idx < len(joined_regular):
                         new_staff_ids[i] = joined_regular[idx]
-                        # 判断新员工身份
-                        from app.models.staff import OrgStaff
-                        staff = (await self.db.execute(
-                            select(OrgStaff).where(OrgStaff.id == joined_regular[idx])
-                        )).scalars().first()
-                        new_is_new[i] = staff.tags and "新员工" in (staff.tags or []) if staff else False
+                        # 批量加载新员工信息判断身份
+                        joined_staff_list = list((await self.db.execute(
+                            select(OrgStaff).where(OrgStaff.id.in_(joined_regular))
+                        )).scalars().all())
+                        joined_staff_map = {s.id: s for s in joined_staff_list}
+                        joined_staff = joined_staff_map.get(joined_regular[idx])
+                        new_is_new[i] = (
+                            joined_staff.tags and "新员工" in (joined_staff.tags or [])
+                        ) if joined_staff else False
 
             pairing.staff_ids = new_staff_ids
             pairing.is_new = new_is_new
@@ -234,12 +237,8 @@ class PairingManager:
                 break
             day_pair = stable_pairs[pair_idx][0]
             night_pair = stable_pairs[pair_idx + 1][0]
-            result[(slot_idx, "day")] = (
-                list(day_pair), self._determine_new_status(day_pair)
-            )
-            result[(slot_idx, "night")] = (
-                list(night_pair), self._determine_new_status(night_pair)
-            )
+            result[(slot_idx, "day")] = (list(day_pair), [False] * len(day_pair))
+            result[(slot_idx, "night")] = (list(night_pair), [False] * len(night_pair))
             pair_idx += 2
 
         return result
@@ -254,11 +253,15 @@ class PairingManager:
         if not staff:
             return {}
 
-        # 加载人员信息判断新老
+        # 批量加载人员信息判断新老
         staff_list = list((await self.db.execute(
             select(OrgStaff).where(OrgStaff.id.in_(staff))
         )).scalars().all())
         staff_map = {s.id: s for s in staff_list}
+
+        def _is_new(staff_id: int) -> bool:
+            s = staff_map.get(staff_id)
+            return bool(s and s.tags and "新员工" in (s.tags or []))
 
         # 简单分组：前一半 day，后一半 night
         mid = len(staff) // 2
@@ -271,31 +274,17 @@ class PairingManager:
             start = slot_idx * per_slot
             end = start + per_slot
             if start < len(day_group):
-                day_is_new = [await self._is_new_employee(s) for s in day_group[start:end]]
-                result[(slot_idx, "day")] = (day_group[start:end], day_is_new)
+                result[(slot_idx, "day")] = (
+                    day_group[start:end],
+                    [_is_new(sid) for sid in day_group[start:end]]
+                )
             if start < len(night_group):
-                night_is_new = [await self._is_new_employee(s) for s in night_group[start:end]]
-                result[(slot_idx, "night")] = (night_group[start:end], night_is_new)
+                result[(slot_idx, "night")] = (
+                    night_group[start:end],
+                    [_is_new(sid) for sid in night_group[start:end]]
+                )
 
         return result
-
-    def _determine_new_status(self, staff_ids: tuple[int, ...]) -> list[bool]:
-        """判断人员是否为新员工（默认 False）"""
-        return [False] * len(staff_ids)
-
-    async def _is_new_employee(self, staff_id: int) -> bool:
-        """判断单个人员是否为新员工"""
-        try:
-            staff_list = list((await self.db.execute(
-                select(OrgStaff).where(OrgStaff.id == staff_id)
-            )).scalars().all())
-            if staff_list:
-                staff = staff_list[0]
-                if staff.tags and "新员工" in (staff.tags or []):
-                    return True
-            return False
-        except Exception:
-            return False
 
     async def delete_pairings(self, shift_id: int) -> None:
         """删除指定班次的所有配对关系"""
