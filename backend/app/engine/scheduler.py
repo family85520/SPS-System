@@ -464,7 +464,7 @@ class IndividualStrategy(ScheduleStrategy):
         daily = daily_assigned or set()
 
         # 从其他班次的上月特殊人员推导
-        new_members = self._derive_special_from_other_shifts(shift, special_pool)
+        new_members = self._derive_special_from_other_shifts(shift, special_pool, conflicts)
 
         if new_members is None:
             # 首次生成或无上月数据：按 ID 顺序选择
@@ -495,24 +495,24 @@ class IndividualStrategy(ScheduleStrategy):
         return selected, conflicts
 
     def _derive_special_from_other_shifts(
-        self, current_shift: SchShiftTemplate, pool: list[int]
+        self, current_shift: SchShiftTemplate, pool: list[int], conflicts: list[str] | None = None
     ) -> list[int] | None:
         """从上月其他班次推导本月特殊人员
 
         规则：特殊人员在不同班次间交替轮换。
         上月在白班/夜班的特殊人员，本月应在行政班；
         上月在行政班的特殊人员，本月应在白班/夜班。
-
-        实现：遍历上月所有排班记录，找到使用相同 special_pool 且 shift_id 不同的
-        班次，从该班次的排班明细中提取特殊人员（即 special_pool 中的人）。
         """
-        if not self.s.prev_month_schedules:
-            return None
-
         pool_set = set(pool)
         count = current_shift.special_count
 
-        # 先收集上月所有使用该 special_pool 的班次ID
+        # 没有上月数据
+        if not self.s.prev_month_schedules:
+            if conflicts is not None:
+                conflicts.append(f"[诊断] {current_shift.name}：无上月排班数据，使用默认顺序")
+            return None
+
+        # 收集上月所有使用该 special_pool 的班次ID
         other_shift_ids = set()
         for sched in self.s.prev_month_schedules:
             if sched.shift_id == current_shift.id:
@@ -525,12 +525,12 @@ class IndividualStrategy(ScheduleStrategy):
                 other_shift_ids.add(sched.shift_id)
 
         if not other_shift_ids:
-            logger.debug(f"_derive_special: 未找到同 pool 的其他班次，shift_id={current_shift.id}, pool={pool_set}")
+            if conflicts is not None:
+                conflicts.append(f"[诊断] {current_shift.name}：未找到同pool({pool})的其他班次")
             return None
 
         # 对每个其他班次，取该班次上月最后一天的排班记录中的特殊人员
         for other_shift_id in other_shift_ids:
-            # 找到该班次上月最后的排班记录
             other_schedules = sorted(
                 [s for s in self.s.prev_month_schedules if s.shift_id == other_shift_id],
                 key=lambda s: str(getattr(s, "date", "")),
@@ -538,19 +538,19 @@ class IndividualStrategy(ScheduleStrategy):
             )
             if not other_schedules:
                 continue
-            # 取最后一条（即上月最后一天）
             last_sched = other_schedules[0]
-            # 从该排班的所有明细中提取 special_pool 中的人员
             other_special = [
                 d.staff_id
                 for d in self.s.existing_details
                 if d.schedule_id == last_sched.id and d.staff_id in pool_set
             ]
             if other_special:
-                logger.debug(f"_derive_special: 找到上月其他班次特殊人员，shift_id={current_shift.id}, 上月shift_id={other_shift_id}, 特殊人员={other_special[:count]}")
+                if conflicts is not None:
+                    conflicts.append(f"[诊断] {current_shift.name}：上月{other_shift_id}特殊人员={other_special[:count]}，本月轮换")
                 return other_special[:count]
 
-        logger.debug(f"_derive_special: 其他班次无特殊人员明细，shift_id={current_shift.id}")
+        if conflicts is not None:
+            conflicts.append(f"[诊断] {current_shift.name}：其他班次无特殊人员明细")
         return None
 
     def _derive_prev_special_from_db(self, shift: SchShiftTemplate) -> list[int] | None:
