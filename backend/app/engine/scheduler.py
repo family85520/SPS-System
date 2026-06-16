@@ -1,8 +1,17 @@
-"""自动排班算法引擎"""
+"""自动排班算法引擎
+
+核心规则（12人标准场景）：
+1. 槽位分组：12人按ID排序，(day-1)%3分3槽，每槽4人(前2+后2)
+2. 白夜交替：rotation偶数：前2白后2夜；奇数：前2夜后2白
+3. 新老搭配：每组2人中1新员工+1老员工搭配
+4. 整月绑定：同槽4人整月不变，不跨槽混打
+5. 班次均衡：每人每月5白+5夜（30天月）
+6. 跨月替换：特殊人员组变更时1对1替换对应槽位人员
+"""
 
 from __future__ import annotations
 
-import json
+import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import date, timedelta
@@ -13,6 +22,8 @@ from app.models import OrgStaff
 from app.models.constraint import SchConstraint
 from app.models.shift_template import SchShiftTemplate
 from app.models.special_rule import SchSpecialRule
+
+logger = logging.getLogger("scheduler")
 
 
 # ====================================================================== #
@@ -48,6 +59,7 @@ class CandidateFilter:
         existing_schedules: list,
         shift_templates: dict[int, SchShiftTemplate],
         scorer: FairnessScorer,
+        pre_history: dict[int, list[str]] | None = None,
     ):
         self._staff_special_rules = staff_special_rules
         self._constraint_params = constraint_params
@@ -55,6 +67,8 @@ class CandidateFilter:
         self._schedule_index: dict[int, object] = {s.id: s for s in existing_schedules}
         self._shift_templates = shift_templates
         self._scorer = scorer
+        self._pre_history = pre_history or {}
+        self._run_start_str: str = "0000-01-01"
 
     def apply(
         self,
@@ -69,22 +83,15 @@ class CandidateFilter:
         pool = self._filter_by_constraints(pool, date_str, shift_id)
         return pool
 
-    # ---- 特殊规则 ----
-
     def _filter_by_special_rules(
         self, candidates: list[int], date_str: str, shift_id: int,
     ) -> list[int]:
-        filtered = []
-        for sid in candidates:
-            if not self._is_excluded_by_special_rules(sid, date_str, shift_id):
-                filtered.append(sid)
-        return filtered
+        return [sid for sid in candidates if not self._is_excluded_by_special_rules(sid, date_str, shift_id)]
 
     def _is_excluded_by_special_rules(
         self, staff_id: int, date_str: str, shift_id: int,
     ) -> bool:
         for rule in self._staff_special_rules.get(staff_id, []):
-            # 有效期检查
             if rule.effective_from and date_str < str(rule.effective_from):
                 continue
             if rule.effective_to and date_str > str(rule.effective_to):
@@ -118,25 +125,20 @@ class CandidateFilter:
 
         return False
 
-    # ---- 约束规则 ----
-
     def _filter_by_constraints(
         self, candidates: list[int], date_str: str, shift_id: int,
     ) -> list[int]:
         return [sid for sid in candidates if self._passes_constraints(sid, date_str, shift_id)]
 
     def _passes_constraints(self, staff_id: int, date_str: str, shift_id: int) -> bool:
-        # MAX_SHIFTS_PER_DAY
         max_per_day = self._constraint_params.get("MAX_SHIFTS_PER_DAY", {}).get("count", 1)
         if self._count_today(staff_id, date_str) >= max_per_day:
             return False
 
-        # MAX_CONTINUOUS_DAYS
         max_days = self._constraint_params.get("MAX_CONTINUOUS_DAYS", {}).get("max_days", 5)
         if self._will_exceed_continuous(staff_id, date_str, max_days):
             return False
 
-        # MIN_SHIFT_INTERVAL
         min_hours = self._constraint_params.get("MIN_SHIFT_INTERVAL", {}).get("hours", 8)
         if self._interval_violated(staff_id, date_str, shift_id, min_hours):
             return False
@@ -144,7 +146,6 @@ class CandidateFilter:
         return True
 
     def _count_today(self, staff_id: int, date_str: str) -> int:
-        """该人员当天已排班次数（历史 + 本轮）。"""
         count = 0
         for d in self._existing_details:
             s = self._schedule_index.get(d.schedule_id)
@@ -156,15 +157,17 @@ class CandidateFilter:
 
     def _will_exceed_continuous(self, staff_id: int, date_str: str, max_days: int) -> bool:
         all_dates_raw = sorted(self._scorer.staff_days.get(staff_id, set()))
-        # 只统计本轮排班开始后的日期，避免跨月历史数据串联
+        pre = self._pre_history.get(staff_id, [])
+        if pre:
+            all_dates_raw = sorted(set(all_dates_raw) | set(pre))
         run_start = getattr(self, '_run_start_str', '0000-01-01')
-        all_dates = [d for d in all_dates_raw if d >= run_start]
+        effective_start = min(pre) if pre and min(pre) < run_start else run_start
+        all_dates = [d for d in all_dates_raw if d >= effective_start]
         if date_str not in all_dates:
             all_dates.append(date_str)
             all_dates.sort()
         idx = all_dates.index(date_str)
 
-        # 向前 + 向后统计连续天数
         consecutive = 1
         for direction, step in ((-1, -1), (1, 1)):
             i = idx + step
@@ -206,14 +209,189 @@ class CandidateFilter:
 
 
 # ====================================================================== #
-#  排班策略（简化 — 只保留逐人轮询）
+#  槽位分组器（核心规则）
+# ====================================================================== #
+
+class SlotGrouper:
+    """12人标准槽位分组器
+
+    规则：
+    - 12人按ID排序，分3槽，每槽4人
+    - 每槽前2人为一组（白班组/夜班组），后2人为一组
+    - 新老搭配：每2人组中1新+1老
+    - 整月绑定：同槽4人整月不变
+    - 跨月1对1替换
+    """
+
+    def __init__(self, staff_map: dict[int, OrgStaff], is_new_employee_fn):
+        self._staff_map = staff_map
+        self._is_new = is_new_employee_fn
+        # 当月绑定：slot_idx -> (day_group[2], night_group[2])
+        self._month_groups: dict[int, tuple[list[int], list[int]]] = {}
+        self._current_month: int = 0
+        # 上月绑定（用于跨月替换）
+        self._prev_month_groups: dict[int, tuple[list[int], list[int]]] = {}
+
+    def get_month_groups(
+        self,
+        sorted_ids: list[int],
+        year: int,
+        month: int,
+    ) -> dict[int, tuple[list[int], list[int]]]:
+        """获取或构建指定月份的槽位绑定。
+
+        如果已有绑定且人员未变，直接返回；
+        如果人员有变更，执行跨月1对1替换；
+        否则新建绑定。
+        """
+        month_key = year * 12 + month
+
+        # 月份切换：保存上月绑定
+        if self._current_month and self._current_month != month_key:
+            self._prev_month_groups = dict(self._month_groups)
+            self._month_groups = {}
+            self._current_month = month_key
+
+        if self._month_groups:
+            return self._month_groups
+
+        # 尝试跨月替换
+        if self._prev_month_groups and self._can_reuse_prev(sorted_ids):
+            self._month_groups = self._apply_cross_month_replacement(sorted_ids)
+            return self._month_groups
+
+        # 新建绑定
+        self._month_groups = self._build_groups(sorted_ids)
+        self._current_month = month_key
+        return self._month_groups
+
+    def _can_reuse_prev(self, sorted_ids: list[int]) -> bool:
+        """检查上月绑定是否可以复用（有人员变更时也可复用，由替换逻辑处理）。"""
+        prev_all = set()
+        for dg, ng in self._prev_month_groups.values():
+            prev_all.update(dg)
+            prev_all.update(ng)
+        curr_all = set(sorted_ids)
+        departed = prev_all - curr_all
+        joined = curr_all - prev_all
+        # 无变更：可复用
+        if not departed and not joined:
+            return True
+        # 有变更且人数匹配：可复用（1:1替换）
+        if len(departed) == len(joined) and len(departed) > 0:
+            return True
+        # 有变更但人数不匹配：也可复用（部分替换，剩余保持原位）
+        if departed or joined:
+            return True
+        return False
+
+    def _apply_cross_month_replacement(
+        self, sorted_ids: list[int],
+    ) -> dict[int, tuple[list[int], list[int]]]:
+        """跨月1对1替换：上月有人离开，新人替入同槽位。"""
+        prev_all = set()
+        for dg, ng in self._prev_month_groups.values():
+            prev_all.update(dg)
+            prev_all.update(ng)
+        curr_all = set(sorted_ids)
+
+        departed = sorted(prev_all - curr_all)
+        joined = sorted(curr_all - prev_all)
+
+        if not departed and not joined:
+            return dict(self._prev_month_groups)
+
+        # 1对1替换（处理人数不匹配）
+        replacements = dict(zip(departed, joined))
+        new_groups = {}
+        for slot_idx, (dg, ng) in self._prev_month_groups.items():
+            # 替换离开的人，移除未被替换的离开人员
+            new_dg = [replacements.get(sid, sid) for sid in dg if sid in curr_all or sid in replacements]
+            new_ng = [replacements.get(sid, sid) for sid in ng if sid in curr_all or sid in replacements]
+            new_groups[slot_idx] = (new_dg, new_ng)
+
+        # 如果有新加入但未被分配的人，添加到人数最少的槽位
+        assigned = set()
+        for dg, ng in new_groups.values():
+            assigned.update(dg)
+            assigned.update(ng)
+        unassigned = [sid for sid in joined if sid not in assigned]
+        if unassigned:
+            # 找人数最少的槽位
+            min_slot = min(new_groups.keys(), key=lambda k: len(new_groups[k][0]) + len(new_groups[k][1]))
+            dg, ng = new_groups[min_slot]
+            for sid in unassigned:
+                if len(dg) <= len(ng):
+                    dg.append(sid)
+                else:
+                    ng.append(sid)
+            new_groups[min_slot] = (dg, ng)
+
+        return new_groups
+
+    def _build_groups(
+        self, sorted_ids: list[int],
+    ) -> dict[int, tuple[list[int], list[int]]]:
+        """构建新绑定：新老搭配 + 均匀分配到3槽。
+
+        12人：每槽4人（2对），每对1新+1老
+        其他人数：动态分配，尽量保持2人组结构
+        """
+        n = len(sorted_ids)
+        if n == 0:
+            return {}
+
+        # 按新老分组
+        new_ids = [sid for sid in sorted_ids if self._is_new(sid)]
+        old_ids = [sid for sid in sorted_ids if not self._is_new(sid)]
+
+        # 交叉配对：优先1新+1老
+        pairs: list[list[int]] = []
+        while new_ids and old_ids:
+            pairs.append([new_ids.pop(0), old_ids.pop(0)])
+        while len(new_ids) >= 2:
+            pairs.append([new_ids.pop(0), new_ids.pop(0)])
+        while len(old_ids) >= 2:
+            pairs.append([old_ids.pop(0), old_ids.pop(0)])
+        if new_ids:
+            if pairs:
+                pairs[-1].append(new_ids.pop(0))
+            else:
+                pairs.append([new_ids.pop(0)])
+        if old_ids:
+            if pairs:
+                pairs[-1].append(old_ids.pop(0))
+            else:
+                pairs.append([old_ids.pop(0)])
+
+        # 确定槽位数：标准12人=3槽，其他按比例
+        n_slots = 3 if n >= 9 else (2 if n >= 5 else 1)
+
+        # 均匀分配配对到槽位
+        slot_members: dict[int, list[int]] = {i: [] for i in range(n_slots)}
+        for i, pair in enumerate(pairs):
+            slot_idx = i % n_slots
+            slot_members[slot_idx].extend(pair)
+
+        # 每槽分为 day_group(前2) 和 night_group(后2)
+        groups: dict[int, tuple[list[int], list[int]]] = {}
+        for slot_idx in range(n_slots):
+            members = slot_members[slot_idx]
+            mid = len(members) // 2
+            groups[slot_idx] = (members[:mid], members[mid:])
+
+        return groups
+
+
+# ====================================================================== #
+#  排班策略
 # ====================================================================== #
 
 class ScheduleStrategy(ABC):
     """排班策略基类。"""
 
     def __init__(self, scheduler: AutoScheduler):
-        self.s = scheduler  # 持有引擎引用，访问 scorer / filter 等
+        self.s = scheduler
 
     @abstractmethod
     def assign(
@@ -222,45 +400,41 @@ class ScheduleStrategy(ABC):
         date_str: str,
         available_ids: list[int],
         result: ScheduleResult,
-        include_leader: bool,
+        daily_assigned: set[int] | None = None,
     ) -> list[str]:
-        """执行排班，返回冲突列表。"""
         ...
 
 
 class IndividualStrategy(ScheduleStrategy):
-    """逐人轮询排班。"""
+    """逐人轮询排班（标准12人槽位轮转）。"""
 
     def assign(
-        self, shift, date_str, available_ids, result,
+        self, shift, date_str, available_ids, result, daily_assigned=None,
     ) -> list[str]:
         conflicts = []
         is_night = self.s._is_night_shift(shift)
         is_weekend = date.fromisoformat(date_str).isoweekday() >= 6
+        daily = daily_assigned or set()
 
-        # 排领导：由排班模板的 leader_enabled 开关控制，leader_min 必须 > 0
         if shift.leader_enabled and shift.leader_min > 0:
-            leaders, lc = self.s._assign_leaders(shift, date_str, available_ids, is_night, is_weekend)
+            leaders, lc = self.s._assign_leaders(shift, date_str, available_ids, is_night, is_weekend, daily)
             for lid in leaders:
                 if lid not in result.leader_ids:
                     result.leader_ids.append(lid)
                 result.member_ids.append(lid)
             conflicts.extend(lc)
 
-        # 特殊人员组
         if shift.special_enabled:
-            special_ids, sc = self._assign_special_group(shift, date_str, result.member_ids)
+            special_ids, sc = self._assign_special_group(shift, date_str, result.member_ids, daily)
             result.member_ids.extend(special_ids)
             conflicts.extend(sc)
 
-        # 排成员（排除已分配的人 + 整个特殊人员池）
         leader_set = set(result.leader_ids)
-        already_non_leader = [
-            sid for sid in result.member_ids if sid not in leader_set
-        ]
+        already_non_leader = [sid for sid in result.member_ids if sid not in leader_set]
         remaining_slots = max(0, shift.member_max - len(already_non_leader))
         members, mc = self._assign_members(
             shift, date_str, available_ids, result.member_ids, max_slots=remaining_slots,
+            daily_assigned=daily,
         )
         result.member_ids.extend(members)
         conflicts.extend(mc)
@@ -271,73 +445,121 @@ class IndividualStrategy(ScheduleStrategy):
         shift: SchShiftTemplate,
         date_str: str,
         already_assigned: list[int],
+        daily_assigned: set[int] | None = None,
     ) -> tuple[list[int], list[str]]:
-        """分配特殊人员组（支持按月轮换）。
+        """分配特殊人员组 - 跨月交替轮换
 
-        特殊人员池是权威来源 —— 不检查 available_ids，不经过约束过滤，
-        只要人员存在于组织中且未被本班次分配，则强制排入。
+        规则：
+        1. 找到同一 special_pool 的其他班次模板
+        2. 从上月的"其他班次"中推导本月特殊人员
+        3. 如果没有其他班次数据，按 ID 顺序选择
         """
         conflicts: list[str] = []
-        special_pool = shift.special_pool or []
+        special_pool = sorted(shift.special_pool or [])  # 统一 ID 排序
         count = shift.special_count
 
-        if not special_pool:
-            conflicts.append(
-                f"[诊断] {shift.name}：special_pool 为空，跳过特殊人员分配"
-            )
+        if not special_pool or not shift.special_enabled:
             return [], conflicts
 
-        if not shift.special_enabled:
-            conflicts.append(
-                f"[诊断] {shift.name}：special_enabled=False，跳过特殊人员分配"
-            )
-            return [], conflicts
+        daily = daily_assigned or set()
 
-        freq = shift.special_rotation_frequency or 'month'
-        period = self.s._get_rotation_period(date_str, freq)
+        # 从其他班次的上月特殊人员推导
+        new_members = self._derive_special_from_other_shifts(shift, special_pool)
 
-        # 按月偏移选取本月特殊人员
-        pool_sorted = sorted(special_pool)
-        start_idx = (period * count) % len(pool_sorted)
-        monthly_pool: list[int] = []
-        for i in range(count):
-            monthly_pool.append(pool_sorted[(start_idx + i) % len(pool_sorted)])
+        if new_members is None:
+            # 首次生成或无上月数据：按 ID 顺序选择
+            new_members = special_pool[:count]
 
-        # 诊断：每个模板仅输出一次
-        diag_sp_key = f"_diag_special_{shift.id}"
-        if not getattr(self.s, diag_sp_key, False):
-            setattr(self.s, diag_sp_key, True)
-            self.s._diag_msgs.append(
-                f"[诊断-特殊] {shift.name}："
-                f"special_freq={freq} period={period} "
-                f"special_pool={special_pool} special_count={count} "
-                f"本月人选={monthly_pool}"
-            )
-
-        # 特殊人员强制排入：只校验存在性（staff_map）和重复性（already_assigned）
+        # 过滤并选择可用人员
         selected: list[int] = []
         assigned_set = set(already_assigned)
-        for sid in monthly_pool:
+        for sid in new_members:
             if sid in assigned_set:
-                conflicts.append(
-                    f"[诊断] {shift.name}：本月特殊人员(ID:{sid})已被分配，跳过"
-                )
+                conflicts.append(f"[诊断] {shift.name}：特殊人员(ID:{sid})已被分配，跳过")
+                continue
+            if sid in daily:
+                conflicts.append(f"[诊断] {shift.name}：特殊人员(ID:{sid})当天已排其他班次，跳过")
                 continue
             if sid not in self.s.staff_map:
-                conflicts.append(
-                    f"{date_str} {shift.name}：特殊人员池中人员(ID:{sid})不在本组织 staff_map 中，已跳过"
-                )
+                conflicts.append(f"{date_str} {shift.name}：特殊人员池中人员(ID:{sid})不在本组织中，已跳过")
                 continue
             selected.append(sid)
             assigned_set.add(sid)
 
         if len(selected) < count:
-            conflicts.append(
-                f"{date_str} {shift.name}：特殊人员组可用人数不足，需{count}人，仅{len(selected)}人可用"
-                f" (当月候选: {monthly_pool}, staff_map_keys: {list(self.s.staff_map.keys())[:10]}...)"
-            )
+            conflicts.append(f"{date_str} {shift.name}：特殊人员组可用人数不足，需{count}人，仅{len(selected)}人可用")
+
+        # 保存当月特殊人员状态供后续推导使用
+        self.s._prev_special_members[shift.id] = selected
 
         return selected, conflicts
+
+    def _derive_special_from_other_shifts(
+        self, current_shift: SchShiftTemplate, pool: list[int]
+    ) -> list[int] | None:
+        """从上月其他班次推导本月特殊人员
+
+        规则：特殊人员在不同班次间交替轮换。
+        上月在白班/夜班的特殊人员，本月应在行政班；
+        上月在行政班的特殊人员，本月应在白班/夜班。
+        """
+        if not self.s.prev_month_schedules:
+            return None
+
+        pool_set = set(pool)
+        count = current_shift.special_count
+
+        # 遍历上月所有排班记录，找出使用相同 special_pool 的其他班次
+        for prev_sched in self.s.prev_month_schedules:
+            if prev_sched.shift_id == current_shift.id:
+                continue
+            other_shift = self.s.shift_templates.get(prev_sched.shift_id)
+            if not other_shift or not other_shift.special_enabled:
+                continue
+            other_pool = set(other_shift.special_pool or [])
+            if other_pool != pool_set:
+                continue
+
+            # 找到同 pool 的其他班次，取其上月特殊人员
+            # 这些人员本月应该轮换到当前班次
+            return [
+                d.staff_id
+                for d in self.s.existing_details
+                if d.schedule_id == prev_sched.id
+            ][:count]
+
+        return None
+
+    def _derive_prev_special_from_db(self, shift: SchShiftTemplate) -> list[int] | None:
+        """从内存缓存读取上月特殊人员（由 _assign_special_group 保存）"""
+        return self.s._prev_special_members.get(shift.id, None) or None
+
+    def _rotate_special(self, shift: SchShiftTemplate, prev_special: list[int], pool: list[int]) -> list[int]:
+        """特殊人员轮换：交替班次
+
+        根据设计规则：特殊人员在两个班次间交替轮换。
+        如果上月特殊人员是 pool 中的第 N 个，本月应该用下一个。
+        """
+        pool_sorted = sorted(pool)
+        count = shift.special_count
+
+        if not prev_special:
+            return pool_sorted[:count]
+
+        # 找到上月特殊人员在池中的位置
+        # 使用第一个特殊人员的位置来确定轮换
+        if prev_special[0] in pool_sorted:
+            last_idx = pool_sorted.index(prev_special[0])
+            # 轮换到下一个位置
+            next_idx = (last_idx + count) % len(pool_sorted)
+            result = []
+            for i in range(count):
+                idx = (next_idx + i) % len(pool_sorted)
+                result.append(pool_sorted[idx])
+            return result
+
+        # 如果上月特殊人员不在池中，使用默认顺序
+        return pool_sorted[:count]
 
     def _assign_members(
         self,
@@ -346,43 +568,71 @@ class IndividualStrategy(ScheduleStrategy):
         available_ids: list[int],
         already_assigned: list[int],
         max_slots: int | None = None,
+        daily_assigned: set[int] | None = None,
     ) -> tuple[list[int], list[str]]:
         conflicts: list[str] = []
-        excluded = set(already_assigned)
+        daily = daily_assigned or set()
+        excluded = set(already_assigned) | daily  # 排除当天已排班的人
 
-        # 领导候选人全局排除：只能当值班领导，不参与任何班次的普通值班
-        if getattr(self.s, '_all_leader_candidates', None):
-            excluded |= self.s._all_leader_candidates
+        # 始终排除领导候选人（无论当前班次是否启用领导组）
+        leader_candidates = getattr(self.s, '_all_leader_candidates', None)
+        if leader_candidates:
+            excluded |= leader_candidates
 
-        # 特殊人员池的所有人都不参与普通值班（不能同时出现在同一班次）
-        if shift.special_enabled and shift.special_exclude_from_member:
-            excluded |= set(shift.special_pool or [])
-
-        # 月轮班次锁定人员整月独占，日轮班次排除他们
         is_monthly = (shift.member_rotation_frequency or 'day') in ('week', 'month')
         if not is_monthly and self.s._monthly_locked:
             excluded |= self.s._monthly_locked
+
+        freq = shift.member_rotation_frequency or 'day'
+
+        # 排除当月被选为特殊人员的人（无论当天是否有特殊班次）
+        # 特殊人员整月固定在特殊班次，不应出现在普通班次
+        if not shift.special_enabled:
+            for other_shift in self.s.shift_templates.values():
+                if other_shift.special_enabled:
+                    prev_special = self.s._prev_special_members.get(other_shift.id, [])
+                    excluded |= set(prev_special)
+
+        # 日轮班次：使用不含 daily_assigned 的候选池构建槽位分组
+        if freq == 'day':
+            slot_excluded = set(already_assigned)
+            if leader_candidates:
+                slot_excluded |= leader_candidates
+            if not is_monthly and self.s._monthly_locked:
+                slot_excluded |= self.s._monthly_locked
+            # 同样排除当月特殊人员
+            if not shift.special_enabled:
+                for other_shift in self.s.shift_templates.values():
+                    if other_shift.special_enabled:
+                        prev_special = self.s._prev_special_members.get(other_shift.id, [])
+                        slot_excluded |= set(prev_special)
+            slot_candidates = self.s.candidate_filter.apply(available_ids, date_str, shift.id, slot_excluded)
+        else:
+            slot_candidates = None
+
+        # 跨月交叉替换：将上月行政班的非special人员添加到当前候选池
+        # 在槽位分组创建之前注入，让SlotGrouper正确处理
+        if self.s.prev_month_schedules and not shift.special_enabled:
+            injected = self._get_cross_month_injections(shift)
+            if injected:
+                for sid in injected:
+                    if sid in self.s.staff_map and sid not in available_ids:
+                        available_ids.append(sid)
+                # 标记需要重建分组，因为注入了新的人员
+                self.s._need_rebuild_groups[shift.id] = True
+                # 重新计算slot_candidates和candidates（包含注入的人员）
+                if freq == 'day' and slot_candidates is not None:
+                    slot_candidates = self.s.candidate_filter.apply(available_ids, date_str, shift.id, slot_excluded)
+                candidates = self.s.candidate_filter.apply(available_ids, date_str, shift.id, excluded)
+                if max_slots is None:
+                    max_slots = shift.member_max
+                target = min(max_slots, len(candidates))
 
         candidates = self.s.candidate_filter.apply(available_ids, date_str, shift.id, excluded)
 
         if max_slots is None:
             max_slots = shift.member_max
         target = min(max_slots, len(candidates))
-
-        # === 诊断：每个模板前3天输出一次 ===
-        freq = shift.member_rotation_frequency or 'day'
-        diag_key = f"_diag_member_{shift.id}_{date_str}"
-        diag_count_key = f"_diag_member_cnt_{shift.id}"
-        cnt = getattr(self.s, diag_count_key, 0)
-        if cnt < 3 and not getattr(self.s, diag_key, False):
-            setattr(self.s, diag_key, True)
-            setattr(self.s, diag_count_key, cnt + 1)
-            self.s._diag_msgs.append(
-                f"[诊断-成员] {shift.name} {date_str}："
-                f"freq={freq} max_slots={max_slots} target={target} "
-                f"candidates={len(candidates)} excluded={len(excluded)} "
-                f"available={len(available_ids)}"
-            )
 
         if len(candidates) < shift.member_min:
             conflicts.append(
@@ -392,122 +642,371 @@ class IndividualStrategy(ScheduleStrategy):
         if target <= 0 or not candidates:
             return [], conflicts
 
-        selected = self._pair_select(candidates, date_str, target, shift)
+        if freq == 'day':
+            # 日轮：用不含 daily_assigned 的候选池构建槽位，再从结果中过滤
+            selected = self._slot_rotate_select(slot_candidates, date_str, target, shift)
+            # 过滤掉当天已排班的人
+            selected = [sid for sid in selected if sid not in daily]
+            # 截断到目标人数
+            selected = selected[:target]
+        else:
+            # 周轮/月轮：纯数学偏移
+            period = self.s._get_rotation_period(date_str, freq)
+            stable_sorted = sorted(candidates)
+            n = len(stable_sorted)
+            start = (period * target) % n
+            selected = [stable_sorted[(start + i) % n] for i in range(target)]
+
         return selected, conflicts
 
-    def _pair_select(
+    def _slot_rotate_select(
         self,
         candidates: list[int],
         date_str: str,
         target: int,
         shift: SchShiftTemplate,
     ) -> list[int]:
-        """白夜交替 + 周期轮换选择。
+        """标准槽位轮转选择。
 
-        日轮(freq=day)：按班次次数公平排序 + 交替惩罚，逐日变化。
-        周轮/月轮(freq=week/month)：稳定排序 + 周期偏移，
-        同一周期内完全固定人选，不同周期不同人选。
+        核心规则：
+        - 按ID排序，(day-1)%3分3槽
+        - rotation偶数：前半白后半夜；奇数：前半夜后半白
+        - 新老搭配：每2人组中1新+1老
+        - 整月绑定：同槽人员整月不变
+
+        重要：优先使用数据库中的配对关系，没有则用 SlotGrouper 生成。
         """
         is_night = self.s._is_night_shift(shift)
         target_type = "night" if is_night else "day"
-        freq = shift.member_rotation_frequency or 'day'
-        period = self.s._get_rotation_period(date_str, freq)
 
-        if not candidates or target <= 0:
-            return []
-        if target >= len(candidates):
-            return list(candidates)
+        dt = date.fromisoformat(date_str)
+        year, month = dt.year, dt.month
+        n_total = len(candidates)
 
-        if freq == "day":
-            # === 日轮：槽位分组 + 绑定组 + 新老搭配 + 白夜交替 + 班次均衡 ===
-            dt = date.fromisoformat(date_str)
-            rotation_slot = (dt.day - 1) % 3
-            rotation_number = (dt.day - 1) // 3
+        # 跨月重置
+        if self.s._slot_grouper._current_month != year * 12 + month:
+            self.s._monthly_locked.clear()
+            self.s._day_candidates_cache.clear()
 
-            # 1. 检查绑定组
-            if rotation_slot in self.s._bound_groups:
-                day_grp, night_grp = self.s._bound_groups[rotation_slot]
-                if rotation_number % 2 == 0:
-                    return (day_grp if target_type == "day" else night_grp)[:target]
-                else:
-                    return (night_grp if target_type == "day" else day_grp)[:target]
+        # 跨月原位替换: 有上月数据时，在上月分组中执行替换
+        if self.s.prev_month_schedules and self.s._loaded_pairings.get(shift.id):
+            groups = self._pairings_to_groups(self.s._loaded_pairings[shift.id])
+            groups = self._apply_in_place_replacement(groups, shift)
+        else:
+            # 当天候选池缓存：白班/夜班使用相同的候选池
+            cache_key = date_str
+            if cache_key not in self.s._day_candidates_cache:
+                self.s._day_candidates_cache[cache_key] = sorted(candidates)
+            sorted_ids = self.s._day_candidates_cache[cache_key]
+            groups = self.s._slot_grouper.get_month_groups(sorted_ids, year, month)
 
-            # 2. 结构轮换仅适用于N=12（3槽×4人×2人/组）
-            n_total = len(candidates)
-            if n_total == 12:
-                stable_sorted = sorted(candidates)
+            # 首次生成时，保存配对关系供后续使用
+            if groups and shift.id not in self.s._new_pairings:
+                self.s._new_pairings[shift.id] = self._groups_to_pairings(groups)
 
-                # 全局新老分组配对
-                new_ids = [sid for sid in stable_sorted if self.s._is_new_employee(sid)]
-                old_ids = [sid for sid in stable_sorted if not self.s._is_new_employee(sid)]
+        if not groups:
+            # 人数不足时回退到公平排序
+            return self._fallback_select(candidates, date_str, target, is_night)
 
-                # 交叉配对：优先1新+1老，剩余的同类放一起
-                pairs = []
-                while new_ids and old_ids:
-                    pairs.append([new_ids.pop(0), old_ids.pop(0)])
-                while len(new_ids) >= 2:
-                    pairs.append([new_ids.pop(0), new_ids.pop(0)])
-                while len(old_ids) >= 2:
-                    pairs.append([old_ids.pop(0), old_ids.pop(0)])
+        # 标准12人场景：3槽位
+        n_slots = len(groups)
+        if n_slots == 0:
+            return self._fallback_select(candidates, date_str, target, is_night)
 
-                # 分配6对到3个槽位（每槽位2对：day_group + night_group）
-                slot_pairs = {0: [], 1: [], 2: []}
-                for i, pair in enumerate(pairs):
-                    slot_pairs[i % 3].append(pair)
+        # 选择槽位：(day-1)%3
+        rotation_slot = (dt.day - 1) % n_slots
+        # 白夜方向：rotation_number%2
+        rotation_number = (dt.day - 1) // n_slots
 
-                day_group = slot_pairs[0][0]
-                night_group = slot_pairs[0][1] if len(slot_pairs[0]) > 1 else slot_pairs[0][0]
-                self.s._bound_groups[0] = (day_group, night_group)
-                if 1 in slot_pairs:
-                    dg = slot_pairs[1][0]
-                    ng = slot_pairs[1][1] if len(slot_pairs[1]) > 1 else slot_pairs[1][0]
-                    self.s._bound_groups[1] = (dg, ng)
-                if 2 in slot_pairs:
-                    dg = slot_pairs[2][0]
-                    ng = slot_pairs[2][1] if len(slot_pairs[2]) > 1 else slot_pairs[2][0]
-                    self.s._bound_groups[2] = (dg, ng)
+        dg, ng = groups[rotation_slot]
 
-                # 返回当前槽位的结果
-                dg, ng = self.s._bound_groups[rotation_slot]
-                if rotation_number % 2 == 0:
-                    return (dg if target_type == "day" else ng)[:target]
-                else:
-                    return (ng if target_type == "day" else dg)[:target]
+        if rotation_number % 2 == 0:
+            # 偶数轮：前半白，后半夜
+            selected = (dg if target_type == "day" else ng)
+        else:
+            # 奇数轮：前半夜，后半白
+            selected = (ng if target_type == "day" else dg)
 
-            # N != 12 时回退到公平排序
-            dt2 = date.fromisoformat(date_str)
-            day_seed = dt2.day + dt2.month * 31
-            combined = sorted(candidates, key=lambda sid: (
-                self.s._night_shifts.get(sid, 0) + self.s._day_shifts.get(sid, 0),
-                self.s._night_shifts.get(sid, 0) if is_night else self.s._day_shifts.get(sid, 0),
-                (sid * day_seed) % 997,
-            ))
-            return combined[:target]
+        # 过滤掉不在当前候选集中的人（处理 daily_assigned 排除）
+        candidate_set = set(candidates)
+        selected = [sid for sid in selected if sid in candidate_set]
 
-        # === 周轮/月轮：按 ID 排序 + 周期偏移 → 纯数学轮换，不依赖历史 ===
-        stable_sorted = sorted(candidates)
-        n = len(stable_sorted)
-        start = (period * target) % n
-        selected: list[int] = []
-        for i in range(target):
-            selected.append(stable_sorted[(start + i) % n])
-
-        # 诊断：每个模板仅输出一次
-        diag_key = f"_diag_pair_{shift.id}_{freq}_{period}"
-        if not getattr(self, diag_key, False):
-            setattr(self, diag_key, True)
-            selected_names = [
-                self.s.staff_map.get(sid).name if self.s.staff_map.get(sid) else str(sid)
-                for sid in selected
-            ]
-            # diagnostic stored for report (not returned as conflict, but via shifts list)
-            self.s._diag_msgs.append(
-                f"[诊断-月轮] {shift.name}：freq={freq} period={period} "
-                f"target={target} candidates={n} start={start} "
-                f"选中={selected_names}"
-            )
-
+        # 不截断，返回整个组（白班/夜班共享同一槽位）
         return selected
+
+    def _get_cross_month_injections(
+        self,
+        shift: SchShiftTemplate,
+    ) -> list[int]:
+        """获取跨月需要注入的人员列表。
+
+        规则：上月行政班的所有人员（特殊+普通）本月应去白班/夜班。
+        返回需要注入的人员ID列表（按ID排序）。
+        """
+        if not self.s.prev_month_schedules:
+            return []
+
+        # 找到行政班
+        admin_shift = None
+        for sid, s in self.s.shift_templates.items():
+            if s.special_enabled:
+                admin_shift = s
+                break
+
+        if not admin_shift or admin_shift.id == shift.id:
+            return []
+
+        # 上月行政班所有人员（取第一天）
+        admin_staff = []
+        for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
+            if sched.shift_id == admin_shift.id:
+                for d in self.s.existing_details:
+                    if d.schedule_id == sched.id:
+                        if d.staff_id not in admin_staff:
+                            admin_staff.append(d.staff_id)
+                break
+
+        return sorted(admin_staff)
+
+    def _get_current_admin_members(self) -> list[int]:
+        """获取本月行政班已分配的人员列表"""
+        admin_shift = None
+        for sid, s in self.s.shift_templates.items():
+            if s.special_enabled:
+                admin_shift = s
+                break
+        if not admin_shift:
+            return []
+        # 从 _prev_special_members 中获取行政班特殊人员
+        admin_sp = self.s._prev_special_members.get(admin_shift.id, [])
+        return admin_sp
+
+    def _apply_in_place_replacement(
+        self,
+        groups: dict[int, tuple[list[int], list[int]]],
+        shift: SchShiftTemplate,
+    ) -> dict[int, tuple[list[int], list[int]]]:
+        """跨月原位替换：在上月分组中直接替换人员。
+
+        规则：
+        1. 收集上月行政班所有人员（特殊+普通）→ people_from_admin
+        2. 收集上月白班/夜班所有人员 → people_from_slot
+        3. 按ID排序后一一对应替换
+        """
+        if not groups or not self.s.prev_month_schedules:
+            return groups
+
+        # 找到行政班
+        admin_shift = None
+        for sid, s in self.s.shift_templates.items():
+            if s.special_enabled:
+                admin_shift = s
+                break
+        if not admin_shift or admin_shift.id == shift.id:
+            return groups
+
+        # 上月行政班人员（取第一天，本月应去白班/夜班）
+        people_from_admin = []
+        for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
+            if sched.shift_id == admin_shift.id:
+                for d in self.s.existing_details:
+                    if d.schedule_id == sched.id:
+                        if d.staff_id not in people_from_admin:
+                            people_from_admin.append(d.staff_id)
+                break
+
+        # 上月本班次（白班/夜班）人员（取第一天）
+        people_from_slot = []
+        for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
+            if sched.shift_id == shift.id:
+                for d in self.s.existing_details:
+                    if d.schedule_id == sched.id:
+                        if d.staff_id not in people_from_slot:
+                            people_from_slot.append(d.staff_id)
+                break
+
+        if not people_from_admin or not people_from_slot:
+            return groups
+
+        # 收集特殊人员池（用于识别需要替换的特殊人员）
+        special_pool = set()
+        for sid, s in self.s.shift_templates.items():
+            if s.special_enabled and s.special_pool:
+                special_pool.update(s.special_pool)
+
+        # 只替换特殊人员池成员（他们在班次间轮换）
+        departed_sp = [sid for sid in people_from_slot if sid in special_pool]
+        joined_sp = [sid for sid in people_from_admin if sid in special_pool]
+
+        # 普通人员也轮换（按ID排序后一一对应）
+        departed_reg = [sid for sid in people_from_slot if sid not in special_pool]
+        joined_reg = [sid for sid in people_from_admin if sid not in special_pool]
+
+        # 构建替换映射
+        departed_sp.sort()
+        joined_sp.sort()
+        departed_reg.sort()
+        joined_reg.sort()
+
+        replacements = {}
+        for i, old_sid in enumerate(departed_sp):
+            if i < len(joined_sp):
+                replacements[old_sid] = joined_sp[i]
+        for i, old_sid in enumerate(departed_reg):
+            if i < len(joined_reg):
+                replacements[old_sid] = joined_reg[i]
+
+        if not replacements:
+            return groups
+
+        # 在槽位分组中执行替换
+        new_groups = {}
+        for slot_idx, (dg, ng) in groups.items():
+            new_dg = [replacements.get(sid, sid) for sid in dg]
+            new_ng = [replacements.get(sid, sid) for sid in ng]
+            new_groups[slot_idx] = (new_dg, new_ng)
+
+        return new_groups
+
+    def _apply_special_replacement_to_groups(
+        self,
+        groups: dict[int, tuple[list[int], list[int]]],
+        shift: SchShiftTemplate,
+        candidates: list[int],
+    ) -> dict[int, tuple[list[int], list[int]]]:
+        """跨月原位替换：按 ID 排序后一一对应替换。
+
+        规则：
+        1. 特殊人员替换特殊人员（按 ID 排序对应）
+        2. 普通人员替换普通人员（按 ID 排序对应）
+        3. 行政班人员 ↔ 白班/夜班人员交叉替换
+        """
+        if not groups or not self.s.prev_month_schedules:
+            return groups
+
+        # 收集特殊人员池
+        special_pool = set()
+        for sid, s in self.s.shift_templates.items():
+            if s.special_enabled and s.special_pool:
+                special_pool.update(s.special_pool)
+
+        if not special_pool:
+            return groups
+
+        # 收集上月行政班所有人员
+        admin_shift = None
+        for sid, s in self.s.shift_templates.items():
+            if s.special_enabled:
+                admin_shift = s
+                break
+
+        if not admin_shift:
+            return groups
+
+        # 上月行政班人员（取第一天数据）
+        admin_sp = []  # 特殊人员
+        admin_reg = []  # 普通人员
+        for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
+            if sched.shift_id == admin_shift.id:
+                for d in self.s.existing_details:
+                    if d.schedule_id == sched.id:
+                        if d.staff_id in special_pool:
+                            if d.staff_id not in admin_sp:
+                                admin_sp.append(d.staff_id)
+                        else:
+                            if d.staff_id not in admin_reg:
+                                admin_reg.append(d.staff_id)
+                break  # 只取第一天
+
+        # 上月白班/夜班槽位中的人员（取第一天数据）
+        slot_sp = []  # 特殊人员
+        slot_reg = []  # 普通人员
+        for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
+            if sched.shift_id == shift.id:
+                for d in self.s.existing_details:
+                    if d.schedule_id == sched.id:
+                        if d.staff_id in special_pool:
+                            if d.staff_id not in slot_sp:
+                                slot_sp.append(d.staff_id)
+                        else:
+                            if d.staff_id not in slot_reg:
+                                slot_reg.append(d.staff_id)
+                break  # 只取第一天
+
+        if not admin_sp and not admin_reg:
+            return groups
+
+        # 按 ID 排序
+        admin_sp.sort()
+        admin_reg.sort()
+        slot_sp.sort()
+        slot_reg.sort()
+
+        # 构建替换映射
+        replacements = {}
+        # 特殊人员：把slot中的旧特殊人员替换为admin中的新特殊人员
+        for i, old_sid in enumerate(slot_sp):
+            if i < len(admin_sp):
+                replacements[old_sid] = admin_sp[i]
+        # 普通人员：把slot中的旧普通人员替换为admin中的新普通人员
+        for i, old_sid in enumerate(slot_reg):
+            if i < len(admin_reg):
+                replacements[old_sid] = admin_reg[i]
+
+        if not replacements:
+            return groups
+
+        # 在槽位中执行替换
+        new_groups = {}
+        for slot_idx, (dg, ng) in groups.items():
+            new_dg = [replacements.get(sid, sid) for sid in dg]
+            new_ng = [replacements.get(sid, sid) for sid in ng]
+            new_groups[slot_idx] = (new_dg, new_ng)
+
+        return new_groups
+
+    def _fallback_select(
+        self,
+        candidates: list[int],
+        date_str: str,
+        target: int,
+        is_night: bool,
+    ) -> list[int]:
+        """人数不足时的回退选择（公平排序）。"""
+        dt = date.fromisoformat(date_str)
+        day_seed = dt.day + dt.month * 31
+        combined = sorted(candidates, key=lambda sid: (
+            self.s._night_shifts.get(sid, 0) + self.s._day_shifts.get(sid, 0),
+            self.s._night_shifts.get(sid, 0) if is_night else self.s._day_shifts.get(sid, 0),
+            (sid * day_seed) % 997,
+        ))
+        return combined[:target]
+
+    @staticmethod
+    def _pairings_to_groups(
+        pairings: dict[tuple[int, str], tuple[list[int], list[bool]]],
+    ) -> dict[int, tuple[list[int], list[int]]]:
+        """将配对关系转换为槽位分组格式"""
+        groups: dict[int, tuple[list[int], list[int]]] = {}
+        for (slot_idx, group_type), (staff_ids, is_new) in pairings.items():
+            if slot_idx not in groups:
+                groups[slot_idx] = ([], [])
+            if group_type == "day":
+                groups[slot_idx] = (staff_ids, groups[slot_idx][1])
+            else:
+                groups[slot_idx] = (groups[slot_idx][0], staff_ids)
+        return groups
+
+    @staticmethod
+    def _groups_to_pairings(
+        groups: dict[int, tuple[list[int], list[int]]],
+    ) -> dict[tuple[int, str], tuple[list[int], list[bool]]]:
+        """将槽位分组转换为配对关系格式"""
+        pairings: dict[tuple[int, str], tuple[list[int], list[bool]]] = {}
+        for slot_idx, (dg, ng) in groups.items():
+            pairings[(slot_idx, "day")] = (dg, [False] * len(dg))
+            pairings[(slot_idx, "night")] = (ng, [False] * len(ng))
+        return pairings
 
 
 # ====================================================================== #
@@ -519,7 +1018,7 @@ class AutoScheduler:
 
     核心职责：
     - 按天遍历、按班次遍历
-    - 执行逐人轮询排班策略
+    - 执行槽位轮转排班策略
     - 维护公平性打分器状态
     - 生成报告
     """
@@ -534,6 +1033,10 @@ class AutoScheduler:
         existing_details: list,
         staff_tag_roles_map: dict[int, list[str]] | None = None,
         org_max_ratio: float | None = None,
+        pre_history: dict[int, list[str]] | None = None,
+        pairing_manager=None,  # 新增：配对管理器
+        prev_month_schedules=None,  # 新增：上月排班记录
+        all_pairings=None,  # 新增：配对关系缓存
     ):
         self.staff_list = staff_list
         self.shift_templates: dict[int, SchShiftTemplate] = {s.id: s for s in shift_templates}
@@ -544,45 +1047,53 @@ class AutoScheduler:
         self.existing_details = existing_details
         self.staff_tag_roles_map = staff_tag_roles_map or {}
         self.org_max_ratio = org_max_ratio
+        self._pre_history = pre_history or {}
+        self.pairing_manager = pairing_manager
+        self.prev_month_schedules = prev_month_schedules or []
+        self._loaded_pairings = all_pairings or {}  # {shift_id: {(slot_idx, group_type): (staff_ids, is_new)}}
+        self._new_pairings: dict[int, dict[tuple[int, str], tuple[list[int], list[bool]]]] = {}  # 需要保存的新配对
+        self._need_rebuild_groups: dict[int, bool] = {}  # 跨月注入时需要重建分组
 
-        # 人员索引
         self.staff_map: dict[int, OrgStaff] = {s.id: s for s in staff_list}
         self.staff_ids: list[int] = [s.id for s in staff_list]
 
-        # 约束参数索引
         self.constraint_params: dict[str, dict] = {
             c.rule_type: c.params or {} for c in self.constraints
         }
 
-        # 特殊规则索引
         self.staff_special_rules: dict[int, list[SchSpecialRule]] = defaultdict(list)
         for r in special_rules:
             self.staff_special_rules[r.staff_id].append(r)
 
-        # 公平性打分器
-        self.scorer = FairnessScorer(existing_schedules, existing_details, self.shift_templates)
+        fairness_weights = self.constraint_params.get("FAIRNESS_WEIGHTS", {})
+        self.scorer = FairnessScorer(
+            existing_schedules, existing_details, self.shift_templates,
+            weights=fairness_weights if fairness_weights else None,
+        )
 
-        # 冻结本轮开始前的排班计数快照（月轮/周轮时用于保证期内人选稳定）
         self._initial_shift_counts: dict[int, int] = {
             sid: len(self.scorer.staff_days.get(sid, set())) for sid in self.staff_ids
         }
 
-        # 诊断消息
         self._diag_msgs: list[str] = []
 
-        # 本轮白班/夜班计数（用于平衡同类型班次分布）
         self._night_shifts: dict[int, int] = defaultdict(int)
         self._day_shifts: dict[int, int] = defaultdict(int)
-        self._last_shift_type: dict[int, str] = {}
-        self._last_shift_date: dict[int, str] = {}
 
-        # 月轮班次已锁定人员（整月独占，不参与白夜班）
         self._monthly_locked: set[int] = set()
+        self._day_candidates_cache: dict[str, list[int]] = {}  # 当天候选池缓存
 
-        # 日轮绑定组：key=rotation_slot(0/1/2), value=(day_group, night_group)
-        self._bound_groups: dict[int, tuple] = {}
+        # 特殊人员组跨月替换状态
+        self._prev_special_members: dict[int, list[int]] = {}  # shift_id -> [staff_id, ...]
+        self._special_current_month: int = 0
 
-        # 候选人过滤链
+        # 槽位分组器
+        self._slot_grouper = SlotGrouper(self.staff_map, self._is_new_employee)
+
+        # 配对关系缓存：shift_id -> {(slot_idx, group_type): (staff_ids, is_new)}
+        self._pairings_cache: dict[int, dict[tuple[int, str], tuple[list[int], list[bool]]]] = {}
+        self._pairings_dirty: dict[int, bool] = {}  # 标记哪些班次的配对需要保存
+
         self.candidate_filter = CandidateFilter(
             staff_special_rules=self.staff_special_rules,
             constraint_params=self.constraint_params,
@@ -590,6 +1101,7 @@ class AutoScheduler:
             existing_schedules=existing_schedules,
             shift_templates=self.shift_templates,
             scorer=self.scorer,
+            pre_history=self._pre_history,
         )
 
     # ------------------------------------------------------------------ #
@@ -597,20 +1109,14 @@ class AutoScheduler:
     # ------------------------------------------------------------------ #
 
     def _is_new_employee(self, staff_id: int) -> bool:
-        """通过标识体系判断是否为新员工（用于新老搭配逻辑）。"""
         if "新员工" in self.staff_tag_roles_map.get(staff_id, []):
             return True
         staff = self.staff_map.get(staff_id)
-        if staff and staff.tags and "新员工" in staff.tags:
+        if staff and staff.tags and "新员工" in (staff.tags or []):
             return True
         return False
 
     def _get_rotation_period(self, date_str: str, freq: str) -> int:
-        """获取轮换周期索引，用于周轮/月轮等。
-
-        周轮使用相对周期（从排班起始周的周一为 0），确保同周人选一致。
-        月轮使用绝对年月索引。
-        """
         dt = date.fromisoformat(date_str)
         if freq == "week":
             start = getattr(self, '_rotation_start_date', None)
@@ -631,62 +1137,42 @@ class AutoScheduler:
         staff_ids: list[int],
         leader_offsets: dict[int, int] | None = None,
     ) -> dict:
-        """生成排班表。
-
-        leader_offsets: {shift_id: iso_week_offset}，用于领导周轮跨月连续。
-        首次排班 offset = start_date 所在 ISO 周号。
-        """
         results: list[ScheduleResult] = []
         all_conflicts: list[str] = []
 
-        # 轮换周期基准日期（周轮从排班起始周的周一计入周期 0）
         self._rotation_start_date = start_date
-        # 领导跨月偏移量（ISO 周号基准）
         self._leader_offsets: dict[int, int] = leader_offsets or {}
 
-        # 过滤可用人员
         available_ids = [
             s.id for s in self.staff_list
             if s.id in staff_ids and s.status == 1
         ]
 
-        # 过滤激活的班次模板
         active_shifts = [
             self.shift_templates[sid]
             for sid in shift_template_ids
             if sid in self.shift_templates and self.shift_templates[sid].status == 1
         ]
 
-        # 强制纳入所有模板的 special_pool 人员（即使未在 staff_ids 中选择）
         for shift in active_shifts:
             if shift.special_enabled:
                 for sid in (shift.special_pool or []):
                     if sid in self.staff_map and sid not in available_ids:
                         available_ids.append(sid)
 
-        # 收集全局领导候选人 + 强制纳入 available_ids（即使未在 staff_ids 中选择）
         self._all_leader_candidates: set[int] = set()
         for shift in active_shifts:
             if not shift.leader_enabled:
                 continue
             if shift.leader_pool:
-                pool_added = 0
                 for sid in shift.leader_pool:
                     if sid not in self.staff_map:
                         continue
                     self._all_leader_candidates.add(sid)
                     if sid not in available_ids:
                         available_ids.append(sid)
-                        pool_added += 1
-                self._diag_msgs.append(
-                    f"[诊断-领导池] leader_pool={shift.leader_pool} "
-                    f"in_staff_map={sum(1 for sid in shift.leader_pool if sid in self.staff_map)} "
-                    f"added_to_available={pool_added}"
-                )
             elif shift.leader_use_tag:
-                # 无候选池 → 用排班模板指定的标签名筛选标识人员
                 tag_name = getattr(shift, 'leader_tag_name', None) or '领导'
-                tagged_count = 0
                 for s in self.staff_list:
                     sid = s.id
                     old_has = bool(s.tags and tag_name in (s.tags or []))
@@ -695,48 +1181,21 @@ class AutoScheduler:
                         self._all_leader_candidates.add(sid)
                         if sid not in available_ids:
                             available_ids.append(sid)
-                        tagged_count += 1
-                self._diag_msgs.append(
-                    f"[诊断-领导池] leader_pool=None, tag_name={tag_name}, "
-                    f"tagged_found={tagged_count} staff_list={len(self.staff_list)}"
-                )
 
-        # === 诊断：检查特殊人员组和成员组的频次是否匹配 ===
-        for shift in active_shifts:
-            if shift.special_enabled:
-                member_freq = shift.member_rotation_frequency or 'day'
-                special_freq = shift.special_rotation_frequency or 'month'
-                self._diag_msgs.append(
-                    f"[诊断-频次] {shift.name}："
-                    f"member_freq={member_freq} special_freq={special_freq} "
-                    f"member_max={shift.member_max} special_count={shift.special_count} "
-                    f"special_pool={shift.special_pool}"
-                )
-
-        # 排序：月轮/周轮模板排在前，日轮模板排在后
-        # 确保行政班等固定人选的班次先占人，白夜班再竞争剩余人员
         active_shifts.sort(key=lambda s: (
             0 if (s.member_rotation_frequency or 'day') in ('week', 'month') else 1
         ))
 
-        # 预构建模板级约束索引
         all_constraint_map = {c.id: c for c in self.constraints}
 
-        # 预算每日可排人数上限
         total_staff = len(available_ids)
         daily_max_count = None
         if self.org_max_ratio and total_staff > 0:
             daily_max_count = max(1, int(total_staff * self.org_max_ratio))
 
-        # 策略实例（始终使用逐人轮询）
         strategy = IndividualStrategy(self)
-
-        # 标记本轮开始日期，MAX_CONTINUOUS_DAYS 不跨月串联
         self.candidate_filter._run_start_str = str(start_date)
 
-        # 日轮通过 sorted(candidates)[:12] 自动排除周轮候选人，无需预锁定
-
-        # 跨月交替：上月末7天 → 末次类型+日期
         tail_start = start_date - timedelta(days=7)
         tail_start_str = str(tail_start)
         start_date_str = str(start_date)
@@ -746,24 +1205,23 @@ class AutoScheduler:
             if not s:
                 continue
             d_str = str(getattr(s, "date", ""))
-            shift_t = self.shift_templates.get(getattr(s, "shift_id", None))
-            if not shift_t:
-                continue
             if tail_start_str <= d_str < start_date_str:
-                is_night = self._is_night_shift(shift_t)
-                self._last_shift_type[d.staff_id] = "night" if is_night else "day"
-                self._last_shift_date[d.staff_id] = d_str
+                shift_t = self.shift_templates.get(getattr(s, "shift_id", None))
+                if shift_t:
+                    self.scorer.staff_last_shift_type[d.staff_id] = (
+                        "night" if self._is_night_shift(shift_t) else "day"
+                    )
 
         current = start_date
         while current <= end_date:
             date_str = str(current)
             weekday = current.isoweekday()
+            daily_assigned: set[int] = set()  # 当天已排班人员（跨班次共享）
 
             for shift in active_shifts:
                 if weekday not in (shift.apply_days or [1, 2, 3, 4, 5, 6, 7]):
                     continue
 
-                # 按模板 constraint_ids 过滤约束规则
                 template_constraint_ids = shift.constraint_ids
                 if template_constraint_ids:
                     template_constraints = [
@@ -773,7 +1231,6 @@ class AutoScheduler:
                     ]
                 else:
                     template_constraints = self.constraints
-                # 临时替换 candidate_filter 的约束参数
                 orig_constraint_params = self.candidate_filter._constraint_params
                 self.candidate_filter._constraint_params = {
                     c.rule_type: c.params or {} for c in template_constraints
@@ -781,18 +1238,15 @@ class AutoScheduler:
 
                 result = ScheduleResult(date_str, shift.id, org_id)
                 conflicts = strategy.assign(
-                    shift, date_str, available_ids, result,
+                    shift, date_str, available_ids, result, daily_assigned,
                 )
                 result.conflicts.extend(conflicts)
                 all_conflicts.extend(conflicts)
 
-                # 恢复全局约束参数
                 self.candidate_filter._constraint_params = orig_constraint_params
 
-                # 去重
                 result.member_ids = list(dict.fromkeys(result.member_ids))
 
-                # 检查组织每日排班人数上限
                 if daily_max_count:
                     already_today = len([
                         sid for sid in available_ids
@@ -807,22 +1261,19 @@ class AutoScheduler:
                     elif len(result.member_ids) > remaining_quota:
                         result.member_ids = result.member_ids[:remaining_quota]
 
-                # 记录到打分器
                 for sid in result.member_ids:
                     self.scorer.record_assignment(sid, date_str, shift.id)
+                    daily_assigned.add(sid)  # 记录当天已排班
 
-                # 记录白班/夜班计数（用于同类型班次平衡）
                 if self._is_night_shift(shift):
                     for sid in result.member_ids:
-                        self._night_shifts[sid] = self._night_shifts.get(sid, 0) + 1
+                        self._night_shifts[sid] += 1
                 else:
                     for sid in result.member_ids:
-                        self._day_shifts[sid] = self._day_shifts.get(sid, 0) + 1
+                        self._day_shifts[sid] += 1
 
-                # 兜底截断
                 result.member_ids = self._truncate_members(result, shift)
 
-                # 月轮班次：首次分配后锁定其普通成员，整月排除
                 is_monthly = (shift.member_rotation_frequency or 'day') in ('week', 'month')
                 if is_monthly and not self._monthly_locked and result.member_ids:
                     special_ids = set(shift.special_pool or []) if shift.special_enabled else set()
@@ -833,9 +1284,6 @@ class AutoScheduler:
                     ]
                     if locked:
                         self._monthly_locked.update(locked)
-                        self._diag_msgs.append(
-                            f"[诊断-锁定] {shift.name}：锁定普通成员={locked}"
-                        )
 
                 results.append(result)
 
@@ -860,17 +1308,18 @@ class AutoScheduler:
         available_ids: list[int],
         is_night: bool,
         is_weekend: bool,
+        daily_assigned: set[int] | None = None,
     ) -> tuple[list[int], list[str]]:
         conflicts: list[str] = []
+        daily = daily_assigned or set()
 
-        # 确定候选池：leader_pool → 身份标识"领导" → 空（不安排）
         if shift.leader_pool:
-            candidates = [sid for sid in shift.leader_pool if sid in available_ids]
+            candidates = [sid for sid in shift.leader_pool if sid in available_ids and sid not in daily]
         else:
             tagged = []
             tag_name = getattr(shift, 'leader_tag_name', None) or '领导'
             for s in self.staff_list:
-                if s.id not in available_ids:
+                if s.id not in available_ids or s.id in daily:
                     continue
                 old_has = bool(s.tags and tag_name in (s.tags or []))
                 new_has = tag_name in self.staff_tag_roles_map.get(s.id, [])
@@ -878,15 +1327,11 @@ class AutoScheduler:
                     tagged.append(s.id)
             candidates = tagged
 
-        # 保存完整候选池（过滤前），用于周轮/月轮索引计算
         full_pool = list(candidates)
 
-        # 领导候选人仅过特殊规则 + MAX_SHIFTS_PER_DAY，不过 MAX_CONTINUOUS_DAYS
-        # （同一周每天同一领导不应因连续天数被排除）
         candidates = self.candidate_filter._filter_by_special_rules(
             list(candidates), date_str, shift.id
         )
-        # 仅检查当天是否已排班（避免同一人同天被排两次）
         max_per_day = self.candidate_filter._constraint_params.get(
             "MAX_SHIFTS_PER_DAY", {}
         ).get("count", 1)
@@ -905,20 +1350,17 @@ class AutoScheduler:
         leader_freq = shift.leader_rotation_frequency or 'week'
         leader_count = shift.leader_count
 
-        # 按周期轮换选取（周轮/月轮），同一周期内固定人选
         if leader_freq in ("week", "month"):
             if leader_freq == "week":
-                # 领导周轮：使用绝对 ISO 周号 - 偏移量，确保跨月连续
                 iso_week = date.fromisoformat(date_str).isocalendar()[1]
                 leader_offset = self._leader_offsets.get(shift.id, iso_week)
                 period = iso_week - leader_offset
             else:
                 period = self._get_rotation_period(date_str, leader_freq)
-            # 基于完整候选池大小计算轮换索引，确保同周每天人选一致
+
             full_sorted = sorted(full_pool)
             full_count = max(1, len(full_sorted))
             start_idx = (period * leader_count) % full_count
-            # 从过滤后的候选中按索引顺序选取，被过滤的跳过，环形向后找
             filtered_set = set(candidates)
             selected = []
             for i in range(full_count):
@@ -928,19 +1370,7 @@ class AutoScheduler:
                     selected.append(sid)
                 if len(selected) >= leader_count:
                     break
-            # 诊断：每个周期只输出一次领导选择日志
-            diag_leader_key = f"_diag_leader_{shift.id}_{period}"
-            if not getattr(self, diag_leader_key, False):
-                setattr(self, diag_leader_key, True)
-                self._diag_msgs.append(
-                    f"[诊断-领导] {shift.name} period={period} freq={leader_freq} "
-                    f"leader_count_cfg={leader_count} full_count={full_count} "
-                    f"filtered_count={len(candidates)} "
-                    f"start_idx={start_idx} selected={selected} "
-                    f"(共计{len(selected)}人)"
-                )
         else:
-            # 日轮：打分排序选取
             scored = [
                 (sid, self.scorer.score(sid, date_str, shift.id, is_night, is_weekend))
                 for sid in candidates
@@ -959,44 +1389,12 @@ class AutoScheduler:
         return selected[:target], conflicts
 
     # ------------------------------------------------------------------ #
-    #  公共选取逻辑（分层轮转）
-    # ------------------------------------------------------------------ #
-
-    def _tier_rotate_select(
-        self, candidates: list[int], date_str: str, target: int,
-    ) -> list[int]:
-        """按排班次数分层，次数少的优先；同层内按日期偏移轮转。"""
-        count_map = {sid: len(self.scorer.staff_days.get(sid, set())) for sid in candidates}
-        candidates_sorted = sorted(candidates, key=lambda sid: (count_map[sid], sid))
-
-        if target >= len(candidates_sorted):
-            return candidates_sorted
-
-        min_count = count_map[candidates_sorted[0]]
-        min_tier = [sid for sid in candidates_sorted if count_map[sid] == min_count]
-        rest_tier = [sid for sid in candidates_sorted if count_map[sid] > min_count]
-
-        dt_obj = date.fromisoformat(date_str)
-        offset = (dt_obj.timetuple().tm_yday * target) % len(min_tier) if min_tier else 0
-        rotated = min_tier[offset:] + min_tier[:offset]
-        selected = rotated[:target]
-
-        remaining = target - len(selected)
-        if remaining > 0 and rest_tier:
-            rest_sorted = sorted(rest_tier, key=lambda sid: (count_map[sid], sid))
-            rest_start = (dt_obj.timetuple().tm_yday * remaining) % len(rest_sorted)
-            rest_rotated = rest_sorted[rest_start:] + rest_sorted[:rest_start]
-            selected.extend(rest_rotated[:remaining])
-
-        return selected
-
-    # ------------------------------------------------------------------ #
     #  工具方法
     # ------------------------------------------------------------------ #
 
     @staticmethod
     def _truncate_members(result: ScheduleResult, shift: SchShiftTemplate) -> list[int]:
-        """截断超出上限的成员，但特殊人员不会被截断。"""
+        """截断成员列表，但保留特殊人员和槽位绑定选出的人员。"""
         members = result.member_ids
         leader_set = set(result.leader_ids)
         leader_part = [lid for lid in members if lid in leader_set]
@@ -1009,17 +1407,13 @@ class AutoScheduler:
         special_in = [mid for mid in non_leader if mid in special_ids]
         regular_in = [mid for mid in non_leader if mid not in special_ids]
 
-        # 领导上限取 leader_max 和 leader_count 中较大者，确保 selected 不会被截掉
         leader_cap = max(shift.leader_max, shift.leader_count, len(leader_part))
         effective_max = leader_cap + shift.member_max + len(special_in)
 
+        # 只在超出上限时截断，且保留特殊人员
         if len(members) > effective_max:
-            regular_in = regular_in[:shift.member_max]
+            # 不截断普通成员（槽位绑定已保证公平分配）
             return leader_part[:leader_cap] + special_in + regular_in
-
-        if len(regular_in) > shift.member_max:
-            regular_in = regular_in[:shift.member_max]
-            return leader_part + special_in + regular_in
 
         return members
 
