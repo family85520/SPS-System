@@ -468,6 +468,8 @@ class IndividualStrategy(ScheduleStrategy):
         special_pool = sorted(shift.special_pool or [])  # 统一 ID 排序
         count = shift.special_count
 
+        _debug_log(f"shift={shift.name}({shift.id}): special_enabled={shift.special_enabled}, pool={special_pool}, count={count}")
+
         if not special_pool or not shift.special_enabled:
             _debug_log(f"shift={shift.name}({shift.id}): SKIP special_enabled={shift.special_enabled}, pool={special_pool}")
             return [], conflicts
@@ -1268,6 +1270,8 @@ class AutoScheduler:
             for shift in active_shifts:
                 if weekday not in (shift.apply_days or [1, 2, 3, 4, 5, 6, 7]):
                     continue
+
+                _debug_log(f"DATE={date_str}: processing shift={shift.name}({shift.id}), special_enabled={shift.special_enabled}, pool={shift.special_pool}")
 
                 template_constraint_ids = shift.constraint_ids
                 if template_constraint_ids:
