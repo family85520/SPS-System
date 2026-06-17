@@ -530,13 +530,15 @@ class IndividualStrategy(ScheduleStrategy):
         for other_shift_id in sorted(by_shift.keys()):
             schedules = by_shift[other_shift_id]
             last_sched = sorted(schedules, key=lambda s: str(getattr(s, "date", "")), reverse=True)[0]
-            other_special = [
+            # 获取该排班的所有人员（不仅仅是 pool 中的）
+            all_details = [
                 d.staff_id
                 for d in self.s.existing_details
-                if d.schedule_id == last_sched.id and d.staff_id in pool_set
+                if d.schedule_id == last_sched.id
             ]
+            other_special = [sid for sid in all_details if sid in pool_set]
             if conflicts is not None:
-                conflicts.append(f"[诊断] 其他班次shift_id={other_shift_id}, 最后一天={getattr(last_sched,'date','')}, pool人员={other_special}")
+                conflicts.append(f"[诊断] 其他班次shift_id={other_shift_id}, 最后一天={getattr(last_sched,'date','')}, 所有人员={all_details[:10]}, pool人员={other_special}")
             if other_special:
                 return other_special[:count]
 
