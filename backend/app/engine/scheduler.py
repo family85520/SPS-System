@@ -750,8 +750,8 @@ class IndividualStrategy(ScheduleStrategy):
         candidate_set = set(candidates)
         selected = [sid for sid in selected if sid in candidate_set]
 
-        # 如果选出的组为空，回退到公平排序
-        if not selected:
+        # 如果选出的组不足 target 人，回退到公平排序
+        if len(selected) < target:
             return self._fallback_select(candidates, date_str, target, is_night)
 
         # 不截断，返回整个组（白班/夜班共享同一槽位）
