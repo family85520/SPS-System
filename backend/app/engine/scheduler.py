@@ -12,7 +12,17 @@
 from __future__ import annotations
 
 import logging
+import os
 from abc import ABC, abstractmethod
+
+_DEBUG_LOG_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..", "..", "debug_special_rotation.log"
+)
+_debug_lines: list[str] = []
+
+def _debug_log(msg: str) -> None:
+    _debug_lines.append(msg)
 from collections import defaultdict
 from datetime import date, timedelta
 from typing import Optional
@@ -493,6 +503,9 @@ class IndividualStrategy(ScheduleStrategy):
 
         # 保存当月特殊人员状态供后续推导使用
         self.s._prev_special_members[shift.id] = selected
+
+        # 写 debug log
+        _debug_log(f"shift={shift.name}({shift.id}), date={date_str}, special_pool={special_pool}, derived={new_members}, selected={selected}")
 
         return selected, conflicts
 
@@ -1323,6 +1336,13 @@ class AutoScheduler:
             current += timedelta(days=1)
 
         report = self._build_report(results)
+
+        # 写 debug log 到文件
+        if _debug_lines:
+            with open(_DEBUG_LOG_PATH, "w", encoding="utf-8") as f:
+                f.write("\n".join(_debug_lines))
+            _debug_lines.clear()
+
         return {
             "schedules": results,
             "report": report,
