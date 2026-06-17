@@ -798,7 +798,7 @@ class IndividualStrategy(ScheduleStrategy):
         admin_regular = []  # 行政班的普通人员
         slot_regular = []   # 白班/夜班的普通人员
 
-        # 行政班所有人员
+        # 行政班所有人员（取第一天）
         for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
             if sched.shift_id == admin_shift.id:
                 for d in self.s.existing_details:
@@ -807,7 +807,7 @@ class IndividualStrategy(ScheduleStrategy):
                             admin_regular.append(d.staff_id)
                 break
 
-        # 白班/夜班所有人员（排除行政班）
+        # 白班/夜班所有人员（排除行政班，取第一天）
         for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
             if sched.shift_id != admin_shift.id:
                 for d in self.s.existing_details:
@@ -815,6 +815,8 @@ class IndividualStrategy(ScheduleStrategy):
                         if d.staff_id not in slot_regular:
                             slot_regular.append(d.staff_id)
                 break
+
+        _debug_log(f"injection: shift={shift.name}({shift.id}), is_admin={is_admin}, admin_regular={admin_regular[:10]}, slot_regular={slot_regular[:10]}")
 
         # 跨月轮换规则：
         # 行政班的普通人员 -> 白班/夜班
