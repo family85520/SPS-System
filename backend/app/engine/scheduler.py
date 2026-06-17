@@ -469,6 +469,7 @@ class IndividualStrategy(ScheduleStrategy):
         count = shift.special_count
 
         if not special_pool or not shift.special_enabled:
+            _debug_log(f"shift={shift.name}({shift.id}): SKIP special_enabled={shift.special_enabled}, pool={special_pool}")
             return [], conflicts
 
         daily = daily_assigned or set()
