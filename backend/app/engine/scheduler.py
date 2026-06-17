@@ -712,8 +712,8 @@ class IndividualStrategy(ScheduleStrategy):
             groups = self._pairings_to_groups(self.s._loaded_pairings[shift.id])
             groups = self._apply_in_place_replacement(groups, shift)
         else:
-            # 当天候选池缓存：白班/夜班使用相同的候选池
-            cache_key = date_str
+            # 白班/夜班分开缓存：各自有自己的候选池
+            cache_key = f"{date_str}:{target_type}"
             if cache_key not in self.s._day_candidates_cache:
                 self.s._day_candidates_cache[cache_key] = sorted(candidates)
             sorted_ids = self.s._day_candidates_cache[cache_key]
