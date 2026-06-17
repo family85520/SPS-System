@@ -1298,6 +1298,8 @@ class AutoScheduler:
 
                 result.member_ids = list(dict.fromkeys(result.member_ids))
 
+                _debug_log(f"DATE={date_str}: shift={shift.name}({shift.id}) -> member_ids={result.member_ids[:20]}, conflicts={result.conflicts[:5]}")
+
                 if daily_max_count:
                     already_today = len([
                         sid for sid in available_ids
