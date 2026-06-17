@@ -468,6 +468,8 @@ class IndividualStrategy(ScheduleStrategy):
 
         if new_members is None:
             # 首次生成或无上月数据：按 ID 顺序选择
+            if conflicts is not None:
+                conflicts.append(f"[诊断] {shift.name}：无上月数据，使用默认顺序 special_pool[:count]={special_pool[:count]}")
             new_members = special_pool[:count]
 
         # 过滤并选择可用人员
@@ -502,22 +504,11 @@ class IndividualStrategy(ScheduleStrategy):
         规则：特殊人员在不同班次间交替轮换。
         上月在白班/夜班的特殊人员，本月应在行政班；
         上月在行政班的特殊人员，本月应在白班/夜班。
-
-        实现方式：从 prev_month_schedules 中找出所有包含 pool 中人员的排班记录，
-        排除当前班次，取其中上月最后一天的排班中的 pool 人员。
         """
         pool_set = set(pool)
         count = current_shift.special_count
 
-        # 调试：打印上月有哪些班次
-        prev_shift_ids = set()
-        for sched in self.s.prev_month_schedules:
-            prev_shift_ids.add(sched.shift_id)
-        if conflicts is not None:
-            conflicts.append(f"[诊断] {current_shift.name}：上月有这些班次ID={sorted(prev_shift_ids)}, 当前shift_id={current_shift.id}, pool={pool}")
-
-        # 从 prev_month_schedules 中找出所有包含 pool 中人员的排班记录
-        # 不管它们的 special_pool 字段是什么
+        # 从 prev_month_schedules 中找出所有其他班次的排班记录
         candidate_schedules = []
         for sched in self.s.prev_month_schedules:
             if sched.shift_id == current_shift.id:
@@ -535,9 +526,10 @@ class IndividualStrategy(ScheduleStrategy):
         for sched in candidate_schedules:
             by_shift[sched.shift_id].append(sched)
 
-        for other_shift_id, schedules in by_shift.items():
+        # 遍历所有其他班次，找到有 pool 人员的班次
+        for other_shift_id in sorted(by_shift.keys()):
+            schedules = by_shift[other_shift_id]
             last_sched = sorted(schedules, key=lambda s: str(getattr(s, "date", "")), reverse=True)[0]
-            # 从 existing_details 中找该排班的 pool 人员
             other_special = [
                 d.staff_id
                 for d in self.s.existing_details
@@ -549,7 +541,7 @@ class IndividualStrategy(ScheduleStrategy):
                 return other_special[:count]
 
         if conflicts is not None:
-            conflicts.append(f"[诊断] {current_shift.name}：其他班次无特殊人员明细")
+            conflicts.append(f"[诊断] {current_shift.name}：所有其他班次均无特殊人员明细")
         return None
 
     def _derive_prev_special_from_db(self, shift: SchShiftTemplate) -> list[int] | None:
