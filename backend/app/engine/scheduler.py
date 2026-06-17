@@ -12,17 +12,7 @@
 from __future__ import annotations
 
 import logging
-import os
 from abc import ABC, abstractmethod
-
-_DEBUG_LOG_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "..", "..", "debug_special_rotation.log"
-)
-_debug_lines: list[str] = []
-
-def _debug_log(msg: str) -> None:
-    _debug_lines.append(msg)
 from collections import defaultdict
 from datetime import date, timedelta
 from typing import Optional
@@ -468,10 +458,8 @@ class IndividualStrategy(ScheduleStrategy):
         special_pool = sorted(shift.special_pool or [])  # 统一 ID 排序
         count = shift.special_count
 
-        _debug_log(f"shift={shift.name}({shift.id}): special_enabled={shift.special_enabled}, pool={special_pool}, count={count}")
 
         if not special_pool or not shift.special_enabled:
-            _debug_log(f"shift={shift.name}({shift.id}): SKIP special_enabled={shift.special_enabled}, pool={special_pool}")
             return [], conflicts
 
         daily = daily_assigned or set()
@@ -508,7 +496,6 @@ class IndividualStrategy(ScheduleStrategy):
         self.s._prev_special_members[shift.id] = selected
 
         # 写 debug log
-        _debug_log(f"shift={shift.name}({shift.id}), date={date_str}, special_pool={special_pool}, derived={new_members}, selected={selected}")
 
         return selected, conflicts
 
@@ -816,7 +803,6 @@ class IndividualStrategy(ScheduleStrategy):
                             slot_regular.append(d.staff_id)
                 break
 
-        _debug_log(f"injection: shift={shift.name}({shift.id}), is_admin={is_admin}, admin_regular={admin_regular[:10]}, slot_regular={slot_regular[:10]}")
 
         # 跨月轮换规则：
         # 行政班的普通人员 -> 白班/夜班
@@ -1273,7 +1259,6 @@ class AutoScheduler:
                 if weekday not in (shift.apply_days or [1, 2, 3, 4, 5, 6, 7]):
                     continue
 
-                _debug_log(f"DATE={date_str}: processing shift={shift.name}({shift.id}), special_enabled={shift.special_enabled}, pool={shift.special_pool}")
 
                 template_constraint_ids = shift.constraint_ids
                 if template_constraint_ids:
@@ -1300,7 +1285,6 @@ class AutoScheduler:
 
                 result.member_ids = list(dict.fromkeys(result.member_ids))
 
-                _debug_log(f"DATE={date_str}: shift={shift.name}({shift.id}) -> member_ids={result.member_ids[:20]}, conflicts={result.conflicts[:5]}")
 
                 if daily_max_count:
                     already_today = len([
@@ -1347,10 +1331,6 @@ class AutoScheduler:
         report = self._build_report(results)
 
         # 写 debug log 到文件
-        if _debug_lines:
-            with open(_DEBUG_LOG_PATH, "w", encoding="utf-8") as f:
-                f.write("\n".join(_debug_lines))
-            _debug_lines.clear()
 
         return {
             "schedules": results,
