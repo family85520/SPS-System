@@ -710,6 +710,12 @@ class IndividualStrategy(ScheduleStrategy):
 
         # 跨月原位替换: 有上月数据时，在上月分组中执行替换
         if self.s.prev_month_schedules and self.s._loaded_pairings.get(shift.id):
+            # 先用候选池构建原始分组，再执行跨月替换
+            cache_key = f"{date_str}:{target_type}"
+            if cache_key not in self.s._day_candidates_cache:
+                self.s._day_candidates_cache[cache_key] = sorted(candidates)
+            sorted_ids = self.s._day_candidates_cache[cache_key]
+            groups = self._slot_grouper.get_month_groups(sorted_ids, year, month)
             groups = self._pairings_to_groups(self.s._loaded_pairings[shift.id])
             groups = self._apply_in_place_replacement(groups, shift, sorted_ids)
         else:
