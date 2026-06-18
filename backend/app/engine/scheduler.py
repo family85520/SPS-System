@@ -711,7 +711,7 @@ class IndividualStrategy(ScheduleStrategy):
         # 跨月原位替换: 有上月数据时，在上月分组中执行替换
         if self.s.prev_month_schedules and self.s._loaded_pairings.get(shift.id):
             groups = self._pairings_to_groups(self.s._loaded_pairings[shift.id])
-            groups = self._apply_in_place_replacement(groups, shift)
+            groups = self._apply_in_place_replacement(groups, shift, sorted_ids)
         else:
             # 白班/夜班分开缓存：各自有自己的候选池
             cache_key = f"{date_str}:{target_type}"
@@ -836,13 +836,17 @@ class IndividualStrategy(ScheduleStrategy):
         self,
         groups: dict[int, tuple[list[int], list[int]]],
         shift: SchShiftTemplate,
+        sorted_ids: list[int],
     ) -> dict[int, tuple[list[int], list[int]]]:
         """跨月原位替换：在上月分组中直接替换人员。
 
         规则：
-        1. 特殊人员：上月行政班的特殊人员 -> 本月白班/夜班（替换上月白班/夜班的特殊人员）
-        2. 普通人员：上月行政班的普通人员 -> 本月白班/夜班（替换上月白班/夜班的普通人员）
+        1. 特殊人员：上月行政班的特殊人员 -> 本月替换上月白班/夜班的特殊人员
+        2. 普通人员：上月行政班的普通人员 -> 本月替换上月白班/夜班的普通人员
         3. 按 ID 排序后一一对应替换
+
+        注意：sorted_ids 是当前候选池（已包含注入的上月行政班人员）。
+        我们先用 sorted_ids 构建原始分组，再执行替换。
         """
         if not groups or not self.s.prev_month_schedules:
             return groups
@@ -858,7 +862,7 @@ class IndividualStrategy(ScheduleStrategy):
         if not admin_shift or admin_shift.id == shift.id:
             return groups
 
-        # 上月行政班人员（取第一天，本月应去白班/夜班）
+        # 上月行政班的所有人员（取第一天）
         people_from_admin = []
         for sched in sorted(self.s.prev_month_schedules, key=lambda x: x.date):
             if sched.shift_id == admin_shift.id:
@@ -889,7 +893,7 @@ class IndividualStrategy(ScheduleStrategy):
         admin_reg = sorted([sid for sid in people_from_admin if sid not in pool_set])
         slot_reg = sorted([sid for sid in people_from_slot if sid not in pool_set])
 
-        # 构建替换映射
+        # 构建替换映射：slot -> admin
         replacements = {}
         for i, old_sid in enumerate(slot_sp):
             if i < len(admin_sp):
