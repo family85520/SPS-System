@@ -715,7 +715,6 @@ class IndividualStrategy(ScheduleStrategy):
             if cache_key not in self.s._day_candidates_cache:
                 self.s._day_candidates_cache[cache_key] = sorted(candidates)
             sorted_ids = self.s._day_candidates_cache[cache_key]
-            groups = self.s._slot_grouper.get_month_groups(sorted_ids, year, month)
             groups = self._pairings_to_groups(self.s._loaded_pairings[shift.id])
             groups = self._apply_in_place_replacement(groups, shift, sorted_ids)
         else:
