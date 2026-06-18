@@ -692,6 +692,7 @@ class IndividualStrategy(ScheduleStrategy):
         - rotation偶数：前半白后半夜；奇数：前半夜后半白
         - 新老搭配：每2人组中1新+1老
         - 整月绑定：同槽人员整月不变
+        - 跨月轮换：上月行政班的普通人员 → 本月白班/夜班，反之亦然
 
         重要：优先使用数据库中的配对关系，没有则用 SlotGrouper 生成。
         """
