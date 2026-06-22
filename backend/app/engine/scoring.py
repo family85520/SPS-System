@@ -18,44 +18,38 @@ class FairnessScorer:
     3. 动态记录本轮新增排班，保证同一轮内打分状态实时更新
     """
 
-    # 打分权重常量
-    _WEIGHT_HOURS = 0.3
-    _WEIGHT_NIGHT = 3.0
-    _WEIGHT_WEEKEND = 2.0
-    _PENALTY_SAME_DAY = 1000.0
-    _PENALTY_CONSECUTIVE = 50.0
-    _PENALTY_GAP_1_DAY = 25.0
-    _PENALTY_GAP_2_DAY = 10.0
-    _PENALTY_SAME_SHIFT_TYPE = 30.0  # 白夜交替：同类型班次惩罚
-
     def __init__(
         self,
         existing_schedules: list[SchSchedule],
         existing_details: list[SchScheduleDetail],
         shifts: dict[int, SchShiftTemplate],
+        weights: dict | None = None,
     ):
         self.shifts = shifts
 
-        # 统计每个人员的历史数据
+        # 打分权重（支持外部配置）
+        w = weights or {}
+        self._WEIGHT_HOURS = w.get("weight_hours", 0.3)
+        self._WEIGHT_NIGHT = w.get("weight_night", 3.0)
+        self._WEIGHT_WEEKEND = w.get("weight_weekend", 2.0)
+        self._PENALTY_SAME_DAY = w.get("penalty_same_day", 1000.0)
+        self._PENALTY_CONSECUTIVE = w.get("penalty_consecutive", 50.0)
+        self._PENALTY_GAP_1_DAY = w.get("penalty_gap_1_day", 25.0)
+        self._PENALTY_GAP_2_DAY = w.get("penalty_gap_2_day", 10.0)
+        self._PENALTY_SAME_SHIFT_TYPE = w.get("penalty_same_shift_type", 30.0)
+
         self.staff_days: dict[int, set[str]] = defaultdict(set)
         self.staff_hours: dict[int, float] = defaultdict(float)
         self.staff_night_count: dict[int, int] = defaultdict(int)
         self.staff_weekend_count: dict[int, int] = defaultdict(int)
 
-        # 白夜交替：记录每人最后排的班次类型
         self.staff_last_shift_type: dict[int, str] = {}
 
-        # 构建 schedule_id -> SchSchedule 索引，消除 O(n) 遍历
         self._schedule_index: dict[int, SchSchedule] = {
             s.id: s for s in existing_schedules
         }
 
-        # 一次性批量统计
         self._bulk_load(existing_details)
-
-    # ------------------------------------------------------------------ #
-    #  公开接口
-    # ------------------------------------------------------------------ #
 
     def score(
         self,
@@ -65,28 +59,21 @@ class FairnessScorer:
         is_night_shift: bool = False,
         is_weekend: bool = False,
     ) -> float:
-        """为候选人计算分数，分数越高越优先排班。"""
         s = 0.0
 
-        # 1. 累计工时（工时越少 → 越优先）
         s -= self.staff_hours.get(staff_id, 0.0) * self._WEIGHT_HOURS
 
-        # 2. 夜班均衡
         if is_night_shift:
             s -= self.staff_night_count.get(staff_id, 0) * self._WEIGHT_NIGHT
 
-        # 3. 周末均衡
         if is_weekend:
             s -= self.staff_weekend_count.get(staff_id, 0) * self._WEIGHT_WEEKEND
 
-        # 4. 当天已排班惩罚
         if target_date in self.staff_days.get(staff_id, set()):
             s -= self._PENALTY_SAME_DAY
 
-        # 5. 连续排班惩罚
         s -= self._calc_proximity_penalty(staff_id, target_date)
 
-        # 6. 白夜交替惩罚：相同班次类型降低优先级，促使白→夜→白交替
         target_type = "night" if is_night_shift else "day"
         if self.staff_last_shift_type.get(staff_id) == target_type:
             s -= self._PENALTY_SAME_SHIFT_TYPE
@@ -94,7 +81,6 @@ class FairnessScorer:
         return s
 
     def record_assignment(self, staff_id: int, target_date: str, shift_id: int) -> None:
-        """记录一次排班分配（同一轮内连续打分时更新状态）。"""
         self.staff_days[staff_id].add(target_date)
 
         shift = self.shifts.get(shift_id)
@@ -108,18 +94,12 @@ class FairnessScorer:
         if self._is_weekend(target_date):
             self.staff_weekend_count[staff_id] += 1
 
-        # 记录本次班次类型，供下一轮白夜交替决策
         if shift:
             self.staff_last_shift_type[staff_id] = (
                 "night" if self._is_night(shift.start_time, shift.end_time) else "day"
             )
 
-    # ------------------------------------------------------------------ #
-    #  内部方法
-    # ------------------------------------------------------------------ #
-
     def _bulk_load(self, details: list[SchScheduleDetail]) -> None:
-        """从历史明细中批量初始化统计数据。"""
         for d in details:
             schedule = self._schedule_index.get(d.schedule_id)
             if not schedule:
@@ -139,8 +119,7 @@ class FairnessScorer:
             if self._is_weekend(date_str):
                 self.staff_weekend_count[d.staff_id] += 1
 
-        # 推断每人最后一次排班的班次类型（用于白夜交替判断）
-        staff_latest: dict[int, tuple] = {}  # staff_id -> (date, shift_id)
+        staff_latest: dict[int, tuple] = {}
         for d in details:
             schedule = self._schedule_index.get(d.schedule_id)
             if not schedule:
@@ -156,18 +135,17 @@ class FairnessScorer:
                 )
 
     def _calc_proximity_penalty(self, staff_id: int, target_date: str) -> float:
-        """计算目标日期与最近排班日期的邻近惩罚。"""
         staff_dates = sorted(self.staff_days.get(staff_id, set()))
         if not staff_dates:
             return 0.0
 
-        penalty = 0.0
         try:
             target_obj = date.fromisoformat(target_date)
         except ValueError:
             return 0.0
 
-        for d_str in staff_dates[-5:]:  # 只看最近 5 天
+        penalty = 0.0
+        for d_str in staff_dates[-5:]:
             try:
                 d_obj = date.fromisoformat(d_str)
             except ValueError:
@@ -182,13 +160,8 @@ class FairnessScorer:
 
         return penalty
 
-    # ------------------------------------------------------------------ #
-    #  纯工具方法（无状态）
-    # ------------------------------------------------------------------ #
-
     @staticmethod
     def _calc_duration(start_time: str, end_time: str) -> float:
-        """计算班次时长（小时），跨天自动 +24h。"""
         try:
             sh, sm = map(int, start_time.split(":"))
             eh, em = map(int, end_time.split(":"))
@@ -199,7 +172,6 @@ class FairnessScorer:
 
     @staticmethod
     def _is_night(start_time: str, end_time: str) -> bool:
-        """判断是否夜班（20:00后开始 或 08:00前结束）。"""
         try:
             sh, _ = map(int, start_time.split(":"))
             eh, _ = map(int, end_time.split(":"))
@@ -209,7 +181,6 @@ class FairnessScorer:
 
     @staticmethod
     def _is_weekend(date_str: str) -> bool:
-        """判断日期是否周末（周六=6, 周日=7）。"""
         try:
             return date.fromisoformat(date_str).isoweekday() >= 6
         except ValueError:

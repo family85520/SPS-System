@@ -119,6 +119,8 @@
         :calendar-data="calendarData"
         @click-shift="handleClickShift"
         @add-schedule="handleAddSchedule"
+        @staff-drop="handleStaffDrop"
+        @shift-swap="handleShiftSwap"
       />
 
       <!-- 自动排班对话框 -->
@@ -487,6 +489,32 @@ async function handleClickShift(shift: CalendarShift) {
   }
 }
 
+async function handleShiftSwap(fromScheduleId: number, toScheduleId: number) {
+  if (!fromScheduleId || fromScheduleId === toScheduleId) return
+  try {
+    await api.post(`/schedules/${fromScheduleId}/swap-staff/${toScheduleId}`)
+    ElMessage.success('班次人员已互换')
+    await handleRefresh()
+  } catch (e: any) {
+    const detail = e?.response?.data?.detail
+    ElMessage.error('互换失败：' + (detail || (e?.message || '未知错误')))
+  }
+}
+
+async function handleStaffDrop(staffId: number, fromScheduleId: number, toScheduleId: number) {
+  if (!fromScheduleId || fromScheduleId === toScheduleId) return
+
+  try {
+    await api.post(`/schedules/${fromScheduleId}/remove-staff`, { staff_id: staffId })
+    await api.post(`/schedules/${toScheduleId}/assign-staff`, { staff_id: staffId, role_type: 'member' })
+    ElMessage.success('人员已调整')
+    await handleRefresh()
+  } catch (e: any) {
+    const detail = e?.response?.data?.detail
+    ElMessage.error('调整失败：' + (detail || (e?.message || '未知错误')))
+  }
+}
+
 async function handleRefresh() {
   await loadCalendar()
   if (drawerVisible.value && currentSchedule.value) {
@@ -714,23 +742,23 @@ async function handleValidate() {
 // ==================== 发布 / 撤回 ====================
 
 async function handlePublish() {
-  const draftIds = collectScheduleIdsByStatus(0)
-  if (draftIds.length === 0) {
-    ElMessage.info('当前视图中没有草稿状态的排班')
+  const ids = collectScheduleIdsByStatus([0, 2])
+  if (ids.length === 0) {
+    ElMessage.info('当前视图中没有草稿或已撤回状态的排班')
     return
   }
 
   try {
     await ElMessageBox({
       title: '确认发布？',
-      message: `确认发布当前视图中的 ${draftIds.length} 条排班？发布后排班将被锁定，变更需通过调班流程。`,
+      message: `确认发布当前视图中的 ${ids.length} 条排班？发布后排班将被锁定，变更需通过调班流程。`,
       showCancelButton: true,
       confirmButtonText: '确认发布',
       cancelButtonText: '取消',
       type: 'warning',
     })
-    const res = await publishSchedules(draftIds)
-    ElMessage.success(`成功发布 ${res.count ?? draftIds.length} 条排班`)
+    const res = await publishSchedules(ids)
+    ElMessage.success(`成功发布 ${res.count ?? ids.length} 条排班`)
     await loadCalendar()
   } catch (e) {
     // 用户取消或接口错误
@@ -843,11 +871,12 @@ async function handleDeleteDrafts() {
   }
 }
 
-function collectScheduleIdsByStatus(status: number): number[] {
+function collectScheduleIdsByStatus(statuses: number | number[]): number[] {
+  const arr = Array.isArray(statuses) ? statuses : [statuses]
   const ids: number[] = []
   for (const day of calendarData.value) {
     for (const shift of day.shifts) {
-      if (shift.status === status) {
+      if (arr.includes(shift.status)) {
         ids.push(shift.schedule_id)
       }
     }

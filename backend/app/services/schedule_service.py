@@ -311,6 +311,7 @@ class ScheduleService:
         )
         db.add(detail)
         await db.flush()
+        await _sync_pairing_from_schedule(db, schedule)
         return {"message": "分配成功", "detail_id": detail.id}
 
     @staticmethod
@@ -329,6 +330,39 @@ class ScheduleService:
 
         await db.delete(detail)
         await db.flush()
+        await _sync_pairing_from_schedule(db, schedule)
+
+    @staticmethod
+    async def swap_staff(
+        db: AsyncSession, schedule_id_a: int, schedule_id_b: int
+    ) -> dict:
+        """互换两个班次的普通成员（领导保持不变）"""
+        sched_a = await _get_writable_schedule(db, schedule_id_a, "互换人员")
+        sched_b = await _get_writable_schedule(db, schedule_id_b, "互换人员")
+
+        # 只互换 role_type != 'leader' 的明细
+        details_a = (await db.execute(
+            select(SchScheduleDetail).where(
+                SchScheduleDetail.schedule_id == schedule_id_a,
+                SchScheduleDetail.role_type != 'leader',
+            )
+        )).scalars().all()
+        details_b = (await db.execute(
+            select(SchScheduleDetail).where(
+                SchScheduleDetail.schedule_id == schedule_id_b,
+                SchScheduleDetail.role_type != 'leader',
+            )
+        )).scalars().all()
+
+        for d in details_a:
+            d.schedule_id = schedule_id_b
+        for d in details_b:
+            d.schedule_id = schedule_id_a
+
+        await db.flush()
+        await _sync_pairing_from_schedule(db, sched_a)
+        await _sync_pairing_from_schedule(db, sched_b)
+        return {"message": "人员互换成功"}
 
     # ==================== 批量操作 ====================
 
@@ -367,6 +401,11 @@ class ScheduleService:
                 count += 1
 
         await db.flush()
+        schedules = list((await db.execute(
+            select(SchSchedule).where(SchSchedule.id.in_(schedule_ids))
+        )).scalars().all())
+        for schedule in schedules:
+            await _sync_pairing_from_schedule(db, schedule)
         return count
 
     # ==================== 发布 / 审核 / 撤回 ====================
@@ -892,6 +931,69 @@ class ScheduleService:
             else:
                 leader_offsets[shift.id] = start_date.isocalendar()[1]
 
+        # ---- 5.8. 加载配对关系 ----
+        from app.engine.pairing_manager import PairingManager
+        pairing_mgr = PairingManager(db, org_id)
+
+        # 加载所有班次的配对关系
+        # ---- 5.9. 加载上月排班记录（用于跨月推导） ----
+        prev_month_end = start_date - timedelta(days=1)
+        prev_month_start = date(prev_month_end.year, prev_month_end.month, 1)
+        prev_month_schedules = list((await db.execute(
+            select(SchSchedule).where(
+                SchSchedule.org_id == org_id,
+                SchSchedule.date >= prev_month_start,
+                SchSchedule.date <= prev_month_end,
+            )
+        )).scalars().all())
+
+        # ---- 5.1. 加载上月末尾排班数据（用于跨月连续天数计算） ----
+        # Cross-month rotation must use the previous month's actual output as
+        # the source of slot ownership. Persisted pairings are a fallback only
+        # when there is no previous-month schedule to derive from.
+        all_pairings: dict[int, dict[tuple[int, str], tuple[list[int], list[bool]]]] = {}
+        rotation_anchor_date = (
+            min(s.date for s in existing_schedules if getattr(s, "date", None))
+            if existing_schedules else start_date
+        )
+        for shift in shifts:
+            derived_pairings = await pairing_mgr.derive_from_schedule(
+                shift.id, prev_month_start, prev_month_end, rotation_anchor_date
+            )
+            if derived_pairings:
+                all_pairings[shift.id] = derived_pairings
+                continue
+            pairings = await pairing_mgr.load_pairings(shift.id)
+            if pairings:
+                all_pairings[shift.id] = pairings
+
+        pre_history: dict[int, list[str]] = {}
+        if start_date.day == 1:
+            max_continuous = 5
+            for c in constraints:
+                if c.rule_type == "MAX_CONTINUOUS_DAYS" and c.enabled:
+                    max_continuous = (c.params or {}).get("max_days", 5)
+                    break
+            prev_month_end = start_date - timedelta(days=1)
+            prev_month_start = prev_month_end - timedelta(days=max_continuous - 1)
+            pre_schedules = list((await db.execute(
+                select(SchSchedule).where(
+                    SchSchedule.org_id == org_id,
+                    SchSchedule.date >= prev_month_start,
+                    SchSchedule.date <= prev_month_end,
+                )
+            )).scalars().all())
+            if pre_schedules:
+                pre_ids = [s.id for s in pre_schedules]
+                pre_details = list((await db.execute(
+                    select(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(pre_ids))
+                )).scalars().all())
+                pre_sched_map = {s.id: s for s in pre_schedules}
+                for d in pre_details:
+                    s = pre_sched_map.get(d.schedule_id)
+                    if s:
+                        pre_history.setdefault(d.staff_id, []).append(str(s.date))
+
         # ---- 6. 执行排班引擎 ----
         scheduler = AutoScheduler(
             staff_list=staff_list,
@@ -902,6 +1004,10 @@ class ScheduleService:
             existing_details=existing_details,
             staff_tag_roles_map=staff_tag_roles_map,
             org_max_ratio=org_max_ratio,
+            pre_history=pre_history,
+            pairing_manager=pairing_mgr,
+            prev_month_schedules=prev_month_schedules,
+            all_pairings=all_pairings,
         )
         result = scheduler.generate(
             start_date=start_date,
@@ -936,6 +1042,11 @@ class ScheduleService:
             created_schedules.append(schedule)
 
         await db.flush()
+
+        # ---- 7.5. 保存配对关系到数据库 ----
+        if pairing_mgr and hasattr(scheduler, '_new_pairings') and scheduler._new_pairings:
+            for shift_id, pairings in scheduler._new_pairings.items():
+                await pairing_mgr.save_pairings(shift_id, pairings)
 
         # ---- 8. 构建返回数据 ----
         staff_name_map = {s.id: s.name for s in staff_list}
@@ -1119,6 +1230,58 @@ async def _get_detail_map(db, schedule_ids):
     return detail_map, staff_map
 
 
+async def _sync_pairing_from_schedule(db, schedule: SchSchedule) -> None:
+    shift = (await db.execute(
+        select(SchShiftTemplate).where(SchShiftTemplate.id == schedule.shift_id)
+    )).scalars().first()
+    if not shift or (shift.member_rotation_frequency or "day") != "day":
+        return
+
+    details = list((await db.execute(
+        select(SchScheduleDetail).where(
+            SchScheduleDetail.schedule_id == schedule.id,
+            SchScheduleDetail.role_type != "leader",
+        )
+    )).scalars().all())
+    if not details:
+        return
+
+    special_ids = set(shift.special_pool or []) if shift.special_enabled else set()
+    staff_ids = [
+        detail.staff_id
+        for detail in details
+        if detail.staff_id not in special_ids
+    ]
+    if not staff_ids:
+        return
+
+    from app.engine.pairing_manager import PairingManager
+    manager = PairingManager(db, schedule.org_id)
+    slot_index, group_type = _resolve_pairing_slot_and_group(schedule.date, shift)
+    staff_ids = list(dict.fromkeys(staff_ids))
+    await manager.set_pairing(
+        schedule.shift_id,
+        slot_index,
+        group_type,
+        staff_ids,
+        [False] * len(staff_ids),
+    )
+
+
+def _resolve_pairing_slot_and_group(schedule_date: date, shift: SchShiftTemplate) -> tuple[int, str]:
+    slot_count = 3
+    slot_index = (schedule_date.day - 1) % slot_count
+    rotation_number = (schedule_date.day - 1) // slot_count
+    target_type = "night" if _is_night_shift_time(shift.start_time, shift.end_time) else "day"
+
+    if rotation_number % 2 == 0:
+        group_type = target_type
+    else:
+        group_type = "day" if target_type == "night" else "night"
+
+    return slot_index, group_type
+
+
 async def _load_shift_templates(db, shift_template_ids):
     """加载班次模板及其关联的值班组。"""
     try:
@@ -1160,12 +1323,19 @@ async def _cleanup_existing_schedules(db, org_id, start_date, end_date):
 
     delete_ids = [s.id for s in existing if s.status in SchSchedule.EDITABLE_STATUSES]
     if delete_ids:
-        # 清理关联的调班申请（外键约束）
-        await db.execute(delete(SchSwapRequest).where(SchSwapRequest.requester_schedule_id.in_(delete_ids)))
+        # 只删除已完成或已取消的调班申请，保留进行中的
+        await db.execute(
+            delete(SchSwapRequest).where(
+                SchSwapRequest.requester_schedule_id.in_(delete_ids),
+                SchSwapRequest.status.in_(["completed", "cancelled"])
+            )
+        )
+        # 将进行中的调班申请的 target_schedule_id 置空
         from sqlalchemy import update as sa_update
         await db.execute(
             sa_update(SchSwapRequest).where(
-                SchSwapRequest.target_schedule_id.in_(delete_ids)
+                SchSwapRequest.target_schedule_id.in_(delete_ids),
+                SchSwapRequest.status.notin_(["completed", "cancelled"])
             ).values(target_schedule_id=None)
         )
         await db.execute(delete(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(delete_ids)))

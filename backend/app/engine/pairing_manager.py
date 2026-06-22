@@ -1,29 +1,31 @@
-"""配对关系管理器 - 管理新老员工配对关系"""
+"""Pairing persistence and reconstruction for the scheduling engine."""
 
 from __future__ import annotations
 
 import logging
-from collections import Counter, defaultdict
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.pairing import SchPairing
 from app.models.schedule import SchSchedule, SchScheduleDetail
+from app.models.shift_template import SchShiftTemplate
 from app.models.staff import OrgStaff
 
 logger = logging.getLogger("pairing_manager")
 
 
 class PairingManager:
-    """配对关系管理器
+    """Manage stable slot/group pairings.
 
-    规则：
-    1. 有上月历史数据取上月，没有则首次自动排班按规则随机生成
-    2. 配对关系存储数据库，直到被特殊班次人员替换时才更新
-    3. 所有排序统一使用 ID 排序
+    Rules:
+    - Persist pairings in ``sch_pairing`` after automatic generation.
+    - If persisted pairings are absent, rebuild them from last month's
+      schedules by reversing the scheduler's slot rotation.
+    - Special/admin personnel are replacements, so they do not overwrite the
+      regular pairing group when deriving history.
     """
 
     def __init__(self, db: AsyncSession, org_id: int):
@@ -36,7 +38,6 @@ class PairingManager:
         slot_index: int,
         group_type: str,
     ) -> Optional[SchPairing]:
-        """获取指定槽位的配对关系"""
         result = await self.db.execute(
             select(SchPairing).where(
                 SchPairing.org_id == self.org_id,
@@ -48,7 +49,6 @@ class PairingManager:
         return result.scalars().first()
 
     async def get_all_pairings(self, shift_id: int) -> list[SchPairing]:
-        """获取指定班次的所有配对关系"""
         result = await self.db.execute(
             select(SchPairing).where(
                 SchPairing.org_id == self.org_id,
@@ -65,48 +65,42 @@ class PairingManager:
         staff_ids: list[int],
         is_new: list[bool],
     ) -> SchPairing:
-        """保存或更新配对关系"""
         existing = await self.get_pairing(shift_id, slot_index, group_type)
 
         if existing:
             existing.staff_ids = staff_ids
             existing.is_new = is_new
             return existing
-        else:
-            pairing = SchPairing(
-                org_id=self.org_id,
-                shift_id=shift_id,
-                slot_index=slot_index,
-                group_type=group_type,
-                staff_ids=staff_ids,
-                is_new=is_new,
-            )
-            self.db.add(pairing)
-            return pairing
+
+        pairing = SchPairing(
+            org_id=self.org_id,
+            shift_id=shift_id,
+            slot_index=slot_index,
+            group_type=group_type,
+            staff_ids=staff_ids,
+            is_new=is_new,
+        )
+        self.db.add(pairing)
+        return pairing
 
     async def load_pairings(
         self,
         shift_id: int,
     ) -> dict[tuple[int, str], tuple[list[int], list[bool]]]:
-        """加载配对关系：优先从数据库读取，没有则返回空
-
-        Returns:
-            {(slot_index, group_type): (staff_ids, is_new)}
-        """
         all_pairings = await self.get_all_pairings(shift_id)
-        if all_pairings:
-            result = {}
-            for p in all_pairings:
-                result[(p.slot_index, p.group_type)] = (p.staff_ids, p.is_new)
-            return result
-        return {}
+        result: dict[tuple[int, str], tuple[list[int], list[bool]]] = {}
+        for pairing in all_pairings:
+            result[(pairing.slot_index, pairing.group_type)] = (
+                pairing.staff_ids or [],
+                pairing.is_new or [False] * len(pairing.staff_ids or []),
+            )
+        return result
 
     async def save_pairings(
         self,
         shift_id: int,
         pairings: dict[tuple[int, str], tuple[list[int], list[bool]]],
     ) -> None:
-        """保存配对关系到数据库"""
         for (slot_index, group_type), (staff_ids, is_new) in pairings.items():
             await self.set_pairing(shift_id, slot_index, group_type, staff_ids, is_new)
 
@@ -118,48 +112,36 @@ class PairingManager:
         departed_regular: list[int],
         joined_regular: list[int],
     ) -> None:
-        """特殊轮换时更新配对关系
-
-        规则：
-        1. special_pool 人员替换原位置
-        2. 普通人员替换离开人员的原位置
-        """
         all_pairings = await self.get_all_pairings(shift_id)
 
-        # 批量加载新员工信息（移到循环外）
         joined_staff_map: dict[int, OrgStaff] = {}
         if joined_regular:
             joined_staff_list = list((await self.db.execute(
                 select(OrgStaff).where(OrgStaff.id.in_(joined_regular))
             )).scalars().all())
-            joined_staff_map = {s.id: s for s in joined_staff_list}
+            joined_staff_map = {staff.id: staff for staff in joined_staff_list}
 
         for pairing in all_pairings:
             staff_ids = pairing.staff_ids or []
             is_new = pairing.is_new or []
             new_staff_ids = list(staff_ids)
-            new_is_new = list(is_new)
+            new_is_new = list(is_new) or [False] * len(staff_ids)
 
-            # 处理 special_pool 人员替换
-            for i, sid in enumerate(staff_ids):
-                if sid in departed_special:
-                    # 找到对应的替换人员（按 ID 顺序）
-                    idx = sorted(departed_special).index(sid)
-                    if idx < len(joined_special):
-                        new_staff_ids[i] = joined_special[idx]
-                        new_is_new[i] = False  # 特殊人员不算新员工
+            for index, staff_id in enumerate(staff_ids):
+                if staff_id in departed_special:
+                    replacement_index = sorted(departed_special).index(staff_id)
+                    if replacement_index < len(joined_special):
+                        new_staff_ids[index] = joined_special[replacement_index]
+                        new_is_new[index] = False
 
-            # 处理普通人员替换
-            for i, sid in enumerate(staff_ids):
-                if sid in departed_regular and sid not in departed_special:
-                    # 找到对应的替换人员（按 ID 顺序）
-                    idx = sorted(departed_regular).index(sid)
-                    if idx < len(joined_regular):
-                        new_staff_ids[i] = joined_regular[idx]
-                        joined_staff = joined_staff_map.get(joined_regular[idx])
-                        new_is_new[i] = (
-                            joined_staff.tags and "新员工" in (joined_staff.tags or [])
-                        ) if joined_staff else False
+            for index, staff_id in enumerate(staff_ids):
+                if staff_id in departed_regular and staff_id not in departed_special:
+                    replacement_index = sorted(departed_regular).index(staff_id)
+                    if replacement_index < len(joined_regular):
+                        replacement_id = joined_regular[replacement_index]
+                        new_staff_ids[index] = replacement_id
+                        joined_staff = joined_staff_map.get(replacement_id)
+                        new_is_new[index] = self._is_new_employee(joined_staff)
 
             pairing.staff_ids = new_staff_ids
             pairing.is_new = new_is_new
@@ -169,131 +151,148 @@ class PairingManager:
         shift_id: int,
         month_start: date,
         month_end: date,
+        rotation_anchor_date: date | None = None,
     ) -> dict[tuple[int, str], tuple[list[int], list[bool]]]:
-        """从上月排班记录推导配对关系
+        """Derive pairings from the latest historical schedule per slot/group.
 
-        通过分析连续多天的人员组合模式，找出稳定的槽位分组。
+        For a 3-slot day rotation:
+        - ``slot_index = rotation_day % 3``
+        - ``rotation_number = rotation_day // 3``
+        - odd rotations swap the actual day/night group.
 
-        Returns:
-            {(slot_index, group_type): (staff_ids, is_new)}
+        Schedules are processed ascending by date, so later manual edits in the
+        previous month overwrite earlier generated pairings for the same key.
         """
-        # 1. 加载排班记录
-        schedules = list((await self.db.execute(
-            select(SchSchedule).where(
-                SchSchedule.org_id == self.org_id,
-                SchSchedule.shift_id == shift_id,
-                SchSchedule.date >= month_start,
-                SchSchedule.date <= month_end,
-            )
-        )).scalars().all())
+        shift = await self._load_shift(shift_id)
+        target_type = "night" if self._is_night_shift(shift) else "day"
+        special_ids = set(shift.special_pool or []) if (
+            shift and getattr(shift, "special_enabled", False)
+        ) else set()
 
+        schedules = await self._load_schedules(shift_id, month_start, month_end)
         if not schedules:
             return {}
 
-        schedule_ids = [s.id for s in schedules]
-        details = list((await self.db.execute(
-            select(SchScheduleDetail).where(SchScheduleDetail.schedule_id.in_(schedule_ids))
-        )).scalars().all())
-
+        schedule_ids = [schedule.id for schedule in schedules]
+        details = await self._load_details(schedule_ids)
         if not details:
             return {}
 
-        # 2. 按日期分组人员
-        day_staff: dict[str, list[int]] = defaultdict(list)
-        schedule_map = {s.id: s for s in schedules}
-        for d in details:
-            s = schedule_map.get(d.schedule_id)
-            if s:
-                day_staff[str(s.date)].append(d.staff_id)
+        details_by_schedule: dict[int, list[SchScheduleDetail]] = {}
+        schedule_id_set = set(schedule_ids)
+        for detail in details:
+            if detail.schedule_id in schedule_id_set:
+                details_by_schedule.setdefault(detail.schedule_id, []).append(detail)
 
-        if not day_staff:
-            return {}
+        result: dict[tuple[int, str], tuple[list[int], list[bool]]] = {}
+        for schedule in sorted(schedules, key=lambda item: (item.date, item.id)):
+            staff_ids = self._regular_staff_ids(
+                details_by_schedule.get(schedule.id, []),
+                special_ids,
+            )
+            if not staff_ids:
+                continue
 
-        # 3. 取前7天分析
-        sorted_dates = sorted(day_staff.keys())[:7]
-        if not sorted_dates:
-            return {}
-
-        # 4. 统计每对人一起出现的频率
-        pair_cooccurrence: Counter = Counter()
-        for date_str in sorted_dates:
-            staff_on_day = day_staff[date_str]
-            for i in range(len(staff_on_day)):
-                for j in range(i + 1, len(staff_on_day)):
-                    pair = tuple(sorted([staff_on_day[i], staff_on_day[j]]))
-                    pair_cooccurrence[pair] += 1
-
-        # 5. 提取高频配对
-        threshold = max(3, len(sorted_dates) // 2)
-        stable_pairs = [(pair, count) for pair, count in pair_cooccurrence.items() if count >= threshold]
-        stable_pairs.sort(key=lambda x: -x[1])
-
-        if not stable_pairs:
-            # 降级：取第一天数据简单分组
-            return await self._fallback_derive(day_staff, sorted_dates[0])
-
-        # 6. 将配对分配到3个槽位
-        result = {}
-        pair_idx = 0
-        for slot_idx in range(3):
-            if pair_idx + 1 >= len(stable_pairs):
-                break
-            day_pair = stable_pairs[pair_idx][0]
-            night_pair = stable_pairs[pair_idx + 1][0]
-            result[(slot_idx, "day")] = (list(day_pair), [False] * len(day_pair))
-            result[(slot_idx, "night")] = (list(night_pair), [False] * len(night_pair))
-            pair_idx += 2
-
-        return result
-
-    async def _fallback_derive(
-        self,
-        day_staff: dict[str, list[int]],
-        first_date: str,
-    ) -> dict[tuple[int, str], tuple[list[int], list[bool]]]:
-        """降级方案：取第一天数据简单分组"""
-        staff = day_staff.get(first_date, [])
-        if not staff:
-            return {}
-
-        # 批量加载人员信息判断新老
-        staff_list = list((await self.db.execute(
-            select(OrgStaff).where(OrgStaff.id.in_(staff))
-        )).scalars().all())
-        staff_map = {s.id: s for s in staff_list}
-
-        def _is_new(staff_id: int) -> bool:
-            s = staff_map.get(staff_id)
-            return bool(s and s.tags and "新员工" in (s.tags or []))
-
-        # 简单分组：前一半 day，后一半 night
-        mid = len(staff) // 2
-        day_group = staff[:mid]
-        night_group = staff[mid:]
-
-        result = {}
-        per_slot = max(1, len(day_group) // 3)
-        for slot_idx in range(3):
-            start = slot_idx * per_slot
-            end = start + per_slot
-            if start < len(day_group):
-                result[(slot_idx, "day")] = (
-                    day_group[start:end],
-                    [_is_new(sid) for sid in day_group[start:end]]
-                )
-            if start < len(night_group):
-                result[(slot_idx, "night")] = (
-                    night_group[start:end],
-                    [_is_new(sid) for sid in night_group[start:end]]
-                )
+            slot_index, group_type = self._resolve_slot_and_group(
+                schedule.date,
+                target_type,
+                rotation_anchor_date,
+            )
+            result[(slot_index, group_type)] = (
+                staff_ids,
+                [False] * len(staff_ids),
+            )
 
         return result
 
     async def delete_pairings(self, shift_id: int) -> None:
-        """删除指定班次的所有配对关系"""
         await self.db.execute(
             delete(SchPairing).where(
                 SchPairing.org_id == self.org_id,
                 SchPairing.shift_id == shift_id,
             )
         )
+
+    async def _load_shift(self, shift_id: int) -> SchShiftTemplate | None:
+        result = await self.db.execute(
+            select(SchShiftTemplate).where(SchShiftTemplate.id == shift_id)
+        )
+        return result.scalars().first()
+
+    async def _load_schedules(
+        self,
+        shift_id: int,
+        month_start: date,
+        month_end: date,
+    ) -> list[SchSchedule]:
+        result = await self.db.execute(
+            select(SchSchedule).where(
+                SchSchedule.org_id == self.org_id,
+                SchSchedule.shift_id == shift_id,
+                SchSchedule.date >= month_start,
+                SchSchedule.date <= month_end,
+            )
+        )
+        return list(result.scalars().all())
+
+    async def _load_details(self, schedule_ids: list[int]) -> list[SchScheduleDetail]:
+        result = await self.db.execute(
+            select(SchScheduleDetail).where(
+                SchScheduleDetail.schedule_id.in_(schedule_ids)
+            )
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    def _regular_staff_ids(
+        details: list[SchScheduleDetail],
+        special_ids: set[int],
+    ) -> list[int]:
+        staff_ids: list[int] = []
+        for detail in sorted(details, key=lambda item: item.id):
+            if getattr(detail, "role_type", "member") == "leader":
+                continue
+            if detail.staff_id in special_ids:
+                continue
+            if detail.staff_id not in staff_ids:
+                staff_ids.append(detail.staff_id)
+        return staff_ids
+
+    @staticmethod
+    def _resolve_slot_and_group(
+        schedule_date: date,
+        target_type: str,
+        rotation_anchor_date: date | None = None,
+    ) -> tuple[int, str]:
+        slot_count = 3
+        anchor = rotation_anchor_date or date(schedule_date.year, schedule_date.month, 1)
+        rotation_day = max(0, (schedule_date - anchor).days)
+        slot_index = rotation_day % slot_count
+        rotation_number = rotation_day // slot_count
+        if rotation_number % 2 == 0:
+            group_type = target_type
+        else:
+            group_type = "day" if target_type == "night" else "night"
+        return slot_index, group_type
+
+    @staticmethod
+    def _is_night_shift(shift: SchShiftTemplate | None) -> bool:
+        if not shift:
+            return False
+
+        is_night = getattr(shift, "is_night", None)
+        if isinstance(is_night, bool):
+            return is_night
+
+        try:
+            start_hour = int(str(shift.start_time).split(":")[0])
+            end_hour = int(str(shift.end_time).split(":")[0])
+            return start_hour >= 20 or end_hour <= 8
+        except (AttributeError, TypeError, ValueError):
+            return False
+
+    @staticmethod
+    def _is_new_employee(staff: OrgStaff | None) -> bool:
+        if not staff or not getattr(staff, "tags", None):
+            return False
+        return any(tag in staff.tags for tag in ("新员工", "new", "new_employee"))

@@ -4,7 +4,6 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 from typing import AsyncGenerator
 
-# 创建异步引擎
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
@@ -13,7 +12,6 @@ engine = create_async_engine(
     pool_pre_ping=True,
 )
 
-# 创建异步Session工厂
 async_session_factory = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -21,12 +19,10 @@ async_session_factory = async_sessionmaker(
 )
 
 
-# 基础模型类
 class Base(DeclarativeBase):
     pass
 
 
-# 获取数据库Session的依赖
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
         try:
@@ -39,30 +35,15 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-# 初始化数据库（创建表）
 async def init_db():
-    from sqlalchemy import inspect as sa_inspect, text as sa_text
-
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # 自动检测并补充缺失字段
     await _auto_migrate_columns()
-
-    # 为历史人员自动创建用户账号
     await _auto_create_accounts_for_existing_staff()
 
 
-# ========== 动态列迁移 ==========
-
-# 声明式定义：需要确保存在的字段（表名, 列名, DDL 类型, 默认值）
-_COLUMN_MIGRATIONS: list[tuple[str, str, str, str | None]] = [
-    ("sys_user", "must_change_password", "BOOLEAN NOT NULL DEFAULT FALSE", "false"),
-]
-
-
 async def _auto_migrate_columns():
-    """动态检查并补充缺失字段（基于模型定义自动对比）"""
     from sqlalchemy import inspect as sa_inspect
 
     async with engine.begin() as conn:
@@ -95,11 +76,8 @@ async def _auto_migrate_columns():
 
         await conn.run_sync(_check_and_add)
 
-# ========== 自动创建账号 ==========
-
 
 async def _auto_create_accounts_for_existing_staff():
-    """为没有账号的历史人员自动创建用户账号（ORM 方式，幂等执行）"""
     from sqlalchemy import select
     from app.models import SysUser, OrgStaff, SysRole, SysUserRole
     from app.utils.security import hash_password
@@ -107,7 +85,6 @@ async def _auto_create_accounts_for_existing_staff():
     default_password = hash_password("123456")
 
     async with async_session_factory() as session:
-        # 查找所有没有关联用户的在职人员
         all_staff = (await session.execute(
             select(OrgStaff).where(OrgStaff.status == 1)
         )).scalars().all()
@@ -120,7 +97,6 @@ async def _auto_create_accounts_for_existing_staff():
             )).scalars().all()
             existing_staff_ids = {sid for sid in bound_users if sid is not None}
 
-        # 查找默认角色
         default_role = (await session.execute(
             select(SysRole).where(SysRole.code == "member")
         )).scalars().first()
@@ -131,7 +107,6 @@ async def _auto_create_accounts_for_existing_staff():
                 continue
 
             username = staff.employee_no
-            # 检查用户名是否已存在
             exists = (await session.execute(
                 select(SysUser).where(SysUser.username == username)
             )).scalars().first()

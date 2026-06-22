@@ -43,6 +43,8 @@
                 :key="shift.schedule_id"
                 :shift="shift"
                 @click="$emit('clickShift', $event)"
+                @staffDrop="(staffId: number, fromSid: number, toSid: number) => emit('staffDrop', staffId, fromSid, toSid)"
+                @shiftSwap="(fromSid: number, toSid: number) => emit('shiftSwap', fromSid, toSid)"
               />
               <div
                 v-if="getShiftsForDate(cell.dateStr).length > maxVisible"
@@ -85,6 +87,8 @@
               :key="shift.schedule_id"
               :shift="shift"
               @click="$emit('clickShift', $event)"
+              @staffDrop="(staffId: number, fromSid: number, toSid: number) => emit('staffDrop', staffId, fromSid, toSid)"
+              @shiftSwap="(fromSid: number, toSid: number) => emit('shiftSwap', fromSid, toSid)"
             />
           </div>
         </div>
@@ -108,9 +112,11 @@ const props = defineProps<{
   maxVisible?: number
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'clickShift', shift: CalendarShift): void
   (e: 'addSchedule', dateStr: string): void
+  (e: 'staffDrop', staffId: number, fromScheduleId: number, toScheduleId: number): void
+  (e: 'shiftSwap', fromScheduleId: number, toScheduleId: number): void
 }>()
 
 const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日']

@@ -8,31 +8,37 @@ from app.database import async_session_factory
 from app.services.auto_schedule_job import _generate_for_org
 from app.models.audit_log import SysConfig
 from app.models.organization import OrgOrganization
+from app.models.staff import OrgStaff
 from sqlalchemy import select
 
 
 async def main():
-    # 修改月份为目标测试月
-    target_month = date(2026, 6, 1)  # 生成7月排班
-    # target_month = date(2026, 7, 1)  # 生成8月排班
+    # 修改月份为目标测试月（_generate_for_org 生成下月排班，所以7月=生成8月）
+    target_month = date(2026, 7, 1)  # 生成8月排班
 
     async with async_session_factory() as db:
         orgs = (await db.execute(
             select(OrgOrganization).where(OrgOrganization.status == 1)
         )).scalars().all()
 
+        # 选择有人员的组织
         for org in orgs:
-            print(f"正在为组织 [{org.name}] 生成排班...")
-            try:
-                result = await _generate_for_org(db, org.id, target_month)
-                if result:
-                    print(f"  完成：共 {result.get('report', {}).get('total_shifts', 0)} 条排班")
-                    for msg in result.get('diagnostics', [])[:5]:
-                        print(f"  [诊断] {msg}")
-                else:
-                    print(f"  跳过（已存在或无可用的班次模板）")
-            except Exception as e:
-                print(f"  失败：{e}")
+            staff = (await db.execute(
+                select(OrgStaff).where(OrgStaff.org_id == org.id, OrgStaff.status == 1)
+            )).scalars().all()
+            if len(staff) >= 12:
+                print(f"正在为组织 [{org.name}] (ID: {org.id}, 人员: {len(staff)}) 生成排班...")
+                try:
+                    result = await _generate_for_org(db, org.id, target_month)
+                    if result:
+                        print(f"  完成：共 {result.get('report', {}).get('total_shifts', 0)} 条排班")
+                        for msg in result.get('diagnostics', [])[:5]:
+                            print(f"  [诊断] {msg}")
+                    else:
+                        print(f"  跳过（已存在或无可用的班次模板）")
+                except Exception as e:
+                    print(f"  失败：{e}")
+                break
 
 
 if __name__ == "__main__":

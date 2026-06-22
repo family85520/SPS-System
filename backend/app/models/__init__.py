@@ -11,6 +11,7 @@ from app.models.swap import SchSwapRequest
 from app.models.special_rule import SchSpecialRule
 from app.models.message import SysMessage, SysAnnouncement
 from app.models.audit_log import SysAuditLog, SysConfig
+from app.models.pairing import SchPairing
 
 __all__ = [
     "TimestampMixin",
@@ -32,4 +33,5 @@ __all__ = [
     "SysAnnouncement",
     "SysAuditLog",
     "SysConfig",
+    "SchPairing",
 ]

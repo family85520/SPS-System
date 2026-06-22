@@ -227,6 +227,19 @@ async def remove_staff(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/{schedule_id}/swap-staff/{other_id}", summary="互换两个班次人员")
+async def swap_schedule_staff(
+    schedule_id: int,
+    other_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("schedule", "update")),
+):
+    try:
+        return await ScheduleService.swap_staff(db, schedule_id, other_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 # ==================== 批量操作 ====================
 
 @router.post("/batch", summary="批量创建/更新排班明细")
