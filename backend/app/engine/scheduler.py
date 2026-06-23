@@ -6,6 +6,7 @@ import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import date, timedelta
+from types import SimpleNamespace
 from typing import Optional
 
 from app.engine.scoring import FairnessScorer
@@ -1360,6 +1361,11 @@ class AutoScheduler:
         """
         results: list[ScheduleResult] = []
         all_conflicts: list[str] = []
+        generated_schedules_by_month: dict[int, list] = defaultdict(list)
+        base_existing_details = list(self.existing_details)
+        generated_details: list = []
+        next_generated_schedule_id = -1
+        next_generated_detail_id = -1
 
         # 轮换周期基准日期（周轮从排班起始周的周一计入周期 0）
         self._rotation_start_date = start_date
@@ -1509,6 +1515,21 @@ class AutoScheduler:
             weekday = current.isoweekday()
             month_key = current.year * 12 + current.month
             if self._active_month_key != month_key:
+                if self._active_month_key is not None:
+                    previous_month_schedules = generated_schedules_by_month.get(
+                        self._active_month_key, []
+                    )
+                    if previous_month_schedules:
+                        self.prev_month_schedules = sorted(
+                            previous_month_schedules,
+                            key=lambda s: getattr(s, "date", ""),
+                        )
+                        for shift_id, pairings in self._new_pairings.items():
+                            self._loaded_pairings[shift_id] = {
+                                key: (list(value[0]), list(value[1]))
+                                for key, value in pairings.items()
+                            }
+
                 self._active_month_key = month_key
                 self._monthly_locked.clear()
                 self._current_admin_members.clear()
@@ -1518,6 +1539,7 @@ class AutoScheduler:
                 self._replacement_processed_groups.clear()
                 self._replacement_used_members.clear()
                 self._admin_replacement_map.clear()
+                self._special_source_shift_by_member.clear()
                 self._prepare_monthly_special_locks(strategy, active_shifts, available_ids, date_str)
 
             for shift in active_shifts:
@@ -1599,6 +1621,25 @@ class AutoScheduler:
                         )
 
                 results.append(result)
+                generated_schedule = SimpleNamespace(
+                    id=next_generated_schedule_id,
+                    date=date.fromisoformat(result.date),
+                    shift_id=result.shift_id,
+                    org_id=result.org_id,
+                )
+                next_generated_schedule_id -= 1
+                generated_schedules_by_month[month_key].append(generated_schedule)
+
+                leader_set = set(result.leader_ids)
+                for staff_id in result.member_ids:
+                    generated_details.append(SimpleNamespace(
+                        id=next_generated_detail_id,
+                        schedule_id=generated_schedule.id,
+                        staff_id=staff_id,
+                        role_type="leader" if staff_id in leader_set else "member",
+                    ))
+                    next_generated_detail_id -= 1
+                self.existing_details = base_existing_details + generated_details
 
             current += timedelta(days=1)
 

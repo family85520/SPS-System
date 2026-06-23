@@ -668,3 +668,133 @@ def test_admin_regular_members_rotate_beyond_special_pool_across_months():
     assert july_selected != august_selected
     assert set(july_selected).isdisjoint(admin_shift.special_pool)
     assert set(august_selected).isdisjoint(admin_shift.special_pool)
+
+
+def test_multi_month_generation_uses_generated_previous_month_for_admin_rotation():
+    day_shift = make_shift(1)
+    admin_shift = make_shift(99, special_enabled=True)
+    admin_shift.special_pool = [2, 3]
+    admin_shift.special_count = 1
+    admin_shift.member_max = 3
+    admin_shift.member_rotation_frequency = "month"
+
+    june_admin = MagicMock(id=201, shift_id=admin_shift.id, date=date(2026, 6, 1), org_id=4)
+    june_day = MagicMock(id=101, shift_id=day_shift.id, date=date(2026, 6, 1), org_id=4)
+    june_details = [
+        MagicMock(id=1, schedule_id=201, staff_id=3, role_type="member"),
+        MagicMock(id=2, schedule_id=201, staff_id=10, role_type="member"),
+        MagicMock(id=3, schedule_id=201, staff_id=11, role_type="member"),
+        MagicMock(id=4, schedule_id=101, staff_id=2, role_type="member"),
+        MagicMock(id=5, schedule_id=101, staff_id=4, role_type="member"),
+    ]
+    june_pairings = {
+        day_shift.id: {
+            (0, "day"): ([2, 4], [False, False]),
+            (0, "night"): ([5, 6], [False, False]),
+            (1, "day"): ([7, 8], [False, False]),
+            (1, "night"): ([9, 12], [False, False]),
+            (2, "day"): ([13, 14], [False, False]),
+            (2, "night"): ([1, 15], [False, False]),
+        }
+    }
+    scheduler = AutoScheduler(
+        staff_list=[make_staff(staff_id) for staff_id in range(1, 16)],
+        shift_templates=[admin_shift, day_shift],
+        constraints=[],
+        special_rules=[],
+        existing_schedules=[june_admin, june_day],
+        existing_details=june_details,
+        prev_month_schedules=[june_admin, june_day],
+        all_pairings=june_pairings,
+    )
+
+    result = scheduler.generate(
+        start_date=date(2026, 7, 1),
+        end_date=date(2026, 8, 3),
+        org_id=4,
+        shift_template_ids=[admin_shift.id, day_shift.id],
+        staff_ids=list(range(1, 16)),
+    )
+
+    admin_by_date = {
+        item.date: item.member_ids
+        for item in result["schedules"]
+        if item.shift_id == admin_shift.id
+    }
+
+    assert admin_by_date["2026-07-01"][0] == 2
+    assert admin_by_date["2026-08-01"][0] == 3
+    assert admin_by_date["2026-08-01"] != admin_by_date["2026-07-01"]
+
+    july_scheduler = AutoScheduler(
+        staff_list=[make_staff(staff_id) for staff_id in range(1, 16)],
+        shift_templates=[admin_shift, day_shift],
+        constraints=[],
+        special_rules=[],
+        existing_schedules=[june_admin, june_day],
+        existing_details=june_details,
+        prev_month_schedules=[june_admin, june_day],
+        all_pairings=june_pairings,
+    )
+    july_result = july_scheduler.generate(
+        start_date=date(2026, 7, 1),
+        end_date=date(2026, 7, 31),
+        org_id=4,
+        shift_template_ids=[admin_shift.id, day_shift.id],
+        staff_ids=list(range(1, 16)),
+    )
+
+    july_schedules = []
+    july_details = []
+    next_schedule_id = 1000
+    next_detail_id = 2000
+    for item in july_result["schedules"]:
+        schedule = MagicMock(
+            id=next_schedule_id,
+            date=date.fromisoformat(item.date),
+            shift_id=item.shift_id,
+            org_id=item.org_id,
+        )
+        july_schedules.append(schedule)
+        for staff_id in item.member_ids:
+            july_details.append(MagicMock(
+                id=next_detail_id,
+                schedule_id=next_schedule_id,
+                staff_id=staff_id,
+                role_type="member",
+            ))
+            next_detail_id += 1
+        next_schedule_id += 1
+
+    july_schedule_map = {schedule.id: schedule for schedule in july_schedules}
+    pre_history = {}
+    for detail in july_details:
+        schedule = july_schedule_map.get(detail.schedule_id)
+        if schedule and date(2026, 7, 27) <= schedule.date <= date(2026, 7, 31):
+            pre_history.setdefault(detail.staff_id, []).append(str(schedule.date))
+
+    august_scheduler = AutoScheduler(
+        staff_list=[make_staff(staff_id) for staff_id in range(1, 16)],
+        shift_templates=[admin_shift, day_shift],
+        constraints=[],
+        special_rules=[],
+        existing_schedules=[june_admin, june_day] + july_schedules,
+        existing_details=june_details + july_details,
+        pre_history=pre_history,
+        prev_month_schedules=july_schedules,
+        all_pairings=july_scheduler._new_pairings,
+    )
+    august_result = august_scheduler.generate(
+        start_date=date(2026, 8, 1),
+        end_date=date(2026, 8, 3),
+        org_id=4,
+        shift_template_ids=[admin_shift.id, day_shift.id],
+        staff_ids=list(range(1, 16)),
+    )
+    sequential_august_admin = {
+        item.date: item.member_ids
+        for item in august_result["schedules"]
+        if item.shift_id == admin_shift.id
+    }
+
+    assert admin_by_date["2026-08-01"] == sequential_august_admin["2026-08-01"]

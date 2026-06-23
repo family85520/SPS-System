@@ -112,3 +112,75 @@ class TestPairingDeriveFromSchedule:
 
         assert result[(1, "day")] == ([5, 14], [False, False])
         assert (0, "day") not in result
+
+    @pytest.mark.asyncio
+    async def test_derives_from_imported_or_manually_adjusted_schedule_rows(self):
+        db = AsyncMock()
+        shift = MagicMock()
+        shift.is_night = False
+        shift.special_enabled = False
+        shift.special_pool = []
+
+        imported_schedule = MagicMock(
+            id=301,
+            date=date(2026, 6, 1),
+            source="import",
+            status=0,
+        )
+        details = [
+            MagicMock(id=10, schedule_id=301, staff_id=21, role_type="member"),
+            MagicMock(id=11, schedule_id=301, staff_id=22, role_type="member"),
+        ]
+
+        shift_result = MagicMock()
+        shift_result.scalars.return_value.first.return_value = shift
+        schedule_result = MagicMock()
+        schedule_result.scalars.return_value.all.return_value = [imported_schedule]
+        detail_result = MagicMock()
+        detail_result.scalars.return_value.all.return_value = details
+        db.execute.side_effect = [shift_result, schedule_result, detail_result]
+
+        mgr = PairingManager(db, org_id=4)
+        result = await mgr.derive_from_schedule(
+            shift_id=1,
+            month_start=date(2026, 6, 1),
+            month_end=date(2026, 6, 30),
+            rotation_anchor_date=date(2026, 6, 1),
+        )
+
+        assert result[(0, "day")] == ([21, 22], [False, False])
+
+    @pytest.mark.asyncio
+    async def test_latest_manual_adjustment_overrides_earlier_slot_history(self):
+        db = AsyncMock()
+        shift = MagicMock()
+        shift.is_night = False
+        shift.special_enabled = False
+        shift.special_pool = []
+
+        original_schedule = MagicMock(id=401, date=date(2026, 6, 1), source="auto")
+        adjusted_schedule = MagicMock(id=407, date=date(2026, 6, 7), source="manual")
+        details = [
+            MagicMock(id=1, schedule_id=401, staff_id=1, role_type="member"),
+            MagicMock(id=2, schedule_id=401, staff_id=2, role_type="member"),
+            MagicMock(id=3, schedule_id=407, staff_id=5, role_type="member"),
+            MagicMock(id=4, schedule_id=407, staff_id=6, role_type="member"),
+        ]
+
+        shift_result = MagicMock()
+        shift_result.scalars.return_value.first.return_value = shift
+        schedule_result = MagicMock()
+        schedule_result.scalars.return_value.all.return_value = [adjusted_schedule, original_schedule]
+        detail_result = MagicMock()
+        detail_result.scalars.return_value.all.return_value = details
+        db.execute.side_effect = [shift_result, schedule_result, detail_result]
+
+        mgr = PairingManager(db, org_id=4)
+        result = await mgr.derive_from_schedule(
+            shift_id=1,
+            month_start=date(2026, 6, 1),
+            month_end=date(2026, 6, 30),
+            rotation_anchor_date=date(2026, 6, 1),
+        )
+
+        assert result[(0, "day")] == ([5, 6], [False, False])
