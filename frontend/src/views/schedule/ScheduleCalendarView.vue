@@ -62,6 +62,29 @@
           <el-icon><Plus /></el-icon>
           添加排班
         </el-button>
+        <el-button
+          v-if="authStore.hasPermission('schedule', 'read')"
+          :loading="templateDownloading"
+          @click="handleDownloadImportTemplate"
+        >
+          <el-icon><Download /></el-icon>
+          下载模板
+        </el-button>
+        <el-button
+          v-if="authStore.hasPermission('schedule', 'create')"
+          :loading="scheduleImporting"
+          @click="handlePickImportFile"
+        >
+          <el-icon><Upload /></el-icon>
+          导入排班
+        </el-button>
+        <input
+          ref="importFileInput"
+          type="file"
+          accept=".xlsx"
+          style="display: none"
+          @change="handleImportFileChange"
+        />
         <el-button v-if="authStore.hasPermission('schedule', 'create')" :loading="validating" @click="handleValidate">
           <el-icon><CircleCheck /></el-icon>
           校验
@@ -344,6 +367,8 @@ import {
   recallSchedulesByMonth,
   approveSchedules,
   rejectSchedules,
+  downloadScheduleImportTemplate,
+  importScheduleTemplate,
   type CalendarDate,
   type CalendarShift,
   type Schedule,
@@ -701,9 +726,68 @@ const currentMonthRange = computed(() => {
 // ==================== 导出排班 ====================
 
 const exportDialogVisible = ref(false)
+const importFileInput = ref<HTMLInputElement | null>(null)
+const templateDownloading = ref(false)
+const scheduleImporting = ref(false)
 
 function handleExport() {
   exportDialogVisible.value = true
+}
+
+async function handleDownloadImportTemplate() {
+  templateDownloading.value = true
+  try {
+    const params: any = {
+      start_date: currentMonthRange.value.start,
+      end_date: currentMonthRange.value.end,
+    }
+    if (filterOrgId.value) params.org_id = filterOrgId.value
+    await downloadScheduleImportTemplate(params)
+    ElMessage.success('模板已开始下载')
+  } catch (e) {
+    // interceptor handles error
+  } finally {
+    templateDownloading.value = false
+  }
+}
+
+function handlePickImportFile() {
+  importFileInput.value?.click()
+}
+
+async function handleImportFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.xlsx')) {
+    ElMessage.warning('请上传 .xlsx 格式的排班模板')
+    return
+  }
+
+  try {
+    await ElMessageBox({
+      title: '确认导入排班？',
+      message: '导入会创建草稿排班；若同日期/组织/班次已有草稿或已撤回记录，会覆盖人员明细。已发布或待审核排班不会被覆盖。',
+      showCancelButton: true,
+      confirmButtonText: '确认导入',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch (e) {
+    return
+  }
+
+  scheduleImporting.value = true
+  try {
+    const res: any = await importScheduleTemplate(file, filterOrgId.value)
+    ElMessage.success(res.message || '排班导入完成')
+    await loadCalendar()
+  } catch (e) {
+    // interceptor handles error
+  } finally {
+    scheduleImporting.value = false
+  }
 }
 
 // ==================== 约束校验 ====================

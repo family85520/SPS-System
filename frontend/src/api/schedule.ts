@@ -208,3 +208,43 @@ export function getScheduleStatistics(params: {
 }): Promise<ScheduleStatisticsResponse> {
   return api.get('/schedules/statistics', { params })
 }
+
+function triggerDownload(response: any, filename: string) {
+  const blob = response?.data ?? response
+  if (!(blob instanceof Blob)) return
+
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', filename)
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+export async function downloadScheduleImportTemplate(params?: {
+  org_id?: number
+  start_date?: string
+  end_date?: string
+}) {
+  const res = await api.get('/schedules/import-template', {
+    params,
+    responseType: 'blob',
+    timeout: 60000,
+  })
+  const suffix = params?.start_date && params?.end_date
+    ? `_${params.start_date}_${params.end_date}`
+    : ''
+  triggerDownload(res, `标准排班导入模板${suffix}.xlsx`)
+}
+
+export function importScheduleTemplate(file: File, orgId?: number): Promise<any> {
+  const form = new FormData()
+  form.append('file', file)
+  return api.post('/schedules/import', form, {
+    params: orgId ? { org_id: orgId } : undefined,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000,
+  })
+}

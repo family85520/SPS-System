@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from datetime import date as date_type
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,8 +28,14 @@ from app.schemas.schedule import (
     StaffSummaryResponse,
 )
 from app.services.schedule_service import ScheduleService
+from app.services.schedule_import_service import ScheduleImportService
 
 router = APIRouter(prefix="/schedules", tags=["排班管理"])
+
+
+def _content_disposition(filename: str) -> str:
+    encoded = quote(filename, safe="")
+    return f'attachment; filename="schedule-import-template.xlsx"; filename*=UTF-8\'\'{encoded}'
 
 
 # ==================== 排班列表 + 日历 ====================
@@ -141,6 +149,51 @@ async def get_schedule_statistics(
         top=top,
     )
     return result
+
+
+# ==================== 自定义排班导入 ====================
+
+@router.get("/import-template", summary="下载标准排班导入模板")
+async def download_schedule_import_template(
+    org_id: int | None = Query(None, description="组织ID，可选；填写后模板会预置该组织"),
+    start_date: str | None = Query(None, description="开始日期 YYYY-MM-DD，可选"),
+    end_date: str | None = Query(None, description="结束日期 YYYY-MM-DD，可选"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("schedule", "read")),
+):
+    sd = _parse_date(start_date, "start_date") if start_date else None
+    ed = _parse_date(end_date, "end_date") if end_date else None
+    if sd and ed and ed < sd:
+        raise HTTPException(status_code=400, detail="结束日期不能早于开始日期")
+
+    buf = await ScheduleImportService.generate_template(
+        db,
+        org_id=org_id,
+        start_date=sd,
+        end_date=ed,
+    )
+    filename = "标准排班导入模板.xlsx"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": _content_disposition(filename)},
+    )
+
+
+@router.post("/import", summary="导入标准排班模板")
+async def import_schedule_template(
+    file: UploadFile = File(...),
+    org_id: int | None = Query(None, description="默认组织ID；模板未填组织时使用"),
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(require_permissions("schedule", "create")),
+):
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="仅支持 .xlsx 文件")
+    data = await file.read()
+    try:
+        return await ScheduleImportService.import_excel(db, data, default_org_id=org_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # ==================== 单条 CRUD ====================
