@@ -1640,6 +1640,8 @@ class AutoScheduler:
                     ))
                     next_generated_detail_id -= 1
                 self.existing_details = base_existing_details + generated_details
+                self.candidate_filter._existing_details = self.existing_details
+                self.candidate_filter._schedule_index[generated_schedule.id] = generated_schedule
 
             current += timedelta(days=1)
 
