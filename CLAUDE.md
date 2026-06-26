@@ -84,8 +84,8 @@ backend/
 ### Key Architecture Decisions
 
 - **API layer**: FastAPI routers handle HTTP concerns; services handle business logic; engine is pure domain logic with no framework dependencies.
-- **Auth**: Bearer token JWT. `deps.py` provides `get_current_user`, `require_roles()`, `require_permissions()` as FastAPI dependencies.
-- **Database**: Auto-migration runs on startup (`_auto_migrate_columns` in `database.py`). Alembic is available but base schema is created by `Base.metadata.create_all`. Auto-creates user accounts for staff without them.
+- **Auth**: Bearer token JWT. `deps.py` provides `get_current_user`, `require_roles()` (exact match), `require_permissions()` as FastAPI dependencies.
+- **Database**: Auto-migration runs on startup (`_auto_migrate_columns` in `database.py`). Alembic is available but base schema is created by `Base.metadata.create_all`. Auto-creates user accounts for staff without them. `get_db()` no longer auto-commits — transaction boundaries are managed per-service.
 - **Frontend routing**: Protected routes via `router.beforeEach` — checks `requiresAuth`, `mustChangePassword`, and RBAC via `meta.permission` and `meta.roles`. HTTP interceptor auto-attaches Bearer token and handles 401/403.
 
 ### Scheduling Engine (critical domain logic)
@@ -102,7 +102,7 @@ Located in `backend/app/engine/scheduler.py`. The engine uses a **slot-based rot
 
 ### Frontend API Layer
 
-`frontend/src/api/` mirrors backend API modules. Each file exports typed functions using the shared axios instance from `utils/request.ts` (auto-injects token, handles errors).
+`frontend/src/api/` mirrors backend API modules. Each file exports typed functions using the shared axios instance from `api/index.ts` (auto-injects token via `localStorage`, handles errors). `utils/request.ts` has been removed — all API files now use the single `api` instance with `baseURL: '/api'`.
 
 ## Database
 

@@ -1366,14 +1366,15 @@ def _get_holiday_set(start_date: date, end_date: date) -> set[str]:
     """获取日期范围内的法定节假日日期集合（使用 chinese_calendar 库，如果不可用则使用内置规则）"""
     holidays: set[str] = set()
     try:
-        from chinese_calendar import is_holiday, get_holiday_detail
+        calendar = __import__("chinese_calendar")
+        is_holiday = getattr(calendar, "is_holiday")
         current = start_date
         while current <= end_date:
             if is_holiday(current):
                 holidays.add(str(current))
             current += timedelta(days=1)
-    except ImportError:
-        # chinese_calendar 未安装，使用周末近似
+    except (ImportError, AttributeError):
+        # chinese_calendar 未安装或接口不可用，使用周末近似
         current = start_date
         while current <= end_date:
             if current.weekday() >= 5:  # 周六、周日
