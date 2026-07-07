@@ -8,13 +8,15 @@
           placeholder="搜索组织"
           clearable
           prefix-icon="Search"
+          class="neo-input"
+          style="width: 100%;"
         />
         <!-- 新建顶级组织：需要 organization create 权限 -->
         <el-button
           v-if="authStore.hasPermission('organization', 'create')"
-          type="primary"
+          class="btn-neo-primary"
           @click="handleCreateRoot"
-          style="margin-top: 8px; width: 100%"
+          style="margin-top: 12px; width: 100%"
         >
           <el-icon><Plus /></el-icon>
           新建顶级组织
@@ -71,6 +73,7 @@
               maxlength="100"
               show-word-limit
               :disabled="!canEdit"
+              class="neo-input"
             />
           </el-form-item>
 
@@ -81,6 +84,7 @@
               maxlength="50"
               show-word-limit
               :disabled="!canEdit"
+              class="neo-input"
             />
             <div v-if="isCreate" style="font-size: 12px; color: #909399; margin-top: 4px;">
               留空将根据组织名称自动生成（拼音首字母简称）
@@ -104,7 +108,7 @@
               clearable
               check-strictly
               :render-after-expand="false"
-              style="width: 100%"
+              class="neo-input"
               :disabled="!isCreate || !canEdit"
             />
           </el-form-item>
@@ -116,34 +120,21 @@
               :max="9999"
               controls-position="right"
               :disabled="!canEdit"
+              class="neo-input"
             />
           </el-form-item>
 
-          <el-form-item v-if="!isCreate" label="排班人数上限">
-            <el-input-number
-              v-model="formData.daily_max_scheduled_ratio"
-              :min="0.1"
-              :max="1.0"
-              :step="0.05"
-              :precision="2"
-              controls-position="right"
-              :disabled="!canEdit"
-              style="width: 200px"
-            />
-            <div style="font-size: 12px; color: #909399; margin-top: 4px;">
-              每日排班人数占在岗人员的比例上限（如0.70=70%），留空则使用系统默认值
-            </div>
-          </el-form-item>
 
           <!-- 启用状态：需要 organization update 权限 -->
           <el-form-item v-if="!isCreate" label="启用状态">
-            <el-switch
+            <span
               v-if="authStore.hasPermission('organization', 'update')"
-              :model-value="formData.status === 1"
-              active-text="启用"
-              inactive-text="停用"
-              @change="handleToggleStatus"
-            />
+              class="neo-switch-inline"
+              :class="{ 'is-checked': formData.status === 1, 'is-disabled': !canEdit }"
+              @click="handleToggleStatus(formData.status === 0)"
+            >
+              <span class="neo-switch-knob"></span>
+            </span>
             <el-tag v-else :type="formData.status === 1 ? 'success' : 'info'" size="small">
               {{ formData.status === 1 ? '启用' : '停用' }}
             </el-tag>
@@ -162,7 +153,7 @@
               <!-- 保存：新建需要 create，编辑需要 update -->
               <el-button
                 v-if="authStore.hasPermission('organization', isCreate ? 'create' : 'update')"
-                type="primary"
+                class="btn-neo-primary"
                 @click="handleSave"
               >
                 保存
@@ -170,6 +161,7 @@
               <!-- 新增下级：需要 organization create 权限 -->
               <el-button
                 v-if="authStore.hasPermission('organization', 'create')"
+                class="btn-neo-success"
                 @click="handleCreateChild"
               >
                 新增下级
@@ -177,18 +169,18 @@
               <!-- 删除：需要 organization delete 权限 -->
               <el-button
                 v-if="!isCreate && authStore.hasPermission('organization', 'delete')"
-                type="danger"
+                class="btn-neo-danger"
                 @click="handleDelete"
               >
                 删除
               </el-button>
-              <el-button @click="handleCancel">取消</el-button>
+              <el-button class="btn-neo-ghost" @click="handleCancel">取消</el-button>
             </div>
           </el-form-item>
         </el-form>
       </template>
 
-      <div v-else class="empty-state">
+      <div v-else class="empty-state empty-state--flex">
         <el-icon :size="48" color="#C0C4CC"><OfficeBuilding /></el-icon>
         <p>请从左侧选择组织或点击"新建顶级组织"</p>
       </div>
@@ -198,7 +190,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type ElTree } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules, type ElTree } from 'element-plus'
+import { useConfirm } from '@/composables/useConfirm'
 import { Plus, OfficeBuilding } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -224,6 +217,8 @@ const treeProps = {
   children: 'children',
   label: 'name',
 }
+
+const { confirm } = useConfirm()
 
 const treeRef = ref<InstanceType<typeof ElTree>>()
 
@@ -372,13 +367,12 @@ async function handleToggleStatus(val: boolean) {
   if (!selectedOrg.value) return
   const tip = val ? '确认启用该组织？' : '停用后该组织不参与排班，确认停用？'
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'warning',
       title: '确认操作？',
       message: tip,
-      showCancelButton: true,
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '确认',
+      cancelText: '取消',
     })
     const updated = await updateOrg(selectedOrg.value.id, {
       status: val ? 1 : 0,
@@ -404,13 +398,12 @@ async function handleDelete() {
   }
 
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'danger',
       title: '确认删除？',
       message: `确认删除组织「${selectedOrg.value.name}」？删除后数据无法恢复。`,
-      showCancelButton: true,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '删除',
+      cancelText: '取消',
     })
     await deleteOrg(selectedOrg.value.id)
     ElMessage.success('删除成功')
@@ -453,127 +446,177 @@ onMounted(() => {
   height: calc(100vh - 56px - 40px);
   gap: 16px;
   padding: 16px;
-  background: #F5F7FA;
+  background: #FFFDF5;
   overflow-x: auto;
   min-width: 700px;
 }
 
-.left-panel {
-  width: 320px;
-  min-width: 280px;
-  background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #E6EAF0;
-  flex-shrink: 0;
-}
-
+/* --- OrgView 特有：树形组件样式 --- */
 .tree-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 12px 12px 12px 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
-
 .tree-node {
+  padding: 10px 12px;
+  background: #FFFDF5;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px 0px #000000;
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
-  padding-right: 8px;
-  overflow: hidden;
+  transition: all 0.15s ease;
+  /* 宽度填满 el-tree-node__content 的可用空间 */
+  width: 100%;
+  box-sizing: border-box;
 }
-
+.tree-node:hover:not(.disabled) {
+  background: #FFFFFF;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
 .tree-node.disabled {
   opacity: 0.55;
+  cursor: not-allowed;
 }
-
+.tree-node.is-current > .tree-node {
+  background: #DBEAFE;
+  border-color: #3B82F6;
+}
 .node-name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
+  font-weight: 700;
+  color: #000000;
 }
-
 .node-level {
   font-size: 11px;
-  color: #C0C4CC;
-  background: #F5F7FA;
+  color: #999;
+  background: #F5F5F0;
   padding: 0 6px;
-  border-radius: 3px;
+  border-radius: 2px;
+  border: 1px solid #DDD;
   flex-shrink: 0;
+  font-weight: 700;
 }
-
 .node-code {
   font-size: 11px;
-  color: #0A63D8;
-  background: #EBF5FF;
+  color: #3B82F6;
+  background: #EFF6FF;
   padding: 0 6px;
-  border-radius: 3px;
+  border-radius: 2px;
+  border: 1px solid #3B82F6;
   flex-shrink: 0;
+  font-weight: 700;
 }
-
 .node-code-empty {
-  font-size: 11px;
-  color: #C0C4CC;
-  background: #F5F7FA;
-  padding: 0 6px;
-  border-radius: 3px;
-  flex-shrink: 0;
-  font-style: italic;
+  font-size: 0;
+  width: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  display: none;
 }
 
-.right-panel {
-  flex: 1;
-  min-width: 400px;
+/* 覆盖 Element Plus 原生树节点样式 */
+/*
+ * DOM 结构：
+ *   .el-tree-node (每个节点的外层容器)
+ *     ├── .el-tree-node__content   ← 包含展开箭头 + .tree-node 卡片
+ *     └── .el-tree-node__children  ← 子节点列表（如果有的话）
+ *
+ * 间距模型（统一用 .el-tree-node__children 的 padding-top 控制）：
+ *   - 父子间距 = 父节点 .el-tree-node__children 的 padding-top
+ *   - 兄弟间距 = 前一个兄弟 .el-tree-node__children 的 padding-top
+ *   - 两者都来自同一个 CSS 规则，视觉上必然一致
+ */
+
+/* 每个节点基础重置 */
+.tree-list :deep(.el-tree-node) {
+  padding-left: 0 !important;
+  padding-bottom: 0 !important;
+  outline: none;
+}
+
+/* 所有层级统一 .el-tree-node__content 的左缩进，确保卡片宽度一致 */
+.tree-list :deep(.el-tree-node > .el-tree-node__content) {
+  height: auto !important;
+  min-height: auto !important;
+  padding-left: 16px !important;
+  border-radius: 0;
+}
+
+/* 展开/收起图标微调 */
+.tree-list :deep(.el-tree-node__expand-icon) {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+/* 核心间距规则：所有 .el-tree-node__children 统一 padding-top
+   无论是父子之间还是兄弟之间，间距都来自同一个值 */
+.tree-list :deep(.el-tree-node > .el-tree-node__children) {
+  padding-top: 16px !important;
+}
+
+/* 子节点缩进：通过 .tree-node 的 margin-left 实现，不影响宽度计算 */
+.tree-list :deep(.el-tree-node .el-tree-node > .tree-node) {
+  margin-left: 12px;
+}
+.tree-list :deep(.el-tree-node .el-tree-node .el-tree-node > .tree-node) {
+  margin-left: 24px;
+}
+.tree-list :deep(.el-tree-node .el-tree-node .el-tree-node .el-tree-node > .tree-node) {
+  margin-left: 36px;
+}
+
+/* 覆盖全局 .left-panel/.right-panel 宽度 + 添加 neo 卡片视觉 */
+.left-panel {
+  width: 460px;
+  min-width: 360px;
+  max-width: 600px;
   background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-
-.right-panel .panel-header {
-  padding: 16px 24px;
+.left-panel:hover {
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+  transition: all 0.15s ease;
 }
-
-.right-panel .panel-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1F2D3D;
+.left-panel .panel-header {
+  padding: 20px 16px;
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
 }
-
-.edit-form {
+.right-panel {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px 24px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.empty-state {
-  flex: 1;
+  min-width: 400px;
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #C0C4CC;
+  overflow: hidden;
 }
-
-.empty-state p {
-  margin-top: 16px;
-  font-size: 14px;
+.right-panel:hover {
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+  transition: all 0.15s ease;
 }
+.right-panel .panel-header { padding: 20px 24px; }
 </style>

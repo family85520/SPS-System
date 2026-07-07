@@ -1,274 +1,272 @@
 <template>
   <div class="dashboard-page" v-loading="loading">
-    <!-- 第一行：排班概览 + 今日值班 -->
-    <el-row :gutter="16" class="dashboard-row">
-      <el-col :span="14">
-        <el-card shadow="never" class="dashboard-card card-schedule-overview">
-          <template #header>
-            <div class="card-header">
-              <span class="card-title">排班概览</span>
-              <el-tag
-                :type="statusTagType"
-                size="small"
-              >
-                {{ statusLabel }}
-              </el-tag>
-            </div>
-          </template>
-          <div class="overview-grid">
-            <div class="overview-stat">
-              <div class="stat-value" style="color: #0A63D8">{{ overview.org_count }}</div>
-              <div class="stat-label">组织数量</div>
-            </div>
-            <div class="overview-stat">
-              <div class="stat-value" style="color: #28A745">{{ overview.staff_count }}</div>
-              <div class="stat-label">人员总数</div>
-            </div>
-            <div class="overview-stat">
-              <div class="stat-value" style="color: #17A2B8">{{ overview.active_rules_count }}</div>
-              <div class="stat-label">启用规则</div>
-            </div>
-            <div
-              class="overview-stat clickable"
-              @click="router.push('/schedule/calendar')"
-            >
-              <div class="stat-value" style="color: #DC3545">
-                {{ overview.constraint_warnings }}
+    <!-- ============================================================
+         顶部：核心指标卡片（仅保留真实数据）
+         ============================================================ -->
+    <div class="stat-grid">
+      <!-- 总员工数 -->
+      <div class="neo-card stat-card stat-card-blue">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><User /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">总员工数</span>
+            <span class="stat-big-number">{{ overview.staff_count }}</span>
+          </div>
+          <div class="stat-deco stat-deco-users" />
+        </div>
+      </div>
+
+      <!-- 组织数量 -->
+      <div class="neo-card stat-card stat-card-green">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><OfficeBuilding /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">组织数量</span>
+            <span class="stat-big-number">{{ overview.org_count }}</span>
+          </div>
+          <div class="stat-deco stat-deco-org" />
+        </div>
+      </div>
+
+      <!-- 待审批事项 -->
+      <div class="neo-card stat-card stat-card-red">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><Switch /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">待审批事项</span>
+            <span class="stat-big-number">{{ overview.pending_swap_count }}</span>
+          </div>
+          <span class="stat-urgent-tag" v-if="overview.pending_swap_count > 0">紧急</span>
+          <div class="stat-deco stat-deco-alert" />
+        </div>
+      </div>
+
+      <!-- 未读消息 -->
+      <div class="neo-card stat-card stat-card-purple">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><Message /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">未读消息</span>
+            <span class="stat-big-number">{{ overview.unread_messages }}</span>
+          </div>
+          <div class="stat-deco stat-deco-msg" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         主内容区：第一行 3 列等宽 + 第二行左宽（快捷操作 + 工作量）+ 右窄（通知 + 模板）
+         ============================================================ -->
+    <div class="dashboard-main">
+      <!-- 第一行：今日值班 | 本月排班状态 | 待处理事项（等宽三列） -->
+      <div class="tri-row">
+        <!-- 列 1：今日值班 -->
+        <div class="neo-card tri-card duty-card">
+          <div class="card-header">
+            <h3 class="card-title font-weight-extrabold">今日值班</h3>
+            <span class="card-date">{{ todayStr }}</span>
+          </div>
+          <div class="tri-body">
+            <div v-if="overview.today_duty.length > 0" class="duty-list">
+              <div v-for="(duty, idx) in overview.today_duty" :key="idx" class="neo-list-item">
+                <div class="duty-shift-name">
+                  <span class="list-item-dot" :style="{ background: shiftColors[idx % shiftColors.length] }" />
+                  {{ duty.shift_name }}
+                </div>
+                <div class="duty-detail">
+                  <span v-if="duty.leader" class="duty-leader font-weight-medium">
+                    带班：{{ duty.leader }}
+                  </span>
+                  <span class="duty-members">
+                    {{ duty.members.join('、') || '暂无安排' }}
+                  </span>
+                </div>
               </div>
-              <div class="stat-label">约束冲突</div>
+            </div>
+            <el-empty v-else description="今日暂无安排" :image-size="40" />
+          </div>
+        </div>
+
+        <!-- 列 2：本月排班状态 -->
+        <div class="neo-card tri-card schedule-card">
+          <div class="card-header">
+            <h3 class="card-title font-weight-extrabold">本月排班状态</h3>
+            <span class="card-date">{{ currentMonthLabel }}</span>
+          </div>
+          <div class="tri-body">
+            <div class="status-grid">
+              <div class="status-item status-item--clickable" @click="router.push('/schedule')">
+                <span class="status-label">已发布</span>
+                <span class="status-value status-success">{{ scheduleStatus.published }}</span>
+              </div>
+              <div class="status-item status-item--clickable" @click="router.push('/schedule')">
+                <span class="status-label">草稿</span>
+                <span class="status-value status-warning">{{ scheduleStatus.draft }}</span>
+              </div>
+              <div class="status-item status-item--clickable" @click="router.push('/schedule')">
+                <span class="status-label">已撤回</span>
+                <span class="status-value status-info">{{ scheduleStatus.recalled }}</span>
+              </div>
             </div>
           </div>
-        </el-card>
-      </el-col>
+        </div>
 
-      <el-col :span="10">
-        <el-card shadow="never" class="dashboard-card card-today-duty">
-          <template #header>
-            <div class="card-header">
-              <span class="card-title">今日值班</span>
-              <span class="card-date">{{ todayStr }}</span>
-            </div>
-          </template>
-          <div v-if="overview.today_duty.length > 0" class="duty-list">
-            <div
-              v-for="(duty, idx) in overview.today_duty"
-              :key="idx"
-              class="duty-item"
-            >
-              <div class="duty-shift-name">
-                <span class="duty-dot" :style="{ background: shiftColors[idx % shiftColors.length] }" />
-                {{ duty.shift_name }}
-              </div>
-              <div class="duty-detail">
-                <span v-if="duty.leader" class="duty-leader">
-                  带班：{{ duty.leader }}
-                </span>
-                <span class="duty-members">
-                  {{ duty.members.join('、') || '暂无安排' }}
-                </span>
-              </div>
-            </div>
+        <!-- 列 3：待处理事项 -->
+        <div class="neo-card tri-card pending-card">
+          <div class="card-header">
+            <h3 class="card-title font-weight-extrabold">待处理事项</h3>
           </div>
-          <el-empty v-else description="今日暂无值班安排" :image-size="60" />
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 第二行：快捷操作 + 待处理事项 -->
-    <el-row :gutter="16" class="dashboard-row">
-      <el-col :span="14">
-        <el-card shadow="never" class="dashboard-card card-quick-actions">
-          <template #header>
-            <span class="card-title">快捷操作</span>
-          </template>
-          <div class="quick-actions-grid">
-            <div
-              v-for="action in quickActions"
-              :key="action.label"
-              class="quick-action-item"
-              @click="router.push(action.path)"
-            >
-              <div class="quick-action-icon" :style="{ background: action.bgColor }">
-                <el-icon :size="24" :color="action.iconColor">
-                  <component :is="action.icon" />
-                </el-icon>
-              </div>
-              <span class="quick-action-label">{{ action.label }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-
-      <el-col :span="10">
-        <el-card shadow="never" class="dashboard-card card-pending">
-          <template #header>
-            <span class="card-title">待处理事项</span>
-          </template>
-          <div class="pending-list">
-            <div
-              v-if="authStore.hasPermission('swap', 'read') || authStore.hasPermission('swap', 'approve')"
-              class="pending-item"
-              @click="router.push('/swap')"
-            >
-              <el-badge :value="overview.pending_swap_count" :hidden="overview.pending_swap_count === 0">
+          <div class="tri-body">
+            <div class="pending-list">
+              <div v-if="authStore.hasPermission('swap', 'read') || authStore.hasPermission('swap', 'approve')"
+                   class="neo-list-item neo-list-item--clickable" @click="handleSwapNavigate">
                 <span class="pending-label">待审批调班</span>
-              </el-badge>
-              <span class="pending-count">{{ overview.pending_swap_count }} 条</span>
-            </div>
-            <div
-              v-if="authStore.hasPermission('message', 'read')"
-              class="pending-item"
-              @click="router.push('/message')"
-            >
-              <el-badge :value="overview.unread_messages" :hidden="overview.unread_messages === 0">
+                <span class="neo-badge neo-badge--red" v-if="overview.pending_swap_count > 0">{{ overview.pending_swap_count }}</span>
+                <span class="pending-count font-weight-medium">{{ overview.pending_swap_count }} 条</span>
+              </div>
+              <div v-if="authStore.hasPermission('message', 'read')" class="neo-list-item neo-list-item--clickable"
+                   @click="router.push('/message')">
                 <span class="pending-label">未读消息</span>
-              </el-badge>
-              <span class="pending-count">{{ overview.unread_messages }} 条</span>
+                <span class="neo-badge neo-badge--red" v-if="overview.unread_messages > 0">{{ overview.unread_messages }}</span>
+                <span class="pending-count font-weight-medium">{{ overview.unread_messages }} 条</span>
+              </div>
+              <el-empty
+                v-if="!authStore.hasPermission('swap', 'read') && !authStore.hasPermission('swap', 'approve')
+                     && !authStore.hasPermission('message', 'read')"
+                description="暂无待办" :image-size="40"
+              />
             </div>
-            <div
-              v-if="overview.constraint_warnings > 0 && authStore.hasPermission('schedule', 'read')"
-              class="pending-item"
-              @click="router.push('/schedule/calendar')"
-            >
-              <span class="pending-label" style="color: #DC3545">约束冲突</span>
-              <span class="pending-count" style="color: #DC3545">
-                {{ overview.constraint_warnings }} 条
-              </span>
-            </div>
-            <el-empty
-              v-if="!authStore.hasPermission('swap', 'read') && !authStore.hasPermission('swap', 'approve') && !authStore.hasPermission('message', 'read') && overview.constraint_warnings === 0"
-              description="暂无待处理事项"
-              :image-size="48"
-            />
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
 
-    <!-- 第三行：最近公告 + 人员统计 -->
-    <el-row :gutter="16" class="dashboard-row">
-      <el-col :span="14">
-        <el-card shadow="never" class="dashboard-card card-announcements">
-          <template #header>
+      <!-- 第二行：左宽（快捷操作 + 工作量）+ 右窄（最近通知 + 班次模板） -->
+      <div class="bottom-row">
+        <!-- 左侧 -->
+        <div class="main-left">
+          <!-- 快捷操作 -->
+          <div class="neo-card quick-card">
             <div class="card-header">
-              <span class="card-title">最近公告</span>
-              <el-button type="primary" text size="small" @click="router.push('/message')">
-                查看全部
-              </el-button>
+              <h3 class="card-title font-weight-extrabold">快捷操作</h3>
             </div>
-          </template>
-          <div v-if="overview.recent_notices.length > 0" class="notice-list">
-            <div
-              v-for="notice in overview.recent_notices"
-              :key="notice.id"
-              class="notice-item"
-            >
-              <el-icon><Document /></el-icon>
-              <span class="notice-title">{{ notice.title }}</span>
-              <span class="notice-time">{{ notice.created_at }}</span>
+            <div class="action-grid">
+              <div v-for="action in quickActions" :key="action.label" class="action-item"
+                   @click="router.push(action.path)">
+                <div class="qa-icon" :style="{ background: action.bgColor }">
+                  <el-icon :size="22"><component :is="action.icon" /></el-icon>
+                </div>
+                <span class="qa-label">{{ action.label }}</span>
+              </div>
             </div>
           </div>
-          <el-empty v-else description="暂无公告" :image-size="60" />
-        </el-card>
-      </el-col>
 
-      <el-col :span="10">
-        <el-card shadow="never" class="dashboard-card card-staff-stats">
-          <template #header>
-            <span class="card-title">人员统计</span>
-          </template>
-          <div class="staff-stats-grid">
-            <div class="staff-stat-item">
-              <div class="stat-value" style="color: #0A63D8">{{ overview.staff_count }}</div>
-              <div class="stat-label">人员总数</div>
-            </div>
-            <div class="staff-stat-item">
-              <div class="stat-value" style="color: #28A745">{{ overview.org_count }}</div>
-              <div class="stat-label">组织数量</div>
-            </div>
-            <div class="staff-stat-item">
-              <div class="stat-value" style="color: #FFC107">{{ overview.active_rules_count }}</div>
-              <div class="stat-label">活跃规则</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 第四行：值班工作量统计 -->
-    <el-row
-      v-if="authStore.hasPermission('schedule', 'read')"
-      :gutter="16"
-      class="dashboard-row"
-    >
-      <el-col :span="24">
-        <el-card shadow="never" class="dashboard-card card-workload" v-loading="workloadLoading">
-          <template #header>
+          <!-- 值班工作量统计 -->
+          <div class="neo-card workload-card" v-if="authStore.hasPermission('schedule', 'read')" v-loading="workloadLoading">
             <div class="card-header">
-              <span class="card-title">值班工作量统计</span>
+              <h3 class="card-title font-weight-extrabold">值班工作量统计</h3>
               <span class="card-date">{{ currentMonthLabel }}</span>
             </div>
-          </template>
-          <div v-if="workloadItems.length > 0" class="workload-container">
-            <!-- 概览数字 -->
-            <div class="workload-summary-grid">
-              <div class="workload-summary-item">
-                <div class="stat-value" style="color: #0A63D8">{{ workloadSummary.total_staff }}</div>
-                <div class="stat-label">参与人数</div>
-              </div>
-              <div class="workload-summary-item">
-                <div class="stat-value" style="color: #28A745">{{ workloadSummary.total_shifts }}</div>
-                <div class="stat-label">总班次数</div>
-              </div>
-              <div class="workload-summary-item">
-                <div class="stat-value" style="color: #17A2B8">{{ workloadSummary.avg_shifts_per_person }}</div>
-                <div class="stat-label">人均班次</div>
-              </div>
-              <div class="workload-summary-item">
-                <div class="stat-value" style="color: #FFC107">
-                  {{ workloadSummary.avg_hours_per_person }}<span style="font-size: 13px; color: #909399;">h</span>
+            <div v-if="workloadItems.length > 0" class="workload-body">
+              <div class="mini-stat-grid">
+                <div class="neo-card mini-stat-card">
+                  <div class="mini-stat-value" style="color: #3B82F6">{{ workloadSummary.total_staff }}</div>
+                  <div class="mini-stat-label">参与人数</div>
                 </div>
-                <div class="stat-label">人均工时</div>
+                <div class="neo-card mini-stat-card">
+                  <div class="mini-stat-value" style="color: #10B981">{{ workloadSummary.total_shifts }}</div>
+                  <div class="mini-stat-label">总班次数</div>
+                </div>
+                <div class="neo-card mini-stat-card">
+                  <div class="mini-stat-value" style="color: #EF4444">{{ workloadSummary.avg_shifts_per_person }}</div>
+                  <div class="mini-stat-label">人均班次</div>
+                </div>
+                <div class="neo-card mini-stat-card">
+                  <div class="mini-stat-value" style="color: #FF6B6B">
+                    {{ workloadSummary.avg_hours_per_person }}<span class="unit-h">h</span>
+                  </div>
+                  <div class="mini-stat-label">人均工时</div>
+                </div>
+              </div>
+              <div class="workload-ranking">
+                <div class="workload-ranking-title font-weight-extrabold">工作量排名 Top 5</div>
+                <div class="ranking-list">
+                  <div v-for="(item, idx) in workloadItems" :key="item.staff_id" class="ranking-item">
+                    <div class="ranking-row">
+                      <div :class="['ranking-badge', idx < 3 ? `ranking-${idx + 1}` : 'ranking-other']">{{ idx + 1 }}</div>
+                      <div class="ranking-info">
+                        <div class="ranking-name font-weight-bold">{{ item.staff_name }}</div>
+                        <div class="ranking-detail">
+                          {{ item.total_shifts }}班 · {{ item.total_hours }}h · 夜班{{ item.night_shifts }}
+                        </div>
+                      </div>
+                      <div class="neo-progress-wrapper">
+                        <div class="neo-progress-bg">
+                          <div class="neo-progress-fill"
+                               :style="{ width: getBarWidth(item.weight_score), background: getBarColor(idx) }" />
+                        </div>
+                      </div>
+                      <div class="ranking-score" :style="{ color: getScoreColor(idx) }">{{ item.weight_score }}</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+            <el-empty v-else description="当月暂无已发布排班数据，请先发布排班后再查看" :image-size="60" />
+          </div>
+        </div>
 
-            <!-- Top5 排名 -->
-            <div class="workload-ranking">
-              <div class="workload-ranking-title">工作量排名 Top 5</div>
-              <div class="workload-list">
-                <div
-                  v-for="(item, idx) in workloadItems"
-                  :key="item.staff_id"
-                  class="workload-item"
-                >
-                  <div :class="['workload-rank', idx < 3 ? `wrank-${idx + 1}` : 'wrank-other']">
-                    {{ idx + 1 }}
-                  </div>
-                  <div class="workload-info">
-                    <div class="workload-name">{{ item.staff_name }}</div>
-                    <div class="workload-detail">
-                      {{ item.total_shifts }}班 · {{ item.total_hours }}h · 夜班{{ item.night_shifts }}
-                    </div>
-                  </div>
-                  <div class="workload-bar-wrapper">
-                    <div class="workload-bar-bg">
-                      <div
-                        class="workload-bar-fill"
-                        :style="{ width: getBarWidth(item.weight_score), background: getBarColor(idx) }"
-                      />
-                    </div>
-                  </div>
-                  <div class="workload-score" :style="{ color: getScoreColor(idx) }">
-                    {{ item.weight_score }}
-                  </div>
+        <!-- 右侧窄栏：最近通知 + 班次模板 -->
+        <div class="main-right">
+          <!-- 最近通知（最多 5 条） -->
+          <div class="neo-card notification-card">
+            <div class="card-header">
+              <h3 class="card-title font-weight-extrabold">最近通知</h3>
+              <el-icon :size="18"><Bell /></el-icon>
+            </div>
+            <div class="notification-list">
+              <div v-for="note in noticeCards" :key="note.id" class="notice-card notice-card--clickable"
+                   :style="{ background: note.bgColor }" @click="handleNoticeClick(note.id)">
+                <div class="notice-top">
+                  <span class="notice-title-text">{{ note.title }}</span>
+                  <span class="notice-time">{{ note.time }}</span>
                 </div>
+                <p class="notice-desc">{{ note.desc }}</p>
+              </div>
+              <el-empty v-if="noticeCards.length === 0" description="暂无通知" :image-size="48" />
+            </div>
+          </div>
+
+          <!-- 班次模板统计 -->
+          <div class="neo-card template-stat-card">
+            <div class="card-header">
+              <h3 class="card-title font-weight-extrabold">班次模板</h3>
+            </div>
+            <div class="template-stats">
+              <div class="template-stat-item">
+                <div class="stat-value" style="color: #3B82F6">{{ shiftTemplateCount }}</div>
+                <div class="stat-label">已启用</div>
+              </div>
+              <div class="template-stat-item">
+                <div class="stat-value" style="color: #666">{{ shiftTemplateDisabled }}</div>
+                <div class="stat-label">已停用</div>
               </div>
             </div>
           </div>
-          <el-empty v-else description="当月暂无排班工作量数据" :image-size="60" />
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -276,37 +274,25 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  Calendar,
-  List,
-  Switch,
-  Message,
-  Bell,
-  Document,
-  Setting,
-  MagicStick,
+  User, OfficeBuilding, Switch, Message, Bell,
+  MagicStick, List, Calendar, Clock, Setting, Key,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getDashboardOverview } from '@/api/dashboard'
 import type { DashboardOverview } from '@/api/dashboard'
-import { getScheduleStatistics } from '@/api/schedule'
+import { getScheduleStatistics, getSchedules } from '@/api/schedule'
 import type { ScheduleStatisticsResponse } from '@/api/schedule'
+import { getShiftTemplates } from '@/api/shift-template'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
-
 const loading = ref(false)
 
 const overview = ref<DashboardOverview>({
-  org_count: 0,
-  staff_count: 0,
-  active_rules_count: 0,
-  pending_swap_count: 0,
-  today_duty: [],
-  unread_messages: 0,
-  recent_notices: [],
-  constraint_warnings: 0,
-  schedule_status: 'empty',
+  org_count: 0, staff_count: 0, active_rules_count: 0,
+  pending_swap_count: 0, today_duty: [], unread_messages: 0,
+  recent_notices: [], constraint_warnings: 0, schedule_status: 'empty',
 })
 
 const todayStr = computed(() => {
@@ -314,28 +300,72 @@ const todayStr = computed(() => {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
 })
 
-const statusLabel = computed(() => {
-  const map: Record<string, string> = {
-    empty: '暂无排班',
-    draft: '草稿',
-    partial_published: '部分已发布',
-    published: '已发布',
-  }
-  return map[overview.value.schedule_status] || '未知'
+// ==================== 通知卡片（最多 5 条） ====================
+interface NoticeCard {
+  id: number
+  title: string
+  time: string
+  desc: string
+  bgColor: string
+}
+
+const noticeCards = computed<NoticeCard[]>(() => {
+  const notices = overview.value.recent_notices
+  const colors = ['#FFD93D', '#C4B5FD', '#86EFAC', '#FCA5A5', '#93C5FD']
+  return notices.slice(0, 5).map((n, i) => ({
+    id: n.id,
+    title: n.title,
+    time: n.created_at || '刚刚',
+    desc: '点击查看公告详情...',
+    bgColor: colors[i % colors.length],
+  }))
 })
 
-const statusTagType = computed(() => {
-  const map: Record<string, string> = {
-    empty: 'info',
-    draft: 'warning',
-    partial_published: '',
-    published: 'success',
+function handleNoticeClick(noticeId: number) {
+  router.push({ path: '/message', query: { noticeId, tab: 'announcement' } })
+}
+
+function handleSwapNavigate() {
+  // 根据用户角色决定跳转到哪个 tab
+  if (authStore.hasRole('admin') || authStore.hasRole('scheduler') || authStore.hasRole('leader')) {
+    // 管理员/调度员/组长 → 全部记录
+    router.push('/swap?tab=all')
+  } else if (authStore.hasPermission('swap', 'approve')) {
+    // 有审批权限 → 待我处理（审批者/接收方）
+    router.push('/swap?tab=pending')
+  } else {
+    // 普通员工 → 我的申请（发起人）
+    router.push('/swap?tab=mine')
   }
-  return (map[overview.value.schedule_status] || 'info') as any
+}
+
+// ==================== 快捷操作 ====================
+const quickActions = computed(() => {
+  const items: Array<{ label: string; path: string; icon: any; bgColor: string }> = []
+  if (authStore.hasPermission('staff', 'read'))
+    items.push({ label: '人员管理', path: '/staffs', icon: User, bgColor: '#DBEAFE' })
+  if (authStore.hasPermission('organization', 'read'))
+    items.push({ label: '组织架构', path: '/organizations', icon: OfficeBuilding, bgColor: '#D1FAE5' })
+  if (authStore.hasPermission('shift_template', 'read'))
+    items.push({ label: '班次模板', path: '/shift-templates', icon: Clock, bgColor: '#FEF3C7' })
+  if (authStore.hasPermission('constraint', 'read'))
+    items.push({ label: '排班规则', path: '/constraints', icon: Setting, bgColor: '#EDE9FE' })
+  if (authStore.hasPermission('schedule', 'create'))
+    items.push({ label: '自动排班', path: '/schedule?auto=1', icon: MagicStick, bgColor: '#FFD93D' })
+  if (authStore.hasPermission('schedule', 'read'))
+    items.push({ label: '排班日历', path: '/schedule', icon: Calendar, bgColor: '#D1FAE5' })
+  if (authStore.hasPermission('swap', 'read'))
+    items.push({ label: '调班管理', path: '/swap?tab=' + (authStore.hasRole('admin') || authStore.hasRole('scheduler') || authStore.hasRole('leader') ? 'all' : (authStore.hasPermission('swap', 'approve') ? 'pending' : 'mine')), icon: Switch, bgColor: '#FCA5A5' })
+  if (authStore.hasPermission('message', 'read'))
+    items.push({ label: '消息中心', path: '/message', icon: Message, bgColor: '#BFDBFE' })
+  if (authStore.hasRole('admin'))
+    items.push({ label: '角色权限', path: '/roles', icon: Key, bgColor: '#E5E7EB' })
+  if (authStore.hasRole('admin'))
+    items.push({ label: '系统设置', path: '/system', icon: List, bgColor: '#FCE7F3' })
+  return items
 })
 
 // ==================== 值班工作量统计 ====================
-
 const workloadData = ref<ScheduleStatisticsResponse | null>(null)
 const workloadLoading = ref(false)
 
@@ -353,26 +383,17 @@ const workloadSummary = computed(() =>
 )
 
 const workloadItems = computed(() => workloadData.value?.items || [])
-
 const maxWorkloadWeight = computed(() => {
   if (!workloadItems.value.length) return 1
   return Math.max(...workloadItems.value.map(i => i.weight_score))
 })
 
-const barColors = ['#0A63D8', '#17A2B8', '#28A745', '#FFC107', '#7B68EE']
-
 function getBarColor(index: number) {
-  return barColors[Math.min(index, barColors.length - 1)]
+  return ['#3B82F6', '#10B981', '#EF4444', '#FF6B6B', '#FFD93D'][index % 5]
 }
-
-function getScoreColor(index: number) {
-  return barColors[Math.min(index, barColors.length - 1)]
-}
-
+function getScoreColor(index: number) { return getBarColor(index) }
 function getBarWidth(score: number) {
-  return maxWorkloadWeight.value > 0
-    ? (score / maxWorkloadWeight.value * 100) + '%'
-    : '0%'
+  return maxWorkloadWeight.value > 0 ? (score / maxWorkloadWeight.value * 100) + '%' : '0%'
 }
 
 const fetchWorkload = async () => {
@@ -380,433 +401,287 @@ const fetchWorkload = async () => {
   workloadLoading.value = true
   try {
     const d = new Date()
-    const yy = d.getFullYear()
-    const mm = d.getMonth()
+    const yy = d.getFullYear(), mm = d.getMonth()
     const startDate = `${yy}-${String(mm + 1).padStart(2, '0')}-01`
     const ld = new Date(yy, mm + 1, 0).getDate()
     const endDate = `${yy}-${String(mm + 1).padStart(2, '0')}-${String(ld).padStart(2, '0')}`
     workloadData.value = await getScheduleStatistics({ start_date: startDate, end_date: endDate, top: 5 })
-  } catch {
-    // silently fail
-  } finally {
-    workloadLoading.value = false
-  }
+  } catch { /* silently fail */ }
+  finally { workloadLoading.value = false }
 }
 
 const shiftColors = ['#FFD166', '#06D6A0', '#118AB2', '#F08A5D']
 
-// 快捷操作（根据权限动态显示）
-const quickActions = computed(() => {
-  const actions: Array<{
-    label: string; path: string; icon: any;
-    bgColor: string; iconColor: string
-  }> = []
+// ==================== 本月排班状态明细 ====================
+const scheduleStatus = ref({ published: 0, draft: 0, recalled: 0, total: 0 })
 
-  // 自动排班 — 需要排班创建权限
-  if (authStore.hasPermission('schedule', 'create')) {
-    actions.push({
-      label: '自动排班', path: '/schedule?auto=1',
-      icon: MagicStick, bgColor: '#EBF5FF', iconColor: '#0A63D8'
-    })
-  }
+const fetchScheduleStatus = async () => {
+  if (!authStore.hasPermission('schedule', 'read')) return
+  try {
+    const d = new Date()
+    const yy = d.getFullYear(), mm = d.getMonth()
+    const startDate = `${yy}-${String(mm + 1).padStart(2, '0')}-01`
+    const ld = new Date(yy, mm + 1, 0).getDate()
+    const endDate = `${yy}-${String(mm + 1).padStart(2, '0')}-${String(ld).padStart(2, '0')}`
+    const res: any = await getSchedules({ start_date: startDate, end_date: endDate, page: 1, page_size: 200 })
+    const items = res?.items || []
+    scheduleStatus.value = {
+      published: items.filter((s: any) => s.status === 1).length,
+      draft: items.filter((s: any) => s.status === 0).length,
+      recalled: items.filter((s: any) => s.status === 2).length,
+      total: items.length,
+    }
+  } catch { /* silently fail */ }
+}
 
-  // 排班日历 — 需要排班查看权限
-  if (authStore.hasPermission('schedule', 'read')) {
-    actions.push({
-      label: '排班日历', path: '/schedule',
-      icon: List, bgColor: '#E8F8F0', iconColor: '#28A745'
-    })
-  }
+// ==================== 班次模板统计 ====================
+const shiftTemplateCount = ref(0)
+const shiftTemplateDisabled = ref(0)
 
-  // 调班申请 — 需要调班查看权限
-  if (authStore.hasPermission('swap', 'read')) {
-    actions.push({
-      label: '调班申请', path: '/swap',
-      icon: Switch, bgColor: '#FFF8E1', iconColor: '#FFC107'
-    })
-  }
+const fetchShiftTemplates = async () => {
+  if (!authStore.hasPermission('shift_template', 'read')) return
+  try {
+    const res: any = await getShiftTemplates({ status: 1 })
+    const items = Array.isArray(res) ? res : (res?.items || [])
+    shiftTemplateCount.value = items.filter((t: any) => t.status === 1).length
+  } catch { /* silently fail */ }
+  try {
+    const res: any = await getShiftTemplates({ status: 0 })
+    const items = Array.isArray(res) ? res : (res?.items || [])
+    shiftTemplateDisabled.value = items.filter((t: any) => t.status === 0).length
+  } catch { /* silently fail */ }
+}
 
-  // 消息中心 — 需要消息查看权限
-  if (authStore.hasPermission('message', 'read')) {
-    actions.push({
-      label: '消息中心', path: '/message',
-      icon: Message, bgColor: '#F3E5F5', iconColor: '#9C27B0'
-    })
-  }
-
-  // 系统设置 — admin 专属
-  if (authStore.hasRole('admin')) {
-    actions.push({
-      label: '系统设置', path: '/system',
-      icon: Setting, bgColor: '#ECEFF1', iconColor: '#607D8B'
-    })
-  }
-
-  return actions
-})
-
+// ==================== 数据加载 ====================
 const fetchOverview = async () => {
   loading.value = true
   try {
     const { data: res } = await getDashboardOverview()
-    if (res.code === 200) {
-      overview.value = { ...overview.value, ...res.data }
-    }
-  } catch {
-    ElMessage.error('获取看板数据失败')
-  } finally {
-    loading.value = false
-  }
+    if (res.code === 200) overview.value = { ...overview.value, ...res.data }
+  } catch { ElMessage.error('获取看板数据失败') }
+  finally { loading.value = false }
 }
 
-onMounted(() => {
-  fetchOverview()
-  fetchWorkload()
+onMounted(async () => {
+  await fetchOverview()
+  await fetchWorkload()
+  await fetchScheduleStatus()
+  await fetchShiftTemplates()
 })
 </script>
 
 <style scoped>
+/* ================================================================
+   页面特定布局（共享样式已迁移至 global.scss）
+   ================================================================ */
+
+/* --- 页面容器 --- */
 .dashboard-page {
-  padding: 0;
-}
-
-.dashboard-row {
-  margin-bottom: 16px;
-}
-
-.dashboard-row:last-child {
-  margin-bottom: 0;
-}
-
-.dashboard-card {
-  border-radius: 6px;
-  height: 100%;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1F2D3D;
-}
-
-.card-date {
-  font-size: 13px;
-  color: #8492a6;
-}
-
-/* 排班概览 */
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  text-align: center;
-}
-
-.overview-stat {
-  padding: 12px 0;
-}
-
-.overview-stat.clickable {
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.overview-stat.clickable:hover {
-  background: #f5f7fa;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #8492a6;
-}
-
-/* 今日值班 */
-.duty-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .dashboard-page {
+    gap: 16px;
+    padding: 0 8px;
+  }
 }
 
-.duty-item {
-  padding: 10px 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border-left: 3px solid #e6eaf0;
+/* --- 主内容区 --- */
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
+/* --- 第一行：三列等宽 --- */
+.tri-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1200px) {
+  .tri-row { grid-template-columns: 1fr; }
+}
+.tri-card { padding: 0; }
+.tri-body { padding: 16px; min-height: 100px; }
+@media (max-width: 768px) {
+  .tri-body { padding: 12px; min-height: 80px; }
+}
+
+/* --- 第二行：左宽 + 右窄 --- */
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+}
+@media (max-width: 1200px) {
+  .bottom-row { grid-template-columns: 1fr; }
+}
+.main-left, .main-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --- 统计卡片装饰图案（页面特有） --- */
+.stat-deco {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  opacity: 0.12;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  color: #000000;
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  user-select: none;
+}
+.stat-card:hover .stat-deco {
+  transform: scale(1.15) rotate(5deg);
+  opacity: 0.18;
+}
+.stat-deco-users::after { content: '👥'; font-size: 28px; }
+.stat-deco-org::after   { content: '🏢'; font-size: 28px; }
+.stat-deco-alert::after { content: '⚠️'; font-size: 28px; }
+.stat-deco-msg::after   { content: '💬'; font-size: 28px; }
+@media (max-width: 768px) {
+  .stat-deco { display: none; }
+}
+
+/* --- 今日值班模块 --- */
+.duty-list { display: flex; flex-direction: column; gap: 10px; }
 .duty-shift-name {
   font-size: 14px;
-  font-weight: 600;
-  color: #1F2D3D;
+  color: #000000;
   margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
+  font-weight: 700;
 }
-
-.duty-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
 .duty-detail {
   font-size: 13px;
-  color: #556173;
+  color: #555;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-
-.duty-leader {
-  color: #F08A5D;
-  font-weight: 500;
+.duty-leader { color: #EF4444; font-weight: 600; }
+@media (max-width: 768px) {
+  .duty-shift-name { font-size: 12px; }
+  .duty-detail { font-size: 11px; }
 }
 
-/* 快捷操作 */
-.quick-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 16px;
+/* --- 待处理事项 --- */
+.pending-list { display: flex; flex-direction: column; gap: 10px; }
+.pending-label { font-size: 14px; color: #000000; font-weight: 700; }
+.pending-count { font-size: 14px; color: #666; font-weight: 700; }
+@media (max-width: 768px) {
+  .pending-label { font-size: 13px; }
+  .pending-count { font-size: 13px; }
 }
 
-.quick-action-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
+/* --- 通知列表 --- */
+.notification-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 768px) {
+  .notification-list { padding: 12px; gap: 8px; }
 }
 
-.quick-action-item:hover {
-  background: #f5f7fa;
-  transform: translateY(-2px);
+/* --- 快捷操作卡片 --- */
+.quick-card { padding: 0; }
+@media (max-width: 768px) {
+  .action-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); padding: 14px; gap: 8px; }
+  .qa-icon { width: 40px; height: 40px; }
+  .qa-label { font-size: 11px; }
+  .action-item { padding: 12px 6px; }
 }
 
-.quick-action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quick-action-label {
-  font-size: 13px;
-  color: #556173;
-  font-weight: 500;
-}
-
-/* 待处理事项 */
-.pending-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.pending-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.pending-item:hover {
-  background: #f0f2f5;
-}
-
-.pending-label {
-  font-size: 14px;
-  color: #1F2D3D;
-  font-weight: 500;
-}
-
-.pending-count {
-  font-size: 14px;
-  color: #8492a6;
-}
-
-/* 最近公告 */
-.notice-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.notice-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid #ebeef5;
-  cursor: pointer;
-}
-
-.notice-item:last-child {
-  border-bottom: none;
-}
-
-.notice-item:hover .notice-title {
-  color: #0A63D8;
-}
-
-.notice-title {
-  flex: 1;
-  font-size: 14px;
-  color: #1F2D3D;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color 0.2s;
-}
-
-.notice-time {
-  font-size: 12px;
-  color: #8492a6;
-  flex-shrink: 0;
-}
-
-/* 人员统计 */
-.staff-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  text-align: center;
-  padding: 12px 0;
-}
-
-.staff-stat-item {
-  padding: 12px 0;
-}
-
-/* 值班工作量统计 */
-.workload-container {
-  display: flex;
-  gap: 32px;
-}
-
-.workload-summary-grid {
+/* --- 班次模板统计 --- */
+.template-stat-card { padding: 0; }
+.template-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  min-width: 200px;
+  padding: 20px;
 }
-
-.workload-summary-item {
+.template-stat-item {
   text-align: center;
-  padding: 12px 8px;
-  background: #f9fafb;
-  border-radius: 6px;
-}
-
-.workload-ranking {
-  flex: 1;
-  min-width: 0;
-}
-
-.workload-ranking-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #556173;
-  margin-bottom: 10px;
-}
-
-.workload-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.workload-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.workload-item:hover {
-  background: #EBEEF5;
-}
-
-.workload-rank {
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  text-align: center;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.wrank-1 { background: #FFC107; color: #fff; }
-.wrank-2 { background: #C0C4CC; color: #fff; }
-.wrank-3 { background: #CD7F32; color: #fff; }
-.wrank-other { background: #E6EAF0; color: #556173; }
-
-.workload-info { flex: 1; min-width: 0; }
-
-.workload-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1F2D3D;
-}
-
-.workload-detail {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 2px;
-}
-
-.workload-bar-wrapper {
-  width: 120px;
-  flex-shrink: 0;
-}
-
-.workload-bar-bg {
-  height: 8px;
-  background: #EBEEF5;
+  padding: 14px 8px;
+  background: #FFFDF5;
+  border: 3px solid #000000;
   border-radius: 4px;
-  overflow: hidden;
+  box-shadow: 2px 2px 0px 0px #000000;
+  transition: all 0.15s;
 }
-
-.workload-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.6s ease;
+.template-stat-item:hover {
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
 }
-
-.workload-score {
-  font-size: 16px;
+.template-stat-item .stat-value {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+  transition: transform 0.2s ease;
+  display: block;
+  transform-origin: center;
+}
+.template-stat-item:hover .stat-value {
+  transform: scale(1.12) rotate(-1deg);
+}
+.template-stat-item .stat-label {
+  font-size: 11px;
   font-weight: 700;
-  width: 48px;
-  text-align: right;
-  flex-shrink: 0;
+  color: #666;
+  text-transform: uppercase;
 }
+@media (max-width: 768px) {
+  .template-stats { padding: 14px; gap: 8px; }
+  .template-stat-item { padding: 10px 6px; }
+  .template-stat-item .stat-value { font-size: 22px; }
+  .template-stat-item .stat-label { font-size: 10px; }
+}
+
+/* --- 值班工作量统计 --- */
+.workload-card { padding: 0; }
+.workload-body {
+  display: flex;
+  gap: 28px;
+  padding: 20px;
+}
+@media (max-width: 768px) {
+  .workload-body {
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px;
+  }
+}
+.unit-h { font-size: 13px; color: #666; }
+.workload-ranking { flex: 1; min-width: 0; }
+.workload-ranking-title { font-size: 13px; color: #000000; margin-bottom: 10px; }
+
+/* --- 动画延迟（页面特有） --- */
+.stat-card:nth-child(1) { animation: pop-in 0.35s ease both; animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation: pop-in 0.35s ease both; animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation: pop-in 0.35s ease both; animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation: pop-in 0.35s ease both; animation-delay: 0.2s; }
+.duty-list .neo-list-item:nth-child(1) { animation-delay: 0.1s; }
+.duty-list .neo-list-item:nth-child(2) { animation-delay: 0.15s; }
+.duty-list .neo-list-item:nth-child(3) { animation-delay: 0.2s; }
+.duty-list .neo-list-item:nth-child(4) { animation-delay: 0.25s; }
+.duty-list .neo-list-item:nth-child(5) { animation-delay: 0.3s; }
+.pending-list .neo-list-item:nth-child(1) { animation-delay: 0.1s; }
+.pending-list .neo-list-item:nth-child(2) { animation-delay: 0.15s; }
+.ranking-list .ranking-item:nth-child(1) { animation-delay: 0.1s; }
+.ranking-list .ranking-item:nth-child(2) { animation-delay: 0.15s; }
+.ranking-list .ranking-item:nth-child(3) { animation-delay: 0.2s; }
+.ranking-list .ranking-item:nth-child(4) { animation-delay: 0.25s; }
+.ranking-list .ranking-item:nth-child(5) { animation-delay: 0.3s; }
+.mini-stat-card:nth-child(1) { animation-delay: 0.05s; }
+.mini-stat-card:nth-child(2) { animation-delay: 0.1s; }
+.mini-stat-card:nth-child(3) { animation-delay: 0.15s; }
+.mini-stat-card:nth-child(4) { animation-delay: 0.2s; }
 </style>

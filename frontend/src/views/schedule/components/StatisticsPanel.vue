@@ -15,11 +15,11 @@
         size="small"
       />
       <span class="filter-label" style="margin-left: 8px;">组织</span>
-      <el-select v-model="filterOrgId" placeholder="全部组织" clearable style="width: 160px">
+      <el-select v-model="filterOrgId" placeholder="全部组织" clearable class="neo-input" style="width: 160px">
         <el-option v-for="org in orgList" :key="org.id" :label="org.name" :value="org.id" />
       </el-select>
-      <el-button type="primary" @click="loadStatistics">查询</el-button>
-      <el-button v-if="authStore.hasPermission('export', 'read')" @click="handleExport">
+      <el-button class="btn-neo-primary" @click="loadStatistics">查询</el-button>
+      <el-button v-if="authStore.hasPermission('export', 'read')" class="btn-neo-primary" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出
       </el-button>
@@ -27,41 +27,88 @@
 
     <!-- 汇总卡片 -->
     <div class="summary-grid" v-if="statisticsData">
-      <div class="summary-card">
-        <div class="summary-value" style="color: #0A63D8;">
-          {{ statisticsData.summary.total_staff }}<span class="summary-unit">人</span>
+      <!-- 参与人数 -->
+      <div class="summary-card neo-card stat-card stat-card-blue">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><User /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">参与人数</span>
+            <span class="stat-big-number">{{ statisticsData.summary.total_staff }}</span>
+          </div>
         </div>
-        <div class="summary-label">参与人数</div>
       </div>
-      <div class="summary-card">
-        <div class="summary-value" style="color: #28A745;">
-          {{ statisticsData.summary.total_shifts }}<span class="summary-unit">班</span>
+
+      <!-- 总班次数 -->
+      <div class="summary-card neo-card stat-card stat-card-green">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><Connection /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">总班次数</span>
+            <span class="stat-big-number">{{ statisticsData.summary.total_shifts }}</span>
+          </div>
         </div>
-        <div class="summary-label">总班次数</div>
       </div>
-      <div class="summary-card">
-        <div class="summary-value" style="color: #17A2B8;">
-          {{ statisticsData.summary.avg_shifts_per_person }}<span class="summary-unit">班</span>
+
+      <!-- 人均班次 -->
+      <div class="summary-card neo-card stat-card stat-card-cyan">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><TrendCharts /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">人均班次</span>
+            <span class="stat-big-number">{{ statisticsData.summary.avg_shifts_per_person }}</span>
+          </div>
         </div>
-        <div class="summary-label">人均班次</div>
       </div>
-      <div class="summary-card">
-        <div class="summary-value" style="color: #FFC107;">
-          {{ statisticsData.summary.avg_hours_per_person }}<span class="summary-unit">h</span>
+
+      <!-- 人均工时 -->
+      <div class="summary-card neo-card stat-card stat-card-orange">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><Timer /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">人均工时</span>
+            <span class="stat-big-number">{{ statisticsData.summary.avg_hours_per_person }}<span class="stat-unit">h</span></span>
+          </div>
         </div>
-        <div class="summary-label">人均工时</div>
       </div>
-      <div class="summary-card">
-        <div class="summary-value" style="color: #DC3545;">
-          {{ statisticsData.summary.total_night_shifts }}<span class="summary-unit">班</span>
+
+      <!-- 夜班总次数 -->
+      <div class="summary-card neo-card stat-card stat-card-red">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><Moon /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">夜班总次数</span>
+            <span class="stat-big-number">{{ statisticsData.summary.total_night_shifts }}</span>
+          </div>
         </div>
-        <div class="summary-label">夜班总次数</div>
       </div>
-      <div class="summary-card">
-        <div class="summary-value" style="color: #9C27B0;">
-          {{ statisticsData.summary.total_holiday_shifts || 0 }}<span class="summary-unit">班</span>
+
+      <!-- 节假日班次 -->
+      <div class="summary-card neo-card stat-card stat-card-purple">
+        <div class="stat-accent-bar" />
+        <div class="stat-card-inner">
+          <div class="stat-icon-wrap">
+            <el-icon :size="24"><Sunny /></el-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label-text">节假日班次</span>
+            <span class="stat-big-number">{{ statisticsData.summary.total_holiday_shifts || 0 }}</span>
+          </div>
         </div>
-        <div class="summary-label">节假日班次</div>
       </div>
     </div>
 
@@ -163,7 +210,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Download } from '@element-plus/icons-vue'
+import {
+  Download,
+  User,
+  Connection,
+  TrendCharts,
+  Timer,
+  Moon,
+  Sunny,
+} from '@element-plus/icons-vue'
 import api from '@/api/index'
 import { useAuthStore } from '@/stores/auth'
 import { getScheduleStatistics } from '@/api/schedule'
@@ -237,7 +292,7 @@ function tableRowClassName({ rowIndex }: { rowIndex: number }) {
 
 function getWeightBarStyle(score: number) {
   const ratio = maxWeight.value > 0 ? score / maxWeight.value : 0
-  const color = ratio > 0.8 ? '#0A63D8' : ratio > 0.6 ? '#17A2B8' : ratio > 0.4 ? '#28A745' : '#FFC107'
+  const color = ratio > 0.8 ? '#3B82F6' : ratio > 0.6 ? '#06B6D4' : ratio > 0.4 ? '#10B981' : '#FFD93D'
   return { width: (ratio * 100) + '%', background: color }
 }
 
@@ -259,8 +314,9 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
   overflow: hidden;
 }
 
@@ -270,67 +326,35 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  border-bottom: 1px solid #E6EAF0;
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
   flex-wrap: wrap;
+  box-shadow: inset 0 -3px 0px 0px rgba(0,0,0,0.05);
 }
 
 .filter-label {
   font-size: 13px;
-  color: #556173;
-  font-weight: 500;
+  color: #000000;
+  font-weight: 700;
 }
 
 /* 汇总卡片 */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
+  gap: 12px;
   padding: 20px;
 }
 
 .summary-card {
-  text-align: center;
-  padding: 16px 8px;
-  background: #F5F7FA;
-  border-radius: 6px;
-  position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.summary-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-}
-
-.summary-card:nth-child(1)::before { background: #0A63D8; }
-.summary-card:nth-child(2)::before { background: #28A745; }
-.summary-card:nth-child(3)::before { background: #17A2B8; }
-.summary-card:nth-child(4)::before { background: #FFC107; }
-.summary-card:nth-child(5)::before { background: #DC3545; }
-.summary-card:nth-child(6)::before { background: #9C27B0; }
-
-.summary-value {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.summary-unit {
-  font-size: 13px;
-  font-weight: 400;
-  color: #909399;
-  margin-left: 2px;
-}
-
-.summary-label {
-  font-size: 13px;
-  color: #909399;
-  margin-top: 4px;
-}
+/* 新增配色变体 — 补全全局 stat-card 缺少的 cyan/orange */
+.stat-card-cyan .stat-accent-bar    { background: #06B6D4; }
+.stat-card-cyan .stat-icon-wrap     { background: #CFFAFE; color: #0E7490; }
+.stat-card-orange .stat-accent-bar  { background: #F59E0B; }
+.stat-card-orange .stat-icon-wrap   { background: #FEF3C7; color: #B45309; }
 
 /* 表格区域 */
 .table-area {
@@ -340,53 +364,71 @@ onMounted(async () => {
 }
 
 .td-name {
-  font-weight: 600;
-  color: #1F2D3D;
+  font-weight: 700;
+  color: #000000;
 }
 
 .td-no {
-  color: #909399;
+  color: #666;
   font-size: 12px;
+  font-weight: 600;
 }
 
 .td-org {
   color: #556173;
+  font-weight: 600;
 }
 
 .td-number {
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .td-badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 10px;
+  border: 2px solid #000000;
   border-radius: 3px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
+  box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.1);
+  transition: all 0.15s ease;
 }
 
-.badge-night { background: #E3F2FD; color: #1565C0; }
-.badge-weekend { background: #F3E5F5; color: #7B1FA2; }
-.badge-leader { background: #FFF3E0; color: #E65100; }
-.badge-holiday { background: #F3E5F5; color: #7B1FA2; }
+.td-badge:hover {
+  box-shadow: 2px 2px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.badge-night { background: #DBEAFE; color: #1D4ED8; }
+.badge-weekend { background: #F5F3FF; color: #6D28D9; }
+.badge-leader { background: #FFF7ED; color: #C2410C; }
+.badge-holiday { background: #F5F3FF; color: #6D28D9; }
 
 /* 排名徽章 */
 .rank-badge {
-  width: 22px;
-  height: 22px;
-  line-height: 22px;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
   text-align: center;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 900;
   display: inline-block;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.15);
+  transition: all 0.15s ease;
 }
 
-.rank-1 { background: #FFC107; color: #fff; }
-.rank-2 { background: #C0C4CC; color: #fff; }
-.rank-3 { background: #CD7F32; color: #fff; }
-.rank-other { background: #E6EAF0; color: #556173; }
+.rank-badge:hover {
+  box-shadow: 3px 3px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.rank-1 { background: #FFD93D; color: #000000; }
+.rank-2 { background: #E5E7EB; color: #000000; }
+.rank-3 { background: #F97316; color: #FFFFFF; }
+.rank-other { background: #FFFDF5; color: #556173; }
 
 /* 权重条 */
 .weight-cell {
@@ -398,28 +440,103 @@ onMounted(async () => {
 
 .weight-bar-bg {
   width: 80px;
-  height: 6px;
-  background: #EBEEF5;
-  border-radius: 3px;
+  height: 10px;
+  background: #FFFDF5;
+  border: 2px solid #000000;
+  border-radius: 2px;
   overflow: hidden;
+  box-shadow: inset 1px 1px 0px 0px rgba(0,0,0,0.1);
 }
 
 .weight-bar-fill {
   height: 100%;
-  border-radius: 3px;
   transition: width 0.4s ease;
+  border-radius: 1px;
 }
 
 .weight-value {
-  font-weight: 700;
+  font-weight: 900;
   font-size: 13px;
   min-width: 36px;
   text-align: right;
-  color: #1F2D3D;
+  color: #000000;
 }
 
 /* 排名高亮行 */
-:deep(.rank-highlight-1) { background: #FFFDE7 !important; }
-:deep(.rank-highlight-2) { background: #F5F5F5 !important; }
-:deep(.rank-highlight-3) { background: #FFF8E1 !important; }
+:deep(.rank-highlight-1) { background: #FFFBEB !important; }
+:deep(.rank-highlight-2) { background: #F9FAFB !important; }
+:deep(.rank-highlight-3) { background: #FFF7ED !important; }
+
+/* ============================================
+   移动端适配
+   ============================================ */
+
+@media (max-width: 768px) {
+  .statistics-panel {
+    border-width: 2px;
+    box-shadow: 3px 3px 0px 0px #000000;
+  }
+
+  .filter-bar {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .filter-bar .neo-input {
+    width: 100% !important;
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .summary-card {
+    padding: 12px 6px;
+  }
+
+  .stat-big-number {
+    font-size: 22px !important;
+  }
+
+  .stat-unit {
+    font-size: 11px;
+  }
+
+  .stat-label-text {
+    font-size: 11px;
+  }
+
+  .table-area {
+    padding: 0 8px 12px;
+  }
+
+  .rank-badge {
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 10px;
+  }
+
+  .weight-bar-bg {
+    width: 50px;
+  }
+
+  .weight-value {
+    font-size: 11px;
+    min-width: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filter-bar .neo-input {
+    flex: 1 1 100%;
+  }
+}
 </style>

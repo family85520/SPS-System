@@ -23,17 +23,18 @@
         <el-divider content-position="left">账号操作</el-divider>
         <el-form label-width="80px">
           <el-form-item label="账号状态">
-            <el-switch
-              :model-value="staff.account_status === 1"
-              active-text="启用"
-              inactive-text="禁用"
-              @change="handleToggleStatus"
-            />
+            <span
+              class="neo-switch-inline"
+              :class="{ 'is-checked': staff.account_status === 1, 'is-disabled': false }"
+              @click="handleToggleStatus(staff.account_status === 0)"
+            >
+              <span class="neo-switch-knob"></span>
+            </span>
           </el-form-item>
           <el-form-item label="重置密码">
             <div style="display: flex; gap: 8px; width: 100%">
               <el-input v-model="newPassword" type="password" show-password placeholder="输入新密码（至少6位）" />
-              <el-button type="warning" :loading="resetting" @click="handleResetPwd" :disabled="!newPassword || newPassword.length < 6">
+              <el-button class="btn-neo-warning" :loading="resetting" @click="handleResetPwd" :disabled="!newPassword || newPassword.length < 6">
                 重置
               </el-button>
             </div>
@@ -104,13 +105,19 @@
             <el-input v-model="createPassword" type="password" show-password placeholder="请输入初始密码（至少6位）" />
           </el-form-item>
           <el-form-item label="首次改密">
-            <el-switch v-model="createMustChangePwd" />
+            <span
+              class="neo-switch-inline"
+              :class="{ 'is-checked': createMustChangePwd, 'is-disabled': false }"
+              @click="createMustChangePwd = !createMustChangePwd"
+            >
+              <span class="neo-switch-knob"></span>
+            </span>
             <span style="font-size: 12px; color: #909399; margin-left: 8px">
               {{ createMustChangePwd ? '首次登录需修改密码' : '不提示修改密码' }}
             </span>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" :loading="creating" @click="handleCreateAccount" style="width: 100%">
+            <el-button class="btn-neo-primary" :loading="creating" @click="handleCreateAccount" style="width: 100%">
               创建账号
             </el-button>
           </el-form-item>

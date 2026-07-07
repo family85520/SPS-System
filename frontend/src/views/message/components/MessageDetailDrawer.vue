@@ -1,63 +1,80 @@
 <template>
   <el-drawer
     :model-value="visible"
-    title="消息详情"
+    size="480px"
     direction="rtl"
-    size="420px"
+    class="neo-drawer"
     @close="$emit('update:visible', false)"
   >
     <template v-if="message">
-      <div class="detail-header">
-        <el-tag
-          :type="msgTypeTagType(message.msg_type)"
-          size="small"
-        >
-          {{ msgTypeLabel(message.msg_type) }}
-        </el-tag>
-        <span class="detail-time">{{ message.created_at }}</span>
+      <!-- 抽屉头部 -->
+      <div class="drawer-header">
+        <div class="drawer-header__left">
+          <div class="drawer-header__avatar" :style="{ background: avatarBg(message.msg_type) }">
+            <el-icon :size="20"><component :is="avatarIcon(message.msg_type)" /></el-icon>
+          </div>
+          <div class="drawer-header__info">
+            <span class="drawer-header__type">{{ msgTypeLabel(message.msg_type) }}</span>
+            <span class="drawer-header__time">{{ message.created_at }}</span>
+          </div>
+        </div>
+        <el-button class="btn-neo-ghost btn-neo-sm" @click="$emit('update:visible', false)">
+          <el-icon><Close /></el-icon>
+        </el-button>
       </div>
 
-      <h3 class="detail-title">{{ message.title }}</h3>
+      <!-- 标题 -->
+      <h3 class="drawer-title">{{ message.title }}</h3>
 
-      <div class="detail-content">
+      <!-- 内容区 -->
+      <div class="drawer-content">
         {{ message.content }}
       </div>
 
-      <div v-if="message.sender_name" class="detail-sender">
-        发送人：{{ message.sender_name }}
+      <!-- 发送人 -->
+      <div v-if="message.sender_name" class="drawer-sender">
+        <el-icon><User /></el-icon>
+        <span>发送人：{{ message.sender_name }}</span>
       </div>
 
-      <div class="detail-actions">
+      <!-- 操作按钮 -->
+      <div class="drawer-actions">
         <el-button
           v-if="!message.is_read"
-          type="primary"
+          class="btn-neo-primary btn-neo-sm"
           @click="handleMarkRead"
         >
-          标记已读
+          <el-icon><Check /></el-icon>
+          <span>标记已读</span>
         </el-button>
         <el-button
           v-if="message.msg_type === 'approve' && message.relation_type === 'schedule'"
-          type="warning"
+          class="btn-neo-warning btn-neo-sm"
           @click="handleJumpSchedule"
         >
-          前往审核
+          <el-icon><ArrowRight /></el-icon>
+          <span>前往审核</span>
         </el-button>
         <el-button
           v-if="message.msg_type === 'schedule' && message.relation_type === 'schedule'"
+          class="btn-neo-primary btn-neo-sm"
           @click="handleJumpSchedule"
         >
-          查看排班
+          <el-icon><Calendar /></el-icon>
+          <span>查看排班</span>
         </el-button>
         <el-button
           v-if="message.msg_type === 'swap'"
+          class="btn-neo-info btn-neo-sm"
           @click="handleJumpSwap"
         >
-          查看调班申请
+          <el-icon><RefreshLeft /></el-icon>
+          <span>查看调班申请</span>
         </el-button>
       </div>
     </template>
 
-    <el-empty v-else description="请选择一条消息" />
+    <el-empty v-else class="drawer-empty" description="请选择一条消息" />
   </el-drawer>
 </template>
 
@@ -66,6 +83,13 @@ import { ElMessage } from 'element-plus'
 import { markMessageRead } from '@/api/message'
 import type { MessageItem } from '@/api/message'
 import { useRouter } from 'vue-router'
+import {
+  Bell, Calendar, RefreshLeft, User, Close, Check, ArrowRight,
+} from '@element-plus/icons-vue'
+import { useMessageStore } from '@/stores/message'
+
+const messageStore = useMessageStore()
+const router = useRouter()
 
 const props = defineProps<{
   visible: boolean
@@ -77,8 +101,6 @@ const emit = defineEmits<{
   (e: 'marked-read'): void
 }>()
 
-const router = useRouter()
-
 const msgTypeLabels: Record<string, string> = {
   schedule: '排班通知',
   swap: '调班通知',
@@ -86,21 +108,24 @@ const msgTypeLabels: Record<string, string> = {
   system: '系统消息',
 }
 
-const msgTypeTagType = (type: string) => {
-  const map: Record<string, string> = {
-    schedule: '',
-    swap: 'success',
-    approve: 'warning',
-    system: 'info',
-  }
-  return map[type] || 'info'
-}
-
 const msgTypeLabel = (type: string) => msgTypeLabels[type] || type
 
-import { useMessageStore } from '@/stores/message'
+const avatarIcons: Record<string, any> = {
+  schedule: Calendar,
+  swap: RefreshLeft,
+  approve: Bell,
+  system: Bell,
+}
 
-const messageStore = useMessageStore()
+const avatarColors: Record<string, string> = {
+  schedule: '#3B82F6',
+  swap: '#10B981',
+  approve: '#F59E0B',
+  system: '#3B82F6',
+}
+
+const avatarIcon = (type: string) => avatarIcons[type] || Bell
+const avatarBg = (type: string) => avatarColors[type] || '#3B82F6'
 
 const handleMarkRead = async () => {
   if (!props.message) return
@@ -108,7 +133,7 @@ const handleMarkRead = async () => {
     const { data: res } = await markMessageRead(props.message.id)
     if (res.code === 200) {
       ElMessage.success('已标记已读')
-      messageStore.fetchUnread()  // 立即刷新全局角标
+      messageStore.fetchUnread()
       emit('marked-read')
     }
   } catch {
@@ -140,45 +165,110 @@ const handleJumpSwap = () => {
 </script>
 
 <style scoped>
-.detail-header {
+.drawer-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* ========== 抽屉头部 ========== */
+.drawer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 16px;
+  background: #FFFDF5;
+  border-bottom: 3px solid #000000;
 }
 
-.detail-time {
-  font-size: 13px;
-  color: #8492a6;
+.drawer-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.detail-title {
-  font-size: 18px;
+.drawer-header__avatar {
+  width: 44px;
+  height: 44px;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 3px 0px 0px #000000;
+  color: #FFFFFF;
+  transition: transform 0.2s ease;
+}
+
+.drawer-header:hover .drawer-header__avatar {
+  transform: rotate(5deg) scale(1.05);
+}
+
+.drawer-header__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer-header__type {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.drawer-header__time {
+  font-size: 12px;
+  color: #666666;
   font-weight: 600;
-  color: #1F2D3D;
-  margin-bottom: 16px;
+}
+
+/* ========== 标题 ========== */
+.drawer-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #000000;
+  margin: 16px;
   line-height: 1.4;
 }
 
-.detail-content {
+/* ========== 内容区 ========== */
+.drawer-content {
   font-size: 14px;
-  color: #556173;
+  color: #000000;
   line-height: 1.8;
   padding: 16px;
-  background: #f9fafb;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  margin: 0 16px 16px;
+  background: #FFFDF5;
+  border: 3px solid #000000;
+  border-radius: 4px;
   white-space: pre-wrap;
+  font-weight: 500;
+  box-shadow: 2px 2px 0px 0px #000000;
 }
 
-.detail-sender {
-  font-size: 13px;
-  color: #8492a6;
-  margin-bottom: 24px;
-}
-
-.detail-actions {
+/* ========== 发送人 ========== */
+.drawer-sender {
   display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #666666;
+  margin: 0 16px 16px;
+  font-weight: 600;
+}
+
+.drawer-sender .el-icon {
+  color: #3B82F6;
+}
+
+/* ========== 操作按钮 ========== */
+.drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  padding: 16px;
+  border-top: 3px solid #000000;
+  background: #FFFDF5;
 }
 </style>

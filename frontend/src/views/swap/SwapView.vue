@@ -1,17 +1,22 @@
 <template>
   <div class="swap-page">
-    <el-card shadow="never">
-      <!-- 顶部工具栏 -->
-      <div class="swap-toolbar">
-        <div class="toolbar-left">
-          <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+    <!-- Neo 卡片容器 — 使用全局 neo-card 类 -->
+    <div class="swap-card neo-card">
+      <!-- 筛选栏 -->
+      <div class="filter-bar">
+        <!-- Tab 栏 -->
+        <div class="filter-card-group">
+          <el-tabs v-model="activeTab" class="swap-tabs" @tab-change="handleTabChange">
             <el-tab-pane label="我的申请" name="mine" />
             <el-tab-pane label="待我处理" name="pending" />
             <el-tab-pane v-if="canViewAll && authStore.hasPermission('swap', 'read')" label="全部记录" name="all" />
           </el-tabs>
         </div>
-        <div class="toolbar-right">
-          <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 140px" @change="fetchData">
+
+        <!-- 状态筛选 -->
+        <div class="filter-card-group">
+          <span class="filter-card-label">状态</span>
+          <el-select v-model="statusFilter" placeholder="全部状态" clearable class="toolbar-filter" @change="fetchData">
             <el-option label="待确认" value="pending_confirm" />
             <el-option label="待认领" value="pending_claim" />
             <el-option label="待审批" value="pending_approve" />
@@ -20,64 +25,72 @@
             <el-option label="已拒绝" value="rejected" />
             <el-option label="对方已拒绝" value="target_refused" />
           </el-select>
-          <el-button v-if="authStore.hasPermission('swap', 'create')" type="primary" @click="showForm = true">
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="filter-card-group filter-card-actions">
+          <el-button v-if="authStore.hasPermission('swap', 'create')" class="btn-neo-primary btn-neo-sm" @click="showForm = true">
+            <el-icon><Plus /></el-icon>
             发起换班申请
           </el-button>
         </div>
       </div>
 
-      <!-- 数据表格 -->
-      <SwapRecordTable
-        :items="tableData"
-        :loading="loading"
-        :total="total"
-        :page-size="pageSize"
-        @detail="handleDetail"
-        @confirm="handleConfirm"
-        @refuse="handleRefuse"
-        @claim="handleClaim"
-        @approve="handleApprove"
-        @reject="handleReject"
-        @cancel="handleCancel"
-        @page-change="handlePageChange"
-      />
-    </el-card>
+      <!-- 表格区域 -->
+      <div class="table-area">
+        <SwapRecordTable
+          :items="tableData"
+          :loading="loading"
+          :total="total"
+          :page-size="pageSize"
+          @detail="handleDetail"
+          @confirm="handleConfirm"
+          @refuse="handleRefuse"
+          @claim="handleClaim"
+          @approve="handleApprove"
+          @reject="handleReject"
+          @cancel="handleCancel"
+          @page-change="handlePageChange"
+        />
+      </div>
+    </div>
 
-    <!-- 申请表单 -->
-    <SwapRequestForm
-      v-model:visible="showForm"
-      @success="fetchData"
-    />
+    <SwapRequestForm v-model:visible="showForm" @success="fetchData" />
+    <SwapDetailPanel v-model:visible="showDetail" :data="currentItem" />
 
-    <!-- 详情抽屉 -->
-    <SwapDetailPanel
-      v-model:visible="showDetail"
-      :data="currentItem"
-    />
-
-    <!-- 拒绝换班弹窗 -->
-    <el-dialog v-model="showRefuseDialog" title="拒绝换班" width="400px">
-      <el-input v-model="refuseComment" type="textarea" :rows="3" placeholder="请输入拒绝原因（选填）" />
+    <el-dialog v-model="showRefuseDialog" title="拒绝换班" width="420px" class="swap-dialog">
+      <div class="alert-card alert-card--danger">
+        <span class="alert-card__icon">⚠</span>
+        <span class="alert-card__content">拒绝后将通知申请人，请认真填写拒绝原因。</span>
+      </div>
+      <el-input v-model="refuseComment" type="textarea" :rows="3" placeholder="请输入拒绝原因（选填）" style="margin-top:12px;" />
       <template #footer>
-        <el-button @click="showRefuseDialog = false">取消</el-button>
-        <el-button type="danger" :loading="actionLoading" @click="doRefuse">确认拒绝</el-button>
+        <el-button class="btn-neo-ghost btn-neo-sm" @click="showRefuseDialog = false">取消</el-button>
+        <el-button class="btn-neo-danger btn-neo-sm" :loading="actionLoading" @click="doRefuse">确认拒绝</el-button>
       </template>
     </el-dialog>
 
-    <!-- 审批弹窗 -->
-    <el-dialog v-model="showApproveDialog" title="审批意见" width="400px">
-      <el-input v-model="approveComment" type="textarea" :rows="3" placeholder="请输入审批意见（选填）" />
+    <el-dialog v-model="showApproveDialog" title="审批意见" width="420px" class="swap-dialog">
+      <div class="alert-card alert-card--info">
+        <span class="alert-card__icon">ℹ</span>
+        <span class="alert-card__content">审批通过后，该调班申请将生效并通知相关人员。</span>
+      </div>
+      <el-input v-model="approveComment" type="textarea" :rows="3" placeholder="请输入审批意见（选填）" style="margin-top:12px;" />
       <template #footer>
-        <el-button @click="showApproveDialog = false">取消</el-button>
-        <el-button type="primary" :loading="actionLoading" @click="doApprove">确认通过</el-button>
+        <el-button class="btn-neo-ghost btn-neo-sm" @click="showApproveDialog = false">取消</el-button>
+        <el-button class="btn-neo-primary btn-neo-sm" :loading="actionLoading" @click="doApprove">确认通过</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showRejectDialog" title="拒绝原因" width="400px">
-      <el-input v-model="rejectComment" type="textarea" :rows="3" placeholder="请输入拒绝原因（选填）" />
+    <el-dialog v-model="showRejectDialog" title="拒绝原因" width="420px" class="swap-dialog">
+      <div class="alert-card alert-card--danger">
+        <span class="alert-card__icon">✕</span>
+        <span class="alert-card__content">对方已拒绝您的调班申请，请填写拒绝原因。</span>
+      </div>
+      <el-input v-model="rejectComment" type="textarea" :rows="3" placeholder="请输入拒绝原因（选填）" style="margin-top:12px;" />
       <template #footer>
-        <el-button @click="showRejectDialog = false">取消</el-button>
-        <el-button type="danger" :loading="actionLoading" @click="doReject">确认拒绝</el-button>
+        <el-button class="btn-neo-ghost btn-neo-sm" @click="showRejectDialog = false">取消</el-button>
+        <el-button class="btn-neo-danger btn-neo-sm" :loading="actionLoading" @click="doReject">确认拒绝</el-button>
       </template>
     </el-dialog>
   </div>
@@ -85,18 +98,23 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import {
   getSwapList, getAllSwapList, confirmSwap, claimSwap, refuseSwap,
   approveSwap, rejectSwap, cancelSwap,
 } from '@/api/swap'
+import { Plus } from '@element-plus/icons-vue'
 import type { SwapRequestItem } from '@/api/swap'
 import SwapRecordTable from './components/SwapRecordTable.vue'
+import { useConfirm } from '@/composables/useConfirm'
 import SwapRequestForm from './components/SwapRequestForm.vue'
 import SwapDetailPanel from './components/SwapDetailPanel.vue'
 
 const authStore = useAuthStore()
+const route = useRoute()
+const { confirmInfo, confirmWarning } = useConfirm()
 const canViewAll = computed(() => authStore.hasRole('admin') || authStore.hasRole('scheduler') || authStore.hasRole('leader'))
 
 const activeTab = ref('mine')
@@ -125,19 +143,14 @@ const fetchData = async () => {
   try {
     if (activeTab.value === 'all') {
       const { data: res } = await getAllSwapList({
-        status: statusFilter.value || undefined,
-        page: page.value,
-        page_size: pageSize.value,
+        status: statusFilter.value || undefined, page: page.value, page_size: pageSize.value,
       })
       tableData.value = res.items || []
       total.value = res.total || 0
     } else {
       const role = activeTab.value === 'pending' ? 'target' : 'requester'
       const { data: res } = await getSwapList({
-        role,
-        status: statusFilter.value || undefined,
-        page: page.value,
-        page_size: pageSize.value,
+        role, status: statusFilter.value || undefined, page: page.value, page_size: pageSize.value,
       })
       tableData.value = res.items || []
       total.value = res.total || 0
@@ -168,24 +181,26 @@ const handleDetail = (row: SwapRequestItem) => {
 
 const handleConfirm = async (row: SwapRequestItem) => {
   try {
-    await ElMessageBox.confirm('确认与对方换班？', '确认换班', {
-      confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
-    })
+    await confirmInfo('确认与对方换班？', '确认换班')
     await confirmSwap(row.id)
     ElMessage.success('确认成功')
     fetchData()
-  } catch {}
+  } catch (e) {
+    if (e instanceof Error && e.message === 'Cancelled') return
+    ElMessage.error('操作失败')
+  }
 }
 
 const handleClaim = async (row: SwapRequestItem) => {
   try {
-    await ElMessageBox.confirm('确认认领该换班申请？', '认领换班', {
-      confirmButtonText: '认领', cancelButtonText: '取消', type: 'warning',
-    })
+    await confirmInfo('确认认领该换班申请？', '认领换班')
     await claimSwap(row.id)
     ElMessage.success('认领成功')
     fetchData()
-  } catch {}
+  } catch (e) {
+    if (e instanceof Error && e.message === 'Cancelled') return
+    ElMessage.error('操作失败')
+  }
 }
 
 const handleApprove = (row: SwapRequestItem) => {
@@ -244,33 +259,277 @@ const doRefuse = async () => {
 
 const handleCancel = async (row: SwapRequestItem) => {
   try {
-    await ElMessageBox.confirm('确认撤回该调班申请？', '撤回申请', {
-      confirmButtonText: '撤回', cancelButtonText: '取消', type: 'warning',
-    })
+    await confirmWarning('确认撤回该调班申请？', '撤回申请')
     await cancelSwap(row.id)
     ElMessage.success('已撤回')
     fetchData()
-  } catch {}
+  } catch (e) {
+    if (e instanceof Error && e.message === 'Cancelled') return
+    ElMessage.error('操作失败')
+  }
 }
 
-onMounted(fetchData)
+onMounted(() => {
+  // 从 URL query 读取初始 tab
+  const tab = route.query.tab as string | undefined
+  if (tab) {
+    activeTab.value = tab
+  }
+  fetchData()
+})
 </script>
 
 <style scoped>
+/* 页面容器 — 仅布局，不重复定义全局样式 */
 .swap-page {
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px - 40px);
+  overflow-x: auto;
 }
 
-.swap-toolbar {
+/* 外层包装 — 利用全局 neo-card 的样式 */
+.swap-card {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  flex-direction: column;
+  margin: 20px;
+  overflow: hidden;
 }
 
-.toolbar-right {
+/* 筛选栏 */
+.filter-bar {
   display: flex;
+  align-items: stretch;
   gap: 12px;
-  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
+  flex-wrap: wrap;
+}
+
+/* 筛选小组 — 复用全局 neo-card 或独立小卡 */
+.filter-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  padding: 8px 12px;
+  transition: all 0.12s ease;
+}
+
+.filter-card-group:hover {
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.filter-card-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: #555555;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  line-height: 1;
+}
+
+.filter-card-actions {
+  justify-content: flex-end;
+  display: flex;
+  align-items: flex-start;
+}
+
+/* Tab 栏 — 覆盖全局 el-tabs__item 样式 */
+.swap-tabs :deep(.el-tabs__header) {
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
+.swap-tabs :deep(.el-tabs__item) {
+  font-weight: 700 !important;
+  color: #000000 !important;
+  border: 3px solid transparent !important;
+  border-bottom: none !important;
+  transition: all 0.12s ease !important;
+  padding: 8px 20px !important;
+  font-size: 14px !important;
+  letter-spacing: 0.3px !important;
+}
+
+.swap-tabs :deep(.el-tabs__item.is-active) {
+  background: #3B82F6 !important;
+  border: 3px solid #000000 !important;
+  border-bottom: 3px solid #FFFDF5 !important;
+  color: #FFFFFF !important;
+  font-weight: 900 !important;
+  transform: translateY(1px);
+}
+
+.swap-tabs :deep(.el-tabs__active-bar) {
+  display: none !important;
+}
+
+/* 筛选下拉框 — 覆盖全局 .el-select__wrapper */
+.filter-bar .toolbar-filter {
+  width: 180px !important;
+  flex: 0 0 auto;
+}
+
+.filter-bar .toolbar-filter .el-select__wrapper {
+  height: 38px !important;
+  min-height: 38px !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  padding: 0 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+
+.filter-bar .toolbar-filter .el-select__wrapper:hover {
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: #FFFDF5 !important;
+}
+
+.filter-bar .toolbar-filter .el-select__wrapper.is-focused {
+  box-shadow: 4px 4px 0px 0px #FFD93D !important;
+  border-color: #000000 !important;
+  background: #FFFDF5 !important;
+}
+
+.filter-bar .toolbar-filter .el-input__inner {
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  color: #000000 !important;
+}
+
+.filter-bar .toolbar-filter .el-input__inner::placeholder {
+  color: #999999 !important;
+  font-weight: 600 !important;
+}
+
+/* 表格区域 */
+.table-area {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 20px 20px;
+}
+
+/* 分页 */
+.table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* 弹窗 — 覆盖全局 .el-dialog */
+.swap-dialog :deep(.el-dialog) {
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 10px 10px 0px 0px #000000 !important;
+  background: #FFFDF5 !important;
+}
+
+.swap-dialog :deep(.el-dialog__header) {
+  border-bottom: 3px solid #000000 !important;
+  background: #FFFDF5 !important;
+  padding: 16px 20px !important;
+  margin: 0 !important;
+}
+
+.swap-dialog :deep(.el-dialog__title) {
+  font-weight: 900 !important;
+  color: #000000 !important;
+  font-size: 16px !important;
+  letter-spacing: 0.3px !important;
+}
+
+.swap-dialog :deep(.el-dialog__body) {
+  padding: 20px !important;
+  background: #FFFDF5 !important;
+}
+
+.swap-dialog :deep(.el-dialog__footer) {
+  border-top: 3px solid #000000 !important;
+  padding: 14px 20px !important;
+  background: #FFFDF5 !important;
+}
+
+.swap-dialog :deep(.el-textarea__inner) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  transition: all 0.1s ease !important;
+}
+
+.swap-dialog :deep(.el-textarea__inner:focus) {
+  box-shadow: 4px 4px 0px 0px #FFD93D !important;
+  background: #FFFDF5 !important;
+}
+
+/* ============================================
+   移动端适配
+   ============================================ */
+
+@media (max-width: 768px) {
+  .swap-page {
+    height: auto;
+    min-height: calc(100vh - 56px - 40px);
+  }
+
+  .swap-card {
+    margin: 12px;
+  }
+
+  .filter-bar {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .filter-card-group {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 120px;
+    padding: 6px 8px;
+  }
+
+  .filter-card-actions {
+    flex: 1 1 100%;
+  }
+
+  .filter-card-actions .btn-neo-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .table-area {
+    padding: 0 12px 12px;
+  }
+
+  .filter-bar .toolbar-filter {
+    width: 100% !important;
+  }
+
+  .filter-bar .toolbar-filter .el-select__wrapper {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .swap-card {
+    margin: 8px;
+  }
+
+  .filter-card-group {
+    flex: 1 1 100%;
+  }
 }
 </style>

@@ -17,8 +17,8 @@
       :label="staff.name"
       :value="staff.id"
     >
-      <span style="float: left">{{ staff.name }}</span>
-      <span style="float: right; color: #909399; font-size: 12px">{{ staff.employee_no }}</span>
+      <span class="font-weight-medium" style="float: left;">{{ staff.name }}</span>
+      <span class="font-weight-medium" style="float: right; color: #666; font-size: 12px;">{{ staff.employee_no }}</span>
     </el-option>
   </el-select>
 </template>
@@ -94,3 +94,38 @@ onMounted(() => {
   loadStaff()
 })
 </script>
+
+<style scoped>
+/* 人员选择器下拉选项样式 */
+:deep(.el-select) {
+  width: 100%;
+}
+
+:deep(.el-select .el-select__wrapper) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  transition: all 0.1s ease !important;
+}
+
+:deep(.el-select .el-select__wrapper:hover) {
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+}
+
+:deep(.el-select .el-select__wrapper.is-focused) {
+  box-shadow: 4px 4px 0px 0px #FFD93D !important;
+  border-color: #000000 !important;
+}
+
+:deep(.el-option__label) {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+:deep(.el-option__content) {
+  font-weight: 600 !important;
+}
+</style>

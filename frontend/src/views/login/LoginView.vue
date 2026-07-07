@@ -1,20 +1,28 @@
 <template>
   <div class="login-container">
+    <div class="login-decorator-left"></div>
+    <div class="login-decorator-right"></div>
     <div class="login-card">
       <div class="login-header">
-        <h1>{{ systemName }}</h1>
+        <div class="login-logo">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <h1 class="login-title">{{ systemName }}</h1>
         <p v-if="orgName" class="org-name">{{ orgName }}</p>
       </div>
       <div class="login-form">
         <div class="form-item">
+          <label class="form-label">用户名</label>
           <el-input
             v-model="form.username"
             placeholder="请输入用户名"
             size="large"
             clearable
+            @keyup.enter="handleLogin"
           />
         </div>
         <div class="form-item">
+          <label class="form-label">密码</label>
           <el-input
             v-model="form.password"
             type="password"
@@ -26,11 +34,10 @@
         </div>
         <div class="form-item">
           <el-button
-            type="primary"
             size="large"
-            :loading="loading"
             class="login-btn"
             @click="handleLogin"
+            :loading="loading"
           >
             登 录
           </el-button>
@@ -38,10 +45,13 @@
       </div>
     </div>
 
-    <!-- 强制改密弹窗（纯 div 实现，避免 el-dialog 渲染冲突） -->
+    <!-- 强制改密弹窗 -->
     <div v-if="showChangePwd" class="modal-overlay">
       <div class="modal-box">
-        <div class="modal-header">修改初始密码</div>
+        <div class="modal-header">
+          <span class="modal-icon">⚠</span>
+          修改初始密码
+        </div>
         <div class="modal-body">
           <p class="modal-warning">您的账号使用的是初始密码，为保障安全，请先设置新密码。</p>
           <div class="modal-form-item">
@@ -65,9 +75,9 @@
         </div>
         <div class="modal-footer">
           <el-button
-            type="primary"
+            size="large"
+            class="modal-btn"
             :loading="changePwdLoading"
-            style="width: 100%"
             @click="handleForceChangePwd"
           >
             确认修改并登录
@@ -188,70 +198,156 @@ async function handleForceChangePwd() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #FFFDF5;
+  position: relative;
+  overflow: hidden;
 }
 
+/* 装饰背景元素 */
+.login-decorator-left,
+.login-decorator-right {
+  position: absolute;
+  border: 4px solid #000000;
+  z-index: 0;
+}
+.login-decorator-left {
+  width: 200px;
+  height: 200px;
+  background: #FFD93D;
+  top: -60px;
+  left: -60px;
+  box-shadow: 6px 6px 0px 0px #3B82F6;
+}
+.login-decorator-right {
+  width: 160px;
+  height: 160px;
+  background: #3B82F6;
+  bottom: -40px;
+  right: -40px;
+  box-shadow: -6px 6px 0px 0px #FFD93D;
+}
+
+/* 登录卡片 */
 .login-card {
-  width: 400px;
-  padding: 40px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 420px;
+  background: #FFFFFF;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 8px 8px 0px 0px #000000;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
 }
 
 .login-header {
+  padding: 32px 32px 24px;
   text-align: center;
-  margin-bottom: 32px;
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
 }
 
-.login-header h1 {
+.login-logo {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  background: #3B82F6;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 0px 0px #000000;
+}
+.login-logo i {
+  font-size: 28px;
+  color: #FFFFFF;
+}
+
+.login-title {
   font-size: 24px;
-  color: #333;
-  margin-bottom: 8px;
+  font-weight: 900;
+  color: #000000;
+  margin: 0 0 4px;
+  letter-spacing: 1px;
 }
 
-.login-header .org-name {
-  font-size: 14px;
-  color: #999;
-  margin-top: 4px;
+.org-name {
+  font-size: 13px;
+  color: #666666;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* 表单 */
+.login-form {
+  padding: 32px;
 }
 
 .form-item {
   margin-bottom: 20px;
 }
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
+}
 
 .login-btn {
   width: 100%;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  background: #3B82F6;
+  border-color: #000000;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: all 0.1s ease;
+}
+.login-btn:hover {
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+}
+.login-btn:active {
+  box-shadow: 2px 2px 0px 0px #000000;
+  transform: translate(2px, 2px);
 }
 
-/* 弹窗样式 */
+/* 弹窗 */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  backdrop-filter: blur(2px);
 }
 
 .modal-box {
-  width: 420px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+  width: 440px;
+  background: #FFFFFF;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 10px 10px 0px 0px #000000;
   overflow: hidden;
 }
 
 .modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 16px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1F2D3D;
-  border-bottom: 1px solid #E6EAF0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000000;
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
+}
+.modal-icon {
+  font-size: 20px;
 }
 
 .modal-body {
@@ -259,28 +355,43 @@ async function handleForceChangePwd() {
 }
 
 .modal-warning {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   padding: 12px 16px;
-  background: #fdf6ec;
-  border: 1px solid #faecd8;
+  background: #FFD93D;
+  border: 2px solid #000000;
   border-radius: 4px;
-  color: #e6a23c;
+  color: #000000;
   font-size: 13px;
+  font-weight: 600;
 }
 
 .modal-form-item {
   margin-bottom: 16px;
 }
-
 .modal-form-item label {
   display: block;
   margin-bottom: 6px;
-  font-size: 14px;
-  color: #606266;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
 }
 
 .modal-footer {
   padding: 16px 24px;
-  border-top: 1px solid #E6EAF0;
+  border-top: 3px solid #000000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  background: #3B82F6;
+  border-color: #000000;
+  box-shadow: 4px 4px 0px 0px #000000;
+  font-weight: 900;
+  transition: all 0.1s ease;
+}
+.modal-btn:hover {
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translate(-2px, -2px);
 }
 </style>

@@ -3,11 +3,14 @@
     <!-- 左侧：规则列表 -->
     <div class="left-panel">
       <div class="panel-header">
-        <h3>约束规则</h3>
+        <div class="panel-header-title">
+          <span class="panel-icon"><el-icon><Lock /></el-icon></span>
+          <h3>约束规则</h3>
+        </div>
         <!-- 新建规则：需要 constraint create 权限 -->
         <el-button
           v-if="authStore.hasPermission('constraint', 'create')"
-          type="primary" size="small"
+          class="btn-neo-primary btn-neo-sm" size="small"
           @click="handleCreate"
         >
           <el-icon><Plus /></el-icon>
@@ -17,31 +20,45 @@
 
       <div class="rule-list" v-loading="loading">
         <div
-          v-for="item in ruleList"
+          v-for="(item, index) in ruleList"
           :key="item.id"
           class="rule-item"
           :class="{ active: selectedId === item.id, disabled: !item.enabled, preset: isPreset(item.rule_type) }"
+          :style="{ '--delay': index * 0.04 }"
           @click="handleSelect(item)"
         >
-          <div class="rule-item-header">
-            <span class="priority-badge">{{ item.priority }}</span>
-            <span class="rule-name">{{ item.rule_name }}</span>
-            <el-tag v-if="item.is_preset" size="small" type="info">预置</el-tag>
-            <!-- 启停切换：需要 constraint update 权限 -->
-            <el-switch
-              v-if="authStore.hasPermission('constraint', 'update')"
-              :model-value="item.enabled"
-              size="small"
-              inline-prompt
-              active-text=""
-              inactive-text=""
-              @click.stop
-              @change="handleToggle(item)"
-            />
+          <div class="rule-item-icon" :class="getRuleIconClass(item.rule_type)">
+            <el-icon><component :is="getRuleIcon(item.rule_type)" /></el-icon>
           </div>
+          <div class="rule-item-body">
+            <div class="rule-item-header">
+              <span class="rule-name">{{ item.rule_name }}</span>
+              <el-tag
+                v-if="item.is_preset"
+                size="small"
+                class="preset-badge"
+              >预置</el-tag>
+            </div>
+            <div class="rule-item-meta">
+              <span class="priority-tag">{{ item.priority }}</span>
+              <span class="rule-type-label">{{ getRuleTypeLabel(item.rule_type) }}</span>
+            </div>
+          </div>
+          <!-- 启停切换：需要 constraint update 权限 -->
+          <span
+            v-if="authStore.hasPermission('constraint', 'update')"
+            class="neo-switch-inline neo-switch-inline--sm"
+            :class="{ 'is-checked': item.enabled, 'is-disabled': false }"
+            @click.stop="handleToggle(item)"
+          >
+            <span class="neo-switch-knob neo-switch-knob--sm"></span>
+          </span>
         </div>
 
-        <el-empty v-if="!loading && ruleList.length === 0" description="暂无约束规则" />
+        <div v-if="!loading && ruleList.length === 0" class="rule-empty">
+          <el-icon :size="48" color="#C0C4CC"><Lock /></el-icon>
+          <p>暂无约束规则</p>
+        </div>
       </div>
     </div>
 
@@ -49,7 +66,10 @@
     <div class="right-panel">
       <template v-if="selectedId !== null && formData">
         <div class="panel-header">
-          <h3>{{ isCreate ? '新建自定义规则' : (isPreset(formData.rule_type) ? '编辑预置规则' : '编辑自定义规则') }}</h3>
+          <div class="panel-header-title">
+            <span class="panel-icon panel-icon--blue"><el-icon><Setting /></el-icon></span>
+            <h3>{{ isCreate ? '新建自定义规则' : (isPreset(formData.rule_type) ? '编辑预置规则' : '编辑自定义规则') }}</h3>
+          </div>
         </div>
 
         <el-form
@@ -72,7 +92,7 @@
           </el-form-item>
 
           <el-form-item v-if="isCreate" label="规则类型" prop="rule_type">
-            <el-select v-model="formData.rule_type" placeholder="请选择规则类型" style="width: 100%" @change="handleTypeChange">
+            <el-select v-model="formData.rule_type" placeholder="请选择规则类型" class="neo-input" @change="handleTypeChange">
               <el-option
                 v-for="t in customRuleTypes"
                 :key="t.value"
@@ -88,12 +108,13 @@
           </el-form-item>
 
           <el-form-item label="启用状态">
-            <el-switch
-              v-model="formData.enabled"
-              active-text="启用"
-              inactive-text="停用"
-              :disabled="!authStore.hasPermission('constraint', 'update')"
-            />
+            <span
+              class="neo-switch-inline"
+              :class="{ 'is-checked': formData.enabled, 'is-disabled': !authStore.hasPermission('constraint', 'update') }"
+              @click="() => { if (authStore.hasPermission('constraint', 'update')) formData.enabled = !formData.enabled }"
+            >
+              <span class="neo-switch-knob"></span>
+            </span>
           </el-form-item>
 
           <el-form-item label="优先级" prop="priority">
@@ -123,7 +144,7 @@
               multiple
               filterable
               placeholder="选择适用的组织"
-              style="width: 100%"
+              class="neo-input"
               :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')"
             >
               <el-option
@@ -135,7 +156,10 @@
             </el-select>
           </el-form-item>
 
-          <el-divider content-position="left">规则参数</el-divider>
+          <div class="form-section-header">
+            <el-icon class="form-section-icon"><DataLine /></el-icon>
+            <span class="form-section-title">规则参数</span>
+          </div>
 
           <!-- 连续工作上限 -->
           <template v-if="formData.rule_type === 'MAX_CONTINUOUS_DAYS'">
@@ -198,7 +222,13 @@
           <!-- 周末差异化 -->
           <template v-if="formData.rule_type === 'WEEKEND_DIFF'">
             <el-form-item label="启用周末差异化">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
+              <span
+                class="neo-switch-inline"
+                :class="{ 'is-checked': formData.params.enabled, 'is-disabled': !authStore.hasPermission('constraint', isCreate ? 'create' : 'update') }"
+                @click="() => { if (authStore.hasPermission('constraint', isCreate ? 'create' : 'update')) formData.params.enabled = !formData.params.enabled }"
+              >
+                <span class="neo-switch-knob"></span>
+              </span>
             </el-form-item>
           </template>
 
@@ -229,7 +259,13 @@
           <!-- 工作量均衡分配 -->
           <template v-if="formData.rule_type === 'EQUAL_DISTRIBUTION'">
             <el-form-item label="启用工作量均衡">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
+              <span
+                class="neo-switch-inline"
+                :class="{ 'is-checked': formData.params.enabled, 'is-disabled': !authStore.hasPermission('constraint', isCreate ? 'create' : 'update') }"
+                @click="() => { if (authStore.hasPermission('constraint', isCreate ? 'create' : 'update')) formData.params.enabled = !formData.params.enabled }"
+              >
+                <span class="neo-switch-knob"></span>
+              </span>
             </el-form-item>
             <el-form-item v-if="formData.params.enabled" label="允许偏差天数">
               <el-input-number v-model="formData.params.tolerance_days" :min="0" :max="10" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
@@ -240,14 +276,26 @@
           <!-- 值班领导轮换均衡 -->
           <template v-if="formData.rule_type === 'LEADER_ROTATION'">
             <el-form-item label="启用领导轮换均衡">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
+              <span
+                class="neo-switch-inline"
+                :class="{ 'is-checked': formData.params.enabled, 'is-disabled': !authStore.hasPermission('constraint', isCreate ? 'create' : 'update') }"
+                @click="() => { if (authStore.hasPermission('constraint', isCreate ? 'create' : 'update')) formData.params.enabled = !formData.params.enabled }"
+              >
+                <span class="neo-switch-knob"></span>
+              </span>
             </el-form-item>
           </template>
 
           <!-- 周末轮转均衡 -->
           <template v-if="formData.rule_type === 'WEEKEND_ROTATION'">
             <el-form-item label="启用周末轮转均衡">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
+              <span
+                class="neo-switch-inline"
+                :class="{ 'is-checked': formData.params.enabled, 'is-disabled': !authStore.hasPermission('constraint', isCreate ? 'create' : 'update') }"
+                @click="() => { if (authStore.hasPermission('constraint', isCreate ? 'create' : 'update')) formData.params.enabled = !formData.params.enabled }"
+              >
+                <span class="neo-switch-knob"></span>
+              </span>
             </el-form-item>
             <el-form-item v-if="formData.params.enabled" label="每人每月最少周末班次">
               <el-input-number v-model="formData.params.min_times_per_month" :min="1" :max="10" controls-position="right" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
@@ -258,7 +306,13 @@
           <!-- 新员工搭配老员工 -->
           <template v-if="formData.rule_type === 'NEW_STAFF_PAIRING'">
             <el-form-item label="启用新员工搭配">
-              <el-switch v-model="formData.params.enabled" active-text="启用" inactive-text="禁用" :disabled="!authStore.hasPermission('constraint', isCreate ? 'create' : 'update')" />
+              <span
+                class="neo-switch-inline"
+                :class="{ 'is-checked': formData.params.enabled, 'is-disabled': !authStore.hasPermission('constraint', isCreate ? 'create' : 'update') }"
+                @click="() => { if (authStore.hasPermission('constraint', isCreate ? 'create' : 'update')) formData.params.enabled = !formData.params.enabled }"
+              >
+                <span class="neo-switch-knob"></span>
+              </span>
             </el-form-item>
           </template>
 
@@ -275,20 +329,22 @@
               <!-- 删除：需要 constraint delete 权限 -->
               <el-button
                 v-if="!isCreate && canDelete && authStore.hasPermission('constraint', 'delete')"
-                type="danger"
+                class="btn-neo-danger"
                 @click="handleDelete"
               >
                 删除
               </el-button>
-              <el-button @click="handleCancel">取消</el-button>
+              <el-button class="btn-neo-ghost" @click="handleCancel">取消</el-button>
             </div>
           </el-form-item>
         </el-form>
       </template>
 
       <div v-else class="empty-state">
-        <el-icon :size="48" color="#C0C4CC"><Setting /></el-icon>
-        <p>请从左侧选择规则或点击"新建规则"</p>
+        <div class="empty-state-icon-wrap">
+          <el-icon :size="56" color="#C0C4CC"><Setting /></el-icon>
+        </div>
+        <p>请从左侧选择规则<br>或点击"新建规则"</p>
       </div>
     </div>
   </div>
@@ -296,8 +352,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Setting } from '@element-plus/icons-vue'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useConfirm } from '@/composables/useConfirm'
+import { Plus, Setting, Lock, DataLine, Clock, Sunny, Moon, Star, Connection, ScaleToOriginal, RefreshRight, Calendar, UserFilled, TrendCharts } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import {
   getConstraints,
@@ -312,6 +369,7 @@ import {
 import api from '@/api/index'
 
 const authStore = useAuthStore()
+const { confirm } = useConfirm()
 
 const orgList = ref<any[]>([])
 
@@ -363,6 +421,75 @@ const customRuleTypes = [
 
 function isPreset(ruleType: string): boolean {
   return presetRuleTypes.has(ruleType)
+}
+
+// 规则类型显示标签
+const ruleTypeLabels: Record<string, string> = {
+  MAX_CONTINUOUS_DAYS: '连续工作上限',
+  MIN_REST_AFTER_CONTINUOUS: '连续后休息',
+  MIN_SHIFT_INTERVAL: '班次间隔',
+  MIN_REST_AFTER_NIGHT: '夜班后休息',
+  MAX_SHIFTS_PER_DAY: '每日班次上限',
+  MAX_WEEKLY_HOURS: '每周工时',
+  HOLIDAY_MODE: '节假日模式',
+  WEEKEND_DIFF: '周末差异化',
+  MAX_CONSECUTIVE_NIGHTS: '连续夜班上限',
+  MIN_INTERVAL_BETWEEN_NIGHTS: '夜班间隔',
+  MAX_NIGHTS_PER_MONTH: '每月夜班次数',
+  EQUAL_DISTRIBUTION: '工作量均衡',
+  LEADER_ROTATION: '领导轮换',
+  WEEKEND_ROTATION: '周末轮转',
+  NEW_STAFF_PAIRING: '新老搭配',
+}
+
+function getRuleTypeLabel(ruleType: string): string {
+  return ruleTypeLabels[ruleType] || ruleType
+}
+
+// 规则图标映射
+const ruleIconMap: Record<string, any> = {
+  MAX_CONTINUOUS_DAYS: Clock,
+  MIN_REST_AFTER_CONTINUOUS: Clock,
+  MIN_SHIFT_INTERVAL: Clock,
+  MIN_REST_AFTER_NIGHT: Moon,
+  MAX_SHIFTS_PER_DAY: Calendar,
+  MAX_WEEKLY_HOURS: TrendCharts,
+  HOLIDAY_MODE: Star,
+  WEEKEND_DIFF: Calendar,
+  MAX_CONSECUTIVE_NIGHTS: Moon,
+  MIN_INTERVAL_BETWEEN_NIGHTS: Clock,
+  MAX_NIGHTS_PER_MONTH: Moon,
+  EQUAL_DISTRIBUTION: ScaleToOriginal,
+  LEADER_ROTATION: RefreshRight,
+  WEEKEND_ROTATION: Connection,
+  NEW_STAFF_PAIRING: UserFilled,
+}
+
+function getRuleIcon(ruleType: string): any {
+  return ruleIconMap[ruleType] || Clock
+}
+
+// 规则图标背景色类
+const ruleIconColorMap: Record<string, string> = {
+  MAX_CONTINUOUS_DAYS: 'yellow',
+  MIN_REST_AFTER_CONTINUOUS: 'yellow',
+  MIN_SHIFT_INTERVAL: 'blue',
+  MIN_REST_AFTER_NIGHT: 'purple',
+  MAX_SHIFTS_PER_DAY: 'red',
+  MAX_WEEKLY_HOURS: 'green',
+  HOLIDAY_MODE: 'accent',
+  WEEKEND_DIFF: 'cyan',
+  MAX_CONSECUTIVE_NIGHTS: 'purple',
+  MIN_INTERVAL_BETWEEN_NIGHTS: 'blue',
+  MAX_NIGHTS_PER_MONTH: 'purple',
+  EQUAL_DISTRIBUTION: 'green',
+  LEADER_ROTATION: 'blue',
+  WEEKEND_ROTATION: 'cyan',
+  NEW_STAFF_PAIRING: 'yellow',
+}
+
+function getRuleIconClass(ruleType: string): string {
+  return ruleIconColorMap[ruleType] || 'yellow'
 }
 
 const canDelete = computed(() => {
@@ -529,13 +656,12 @@ async function handleSave() {
 async function handleDelete() {
   if (!formData.value.id) return
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'danger',
       title: '确认删除？',
       message: '删除后数据无法恢复，请慎重操作。',
-      showCancelButton: true,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '删除',
+      cancelText: '取消',
     })
     await deleteConstraint(formData.value.id)
     ElMessage.success('删除成功')
@@ -571,69 +697,179 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ============================================================
+   Constraint View — Neo-brutalism redesign
+   Inspired by GemDesign ShiftRuleConfigPage prototype
+   ============================================================ */
+
+/* ---- Page Container ---- */
 .constraint-page {
   display: flex;
   height: calc(100vh - 56px - 40px);
-  gap: 16px;
-  padding: 16px;
-  background: #F5F7FA;
-  overflow-x: auto;
-  min-width: 700px;
+  gap: 20px;
+  padding: 20px;
+  background: #FFFDF5;
+  overflow: hidden;
+  min-width: 900px;
+  animation: slide-in-left 0.3s ease both;
 }
 
-.left-panel {
-  width: 340px;
-  min-width: 300px;
+/* ---- Left / Right Panels — neo-card style ---- */
+.left-panel,
+.right-panel {
   background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 8px 8px 0px 0px #000000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: all 0.2s ease;
 }
 
+.left-panel {
+  width: 400px;
+  min-width: 340px;
+  max-width: 480px;
+}
+
+.right-panel {
+  flex: 1;
+}
+
+/* ---- Panel Header ---- */
 .panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #E6EAF0;
+  padding: 16px 20px;
+  border-bottom: 4px solid #000000;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: #FFFDF5;
+}
+
+.panel-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-icon {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 3px 3px 0px 0px #000000;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.panel-icon--blue {
+  background: #DBEAFE;
+  color: #1D4ED8;
 }
 
 .panel-header h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1F2D3D;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+/* ---- Rule List ---- */
 .rule-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
+/* ---- Rule Item — prototype card style ---- */
 .rule-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 12px;
-  border-radius: 6px;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  background: #FFFFFF;
+  box-shadow: 4px 4px 0px 0px #000000;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 4px;
-  border: 2px solid transparent;
+  transition: all 0.15s ease;
+  animation: slide-in-left 0.3s ease both;
+  animation-delay: calc(var(--delay, 0) * 1s);
+  position: relative;
 }
 
 .rule-item:hover {
-  background: #F5F7FA;
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+  background: #FFFDF5;
 }
 
 .rule-item.active {
-  background: #ECF5FF;
-  border-color: #0A63D8;
+  background: #FFFDF5;
+  border-color: #3B82F6;
+  box-shadow: 5px 5px 0px 0px #3B82F6;
+}
+
+.rule-item.active:hover {
+  box-shadow: 8px 8px 0px 0px #3B82F6;
+  transform: translate(-3px, -3px);
 }
 
 .rule-item.disabled {
-  opacity: 0.55;
+  opacity: 0.5;
+}
+
+.rule-item.disabled:hover {
+  transform: none;
+  box-shadow: 4px 4px 0px 0px #000000;
+}
+
+/* ---- Rule Item Icon ---- */
+.rule-item-icon {
+  width: 44px;
+  height: 44px;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 0px 0px #000000;
+  transition: transform 0.2s ease;
+}
+
+.rule-item:hover .rule-item-icon {
+  transform: rotate(3deg);
+}
+
+.rule-item-icon--yellow { background: #FFD93D; color: #000000; }
+.rule-item-icon--red { background: #FF6B6B; color: #FFFFFF; }
+.rule-item-icon--blue { background: #DBEAFE; color: #1D4ED8; }
+.rule-item-icon--green { background: #D1FAE5; color: #047857; }
+.rule-item-icon--purple { background: #EDE9FE; color: #6D28D9; }
+.rule-item-icon--cyan { background: #CFFAFE; color: #0E7490; }
+.rule-item-icon--accent { background: #FF6B6B; color: #FFFFFF; }
+.rule-item-icon--black { background: #000000; color: #FFFFFF; }
+
+/* ---- Rule Item Body ---- */
+.rule-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .rule-item-header {
@@ -642,79 +878,218 @@ onMounted(() => {
   gap: 8px;
 }
 
-.priority-badge {
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  text-align: center;
-  border-radius: 50%;
-  background: #E6EAF0;
-  color: #556173;
-  font-size: 12px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
 .rule-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1F2D3D;
+  font-size: 15px;
+  font-weight: 700;
+  color: #000000;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.right-panel {
-  flex: 1;
-  background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
+/* ---- Preset badge — neo-badge style ---- */
+.preset-badge {
+  background: #FFD93D !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 2px !important;
+  font-weight: 700 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  font-size: 11px !important;
+  padding: 0 6px !important;
+  height: 20px !important;
+  line-height: 16px !important;
+}
+
+/* ---- Rule Meta Row ---- */
+.rule-item-meta {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.edit-form {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px 24px;
-}
-
-.priority-tip {
-  font-size: 12px;
-  color: #909399;
-  margin-left: 12px;
-}
-
-.param-unit {
-  font-size: 14px;
-  color: #556173;
-  margin-left: 8px;
-}
-
-.form-actions {
-  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
+.priority-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 2px 2px 0px 0px #000000;
+  color: #FFFFFF;
+  background: #3B82F6;
+  flex-shrink: 0;
+}
+
+.rule-type-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+}
+
+/* ---- Rule Empty State ---- */
+.rule-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #C0C4CC;
+  padding: 40px 20px;
+}
+
+.rule-empty p {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ---- Right Panel — Edit Form ---- */
+.edit-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px 32px;
+}
+
+/* ---- Form Section Header (replaces el-divider) ---- */
+.form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  border-top: 4px solid #000000;
+}
+
+.form-section-icon {
+  font-size: 20px;
+  color: #3B82F6;
+  flex-shrink: 0;
+}
+
+.form-section-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Priority Tip ---- */
+.priority-tip {
+  font-size: 12px;
+  color: #666666;
+  margin-left: 12px;
+  font-weight: 600;
+}
+
+/* ---- Param Unit ---- */
+.param-unit {
+  font-size: 14px;
+  color: #000000;
+  margin-left: 8px;
+  font-weight: 700;
+}
+
+/* ---- Form Actions ---- */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+/* ---- Empty State (right panel) ---- */
 .empty-state {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #C0C4CC;
+  gap: 16px;
+  padding: 40px 20px;
+}
+
+.empty-state-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  background: #F5F5F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: transform 0.2s ease;
+}
+
+.empty-state:hover .empty-state-icon-wrap {
+  transform: rotate(10deg) scale(1.05);
 }
 
 .empty-state p {
-  margin-top: 16px;
-  font-size: 14px;
+  margin-top: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #999999;
+  text-align: center;
+  line-height: 1.6;
 }
 
+/* ---- Type Hint ---- */
 .type-hint {
   font-size: 12px;
-  color: #909399;
+  color: #666666;
   margin-top: 4px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* ---- Neo Switch Inline (small) ---- */
+.neo-switch-inline--sm {
+  width: 32px !important;
+  height: 18px !important;
+  border-width: 2px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  flex-shrink: 0;
+}
+
+.neo-switch-inline--sm .neo-switch-knob--sm {
+  width: 10px !important;
+  height: 10px !important;
+  border-width: 1px !important;
+  box-shadow: 1px 1px 0px 0px #000000 !important;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1200px) {
+  .left-panel {
+    width: 320px;
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .constraint-page {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 56px - 40px);
+  }
+
+  .left-panel {
+    width: 100%;
+    max-width: none;
+    height: 300px;
+  }
+
+  .right-panel {
+    min-height: 500px;
+  }
 }
 </style>

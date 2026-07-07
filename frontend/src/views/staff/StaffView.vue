@@ -1,179 +1,271 @@
 <template>
   <div class="staff-page">
+    <!-- ====== 页面头部 ====== -->
     <div class="page-header">
-      <h3>人员管理</h3>
-    </div>
-
-    <div class="page-content">
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-input
-            v-model="keyword"
-            placeholder="搜索人员姓名或工号"
-            clearable
-            prefix-icon="Search"
-            style="width: 280px"
-            @input="handleSearch"
-            @clear="handleSearch"
-          />
-          <el-button
-            v-if="authStore.hasPermission('staff', 'update')"
-            type="warning"
-            :disabled="selectedStaffIds.length === 0"
-            @click="handleBatchResetPwd"
-          >
-            批量重置密码
-          </el-button>
+      <div class="header-main">
+        <div class="header-icon">
+          <el-icon :size="24"><UserFilled /></el-icon>
         </div>
+        <div class="header-text">
+          <h2 class="header-title">人员管理</h2>
+          <p class="header-desc">管理所有员工信息，配置排班权限与岗位属性，确保排班系统数据准确完整。</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <el-button class="btn-neo-ghost" @click="loadStaff">
+          <el-icon><Refresh /></el-icon>
+          刷新
+        </el-button>
         <el-button
           v-if="authStore.hasPermission('staff', 'create')"
-          type="primary"
+          class="btn-neo-primary"
           @click="handleCreate"
         >
           <el-icon><Plus /></el-icon>
           新增人员
         </el-button>
       </div>
+    </div>
 
-      <!-- 人员表格 -->
+    <div class="page-content">
+      <!-- ====== 搜索筛选卡片 ====== -->
+      <div class="neo-card search-card">
+        <div class="search-row">
+          <div class="search-input-wrap">
+            <el-icon class="search-icon"><Search /></el-icon>
+            <el-input
+              v-model="keyword"
+              placeholder="搜索员工姓名、工号或部门..."
+              clearable
+              @input="debounceSearch"
+              @clear="loadStaff"
+            />
+          </div>
+          <el-select v-model="deptFilter" placeholder="全部部门" clearable @change="loadStaff" class="neo-select">
+            <el-option
+              v-for="org in orgList"
+              :key="org.id"
+              :label="org.name"
+              :value="org.id"
+            />
+          </el-select>
+          <el-select v-model="statusFilter" placeholder="全部状态" clearable @change="loadStaff" class="neo-select">
+            <el-option label="在岗" :value="1" />
+            <el-option label="请假" :value="2" />
+            <el-option label="外派" :value="3" />
+            <el-option label="停用" :value="0" />
+          </el-select>
+        </div>
+      </div>
+
+      <!-- ====== 统计卡片 ====== -->
+      <div class="stats-grid">
+        <div class="neo-card stat-card">
+          <div class="stat-header">
+            <el-icon :size="24" class="stat-icon stat-icon-accent"><UserFilled /></el-icon>
+            <span class="stat-label">总员工数</span>
+          </div>
+          <span class="stat-value">{{ total }}</span>
+        </div>
+        <div class="neo-card stat-card">
+          <div class="stat-header">
+            <el-icon :size="24" class="stat-icon stat-icon-success"><Check /></el-icon>
+            <span class="stat-label">在岗</span>
+          </div>
+          <span class="stat-value">{{ statsActive }}</span>
+        </div>
+        <div class="neo-card stat-card">
+          <div class="stat-header">
+            <el-icon :size="24" class="stat-icon stat-icon-warning"><Coffee /></el-icon>
+            <span class="stat-label">请假</span>
+          </div>
+          <span class="stat-value">{{ statsLeave }}</span>
+        </div>
+        <div class="neo-card stat-card">
+          <div class="stat-header">
+            <el-icon :size="24" class="stat-icon stat-icon-danger"><Close /></el-icon>
+            <span class="stat-label">停用</span>
+          </div>
+          <span class="stat-value">{{ statsResigned }}</span>
+        </div>
+      </div>
+
+      <!-- ====== 工具栏 ====== -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <el-input
+            v-model="quickSearch"
+            placeholder="搜索人员姓名或工号"
+            clearable
+            prefix-icon="Search"
+            style="width: 260px"
+            @input="handleQuickSearch"
+            @clear="loadStaff"
+          />
+          <el-button
+            v-if="authStore.hasPermission('staff', 'update')"
+            class="btn-neo-warning btn-neo-sm"
+            :disabled="selectedStaffIds.length === 0"
+            @click="handleBatchResetPwd"
+          >
+            批量重置密码
+          </el-button>
+        </div>
+      </div>
+
+      <!-- ====== 人员表格 ====== -->
       <el-table
-        :data="filteredStaffList"
+        :data="displayList"
         stripe
-        style="width: 100%"
         v-loading="loading"
         @selection-change="handleSelectionChange"
         :row-class-name="tableRowClassName"
+        class="staff-table"
       >
-        <el-table-column type="selection" width="50" :selectable="isRowSelectable" />
-        <el-table-column prop="name" label="姓名" width="100" />
-        <el-table-column prop="employee_no" label="工号" width="120" />
-        <el-table-column prop="phone" label="联系方式" width="130" />
-        <el-table-column label="所属组织" width="160">
+        <el-table-column type="selection" width="40" :selectable="isRowSelectable" />
+        <el-table-column label="人员信息" min-width="180">
+          <template #default="{ row }">
+            <div class="staff-cell">
+              <div class="staff-avatar" :style="{ backgroundColor: avatarColor(row.id) }">
+                {{ row.name.charAt(0) }}
+              </div>
+              <div class="staff-info">
+                <div class="staff-name">{{ row.name }}</div>
+                <div class="staff-phone">{{ row.phone || '-' }}</div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="employee_no" label="工号" width="100" />
+        <el-table-column label="所属组织" width="130">
           <template #default="{ row }">
             {{ orgNameMap[row.org_id] || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column label="状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="statusType(row.status)" size="small">
+            <el-tag :type="statusType(row.status)" size="small" effect="dark">
               {{ statusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="角色+身份标识" min-width="220">
+        <el-table-column label="角色+身份标识" min-width="160">
           <template #default="{ row }">
-            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-              <!-- 角色（绿色） -->
+            <div class="tag-group">
               <el-tag
                 v-for="role in (row.account_roles || [])"
                 :key="'role-' + role"
                 size="small"
                 type="success"
+                effect="dark"
               >
                 {{ role }}
               </el-tag>
-              <!-- 标识（橙色） -->
               <el-tag
                 v-for="tag in (row.tag_roles || [])"
                 :key="'tag-' + tag.id"
                 size="small"
                 type="warning"
+                effect="dark"
               >
                 {{ tag.name }}
               </el-tag>
-              <!-- 无任何角色/标识时显示 - -->
               <span
                 v-if="(!row.account_roles || row.account_roles.length === 0) && (!row.tag_roles || row.tag_roles.length === 0)"
-                style="color: #909399"
+                class="text-muted"
               >-</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="登录账号" width="160">
+        <el-table-column label="登录账号" width="130">
           <template #default="{ row }">
             <template v-if="row.has_account">
-              <div>{{ row.account_username }}</div>
-              <el-tag :type="row.account_status === 1 ? 'success' : 'danger'" size="small" style="margin-top: 2px">
-                {{ row.account_status === 1 ? '正常' : '禁用' }}
-              </el-tag>
+              <div class="account-info">
+                <span class="account-name">{{ row.account_username }}</span>
+                <el-tag :type="row.account_status === 1 ? 'success' : 'danger'" size="small" effect="dark">
+                  {{ row.account_status === 1 ? '正常' : '禁用' }}
+                </el-tag>
+              </div>
             </template>
-            <el-tag v-else size="small" type="info">未创建</el-tag>
+            <el-tag v-else size="small" type="info" effect="dark">未创建</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="特殊规则" min-width="180">
+        <el-table-column label="特殊规则" min-width="130">
           <template #default="{ row }">
-            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+            <div class="tag-group">
               <el-tag
                 v-for="rule in (staffRulesMap[row.id] || [])"
                 :key="rule.id"
                 size="small"
                 type="info"
+                effect="dark"
               >
                 {{ ruleDesc(rule) }}
               </el-tag>
-              <span v-if="!staffRulesMap[row.id] || staffRulesMap[row.id].length === 0" style="color: #909399">-</span>
+              <span v-if="!staffRulesMap[row.id] || staffRulesMap[row.id].length === 0" class="text-muted">-</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column label="账号" width="50">
           <template #default="{ row }">
-            <!-- ========== 修改点1：系统账号重置密码仅限admin角色 ========== -->
-            <template v-if="row.is_system_account">
-              <el-button
-                v-if="authStore.hasRole('admin')"
-                link type="warning" size="small"
-                @click="handleResetSingle(row)"
-              >
-                重置密码
+            <el-tooltip content="账号管理" placement="top" v-if="authStore.hasPermission('staff', 'update') && !row.is_system_account">
+              <el-button size="small" class="neo-icon-btn" @click="handleAccount(row)">
+                <el-icon><User /></el-icon>
               </el-button>
-            </template>
-            <!-- 普通人员：正常操作 -->
-            <template v-else>
-              <el-button
-                v-if="authStore.hasPermission('staff', 'update')"
-                link type="primary" size="small"
-                @click="handleEdit(row)"
-              >
-                编辑
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="特殊规则" width="60">
+          <template #default="{ row }">
+            <el-tooltip content="特殊规则" placement="top" v-if="authStore.hasPermission('staff', 'update') && !row.is_system_account">
+              <el-button size="small" class="neo-icon-btn" @click="handleSpecialRule(row)">
+                <el-icon><Setting /></el-icon>
               </el-button>
-              <el-button
-                v-if="authStore.hasPermission('staff', 'update')"
-                link type="primary" size="small"
-                @click="handleAccount(row)"
-              >
-                账号
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="60">
+          <template #default="{ row }">
+            <el-tooltip :content="row.status === 1 ? '停用' : '启用'" placement="top" v-if="authStore.hasPermission('staff', 'update') && !row.is_system_account">
+              <el-button size="small" :class="row.status === 1 ? 'neo-icon-btn neo-icon-warning' : 'neo-icon-btn neo-icon-success'" @click="handleToggleStatus(row)">
+                <el-icon v-if="row.status === 1"><SwitchButton /></el-icon>
+                <el-icon v-else><CircleCheck /></el-icon>
               </el-button>
-              <el-button
-                v-if="authStore.hasPermission('staff', 'update')"
-                link type="primary" size="small"
-                @click="handleSpecialRule(row)"
-              >
-                特殊规则
-              </el-button>
-              <el-button
-                v-if="authStore.hasPermission('staff', 'update')"
-                link
-                :type="row.status === 1 ? 'warning' : 'success'"
-                size="small"
-                @click="handleToggleStatus(row)"
-              >
-                {{ row.status === 1 ? '停用' : '启用' }}
-              </el-button>
-              <el-button
-                v-if="authStore.hasPermission('staff', 'delete')"
-                link type="danger" size="small"
-                @click="handleDelete(row)"
-              >
-                删除
-              </el-button>
-            </template>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
+            <div class="action-group">
+              <!-- 系统账号：仅 admin 可重置密码 -->
+              <template v-if="row.is_system_account">
+                <el-tooltip content="重置密码" placement="top" v-if="authStore.hasRole('admin')">
+                  <el-button size="small" class="neo-icon-btn neo-icon-warning" @click="handleResetSingle(row)">
+                    <el-icon><Key /></el-icon>
+                  </el-button>
+                </el-tooltip>
+              </template>
+              <!-- 普通人员：编辑 + 删除 -->
+              <template v-else>
+                <el-tooltip content="编辑" placement="top" v-if="authStore.hasPermission('staff', 'update')">
+                  <el-button size="small" class="neo-icon-btn" @click="handleEdit(row)">
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip content="删除" placement="top" v-if="authStore.hasPermission('staff', 'delete')">
+                  <el-button size="small" class="neo-icon-btn neo-icon-danger" @click="handleDelete(row)">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </el-tooltip>
+              </template>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
       <div class="pagination-wrapper">
+        <span class="pagination-info">显示 {{ paginationInfo.start }}-{{ paginationInfo.end }} 共 {{ total }} 条记录</span>
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
@@ -186,120 +278,142 @@
       </div>
     </div>
 
-    <!-- 新增/编辑抽屉 -->
+    <!-- ====== 新增/编辑抽屉 ====== -->
     <el-drawer
       v-model="drawerVisible"
       :title="isCreate ? '新增人员' : '编辑人员'"
-      size="480px"
+      size="520px"
       :close-on-click-modal="false"
+      class="neo-drawer"
     >
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        label-width="90px"
-        label-position="right"
-        style="padding: 16px"
-      >
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入姓名" />
-        </el-form-item>
-        <el-form-item v-if="!isCreate" label="工号" prop="employee_no">
-          <el-input v-model="formData.employee_no" disabled />
-        </el-form-item>
-        <el-form-item v-if="isCreate" label="工号">
-          <el-input v-model="formData.employee_no" disabled :placeholder="employeeNoLoading ? '生成中...' : '选择组织后自动生成'" />
-        </el-form-item>
-        <el-form-item label="联系方式">
-          <el-input v-model="formData.phone" placeholder="请输入联系方式" />
-        </el-form-item>
-        <el-form-item label="所属组织" prop="org_id">
-          <el-select v-model="formData.org_id" placeholder="请选择组织" style="width: 100%" @change="onOrgChange">
-            <el-option
-              v-for="org in orgList"
-              :key="org.id"
-              :label="org.name"
-              :value="org.id"
+      <div class="drawer-body">
+        <el-form
+          ref="formRef"
+          :model="formData"
+          :rules="rules"
+          label-width="90px"
+          label-position="right"
+        >
+          <el-form-item label="姓名" prop="name">
+            <el-input v-model="formData.name" placeholder="请输入姓名" />
+          </el-form-item>
+          <el-form-item v-if="!isCreate" label="工号" prop="employee_no">
+            <el-input v-model="formData.employee_no" disabled />
+          </el-form-item>
+          <el-form-item v-if="isCreate" label="工号">
+            <el-input
+              v-model="formData.employee_no"
+              disabled
+              :placeholder="employeeNoLoading ? '生成中...' : '选择组织后自动生成'"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="formData.status" style="width: 100%">
-            <el-option label="在岗" :value="1" />
-            <el-option label="请假" :value="2" />
-            <el-option label="外派" :value="3" />
-            <el-option label="停用" :value="0" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="角色标签">
-          <el-select
-            v-model="formData.tags"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            placeholder="输入或选择标签"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="role in roleList"
-              :key="role.id"
-              :label="role.name"
-              :value="role.name"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="身份标识">
-          <el-select
-            v-model="formData.tag_role_ids"
-            multiple
-            filterable
-            placeholder="选择身份标识"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="tag in tagOptions"
-              :key="tag.id"
-              :label="tag.name"
-              :value="tag.id"
-            />
-          </el-select>
-          <div style="font-size: 12px; color: #909399; margin-top: 4px">
-            标识在"角色管理"中创建，类型选择"标识"
-          </div>
-        </el-form-item>
+          </el-form-item>
+          <el-form-item label="联系方式">
+            <el-input v-model="formData.phone" placeholder="请输入联系方式" />
+          </el-form-item>
+          <el-form-item label="所属组织" prop="org_id">
+            <el-select v-model="formData.org_id" placeholder="请选择组织" class="neo-input" @change="onOrgChange">
+              <el-option
+                v-for="org in orgList"
+                :key="org.id"
+                :label="org.name"
+                :value="org.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="formData.status" class="neo-input">
+              <el-option label="在岗" :value="1" />
+              <el-option label="请假" :value="2" />
+              <el-option label="外派" :value="3" />
+              <el-option label="停用" :value="0" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="角色标签">
+            <el-select
+              v-model="formData.tags"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              placeholder="输入或选择标签"
+              class="neo-input"
+            >
+              <el-option
+                v-for="role in roleList"
+                :key="role.id"
+                :label="role.name"
+                :value="role.name"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="身份标识">
+            <el-select
+              v-model="formData.tag_role_ids"
+              multiple
+              filterable
+              placeholder="选择身份标识"
+              class="neo-input"
+            >
+              <el-option
+                v-for="tag in tagOptions"
+                :key="tag.id"
+                :label="tag.name"
+                :value="tag.id"
+              />
+            </el-select>
+            <div class="form-tip">标识在"角色管理"中创建，类型选择"标识"</div>
+          </el-form-item>
 
-        <template v-if="isCreate">
-          <el-divider content-position="left">登录账号</el-divider>
-          <el-form-item label="创建账号">
-            <el-switch v-model="formData.create_account" @change="onAccountToggle" />
-            <span style="font-size: 12px; color: #909399; margin-left: 8px">
-              {{ formData.create_account ? '用户名=工号，初始密码=123456，角色根据标签自动匹配' : '不创建登录系统账号' }}
-            </span>
-          </el-form-item>
-          <el-form-item v-if="formData.create_account" label="首次改密">
-            <el-switch v-model="formData.must_change_password" />
-            <span style="font-size: 12px; color: #909399; margin-left: 8px">
-              {{ formData.must_change_password ? '首次登录需修改密码' : '首次登录不提示修改密码' }}
-            </span>
-          </el-form-item>
-        </template>
-      </el-form>
+          <template v-if="isCreate">
+            <el-divider content-position="left">登录账号</el-divider>
+            <div class="alert-card alert-card--info">
+              <span class="alert-card__icon">ℹ</span>
+              <span class="alert-card__content">创建账号后，系统将自动生成用户名（工号）和初始密码（123456）。</span>
+            </div>
+            <el-form-item label="创建账号">
+              <span
+                class="neo-switch-inline"
+                :class="{ 'is-checked': formData.create_account, 'is-disabled': !canEdit }"
+                @click="() => { if (canEdit) { formData.create_account = !formData.create_account; onAccountToggle() } }"
+              >
+                <span class="neo-switch-knob"></span>
+              </span>
+              <span class="form-tip">
+                {{ formData.create_account ? '用户名=工号，初始密码=123456，角色根据标签自动匹配' : '不创建登录系统账号' }}
+              </span>
+            </el-form-item>
+            <el-form-item v-if="formData.create_account" label="首次改密">
+              <span
+                class="neo-switch-inline"
+                :class="{ 'is-checked': formData.must_change_password, 'is-disabled': !canEdit }"
+                @click="() => { if (canEdit) formData.must_change_password = !formData.must_change_password }"
+              >
+                <span class="neo-switch-knob"></span>
+              </span>
+              <span class="form-tip">
+                {{ formData.must_change_password ? '首次登录需修改密码' : '首次登录不提示修改密码' }}
+              </span>
+            </el-form-item>
+          </template>
+        </el-form>
+      </div>
 
       <template #footer>
-        <el-button @click="drawerVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+        <div class="drawer-footer">
+          <el-button class="btn-neo-ghost" @click="drawerVisible = false">取消</el-button>
+          <el-button class="btn-neo-primary" :loading="saving" @click="handleSave">保存</el-button>
+        </div>
       </template>
     </el-drawer>
 
-    <!-- 账号管理抽屉 -->
+    <!-- ====== 账号管理抽屉 ====== -->
     <AccountDrawer
       v-model:visible="accountVisible"
       :staff="accountStaff"
       @refresh="refreshAccountData"
     />
 
-    <!-- 特殊规则抽屉 -->
+    <!-- ====== 特殊规则抽屉 ====== -->
     <SpecialRuleDrawer
       v-model:visible="specialRuleVisible"
       :staff-id="specialRuleStaffId"
@@ -311,24 +425,30 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import {
+  Plus, Refresh, Search, UserFilled, Edit, User, Setting, Delete,
+  Key, SwitchButton, CircleCheck, Check, Coffee, Close,
+} from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import SpecialRuleDrawer from './components/SpecialRuleDrawer.vue'
 import AccountDrawer from './components/AccountDrawer.vue'
 import api from '@/api/index'
 import { getSpecialRules, type SpecialRule } from '@/api/special-rule'
 import request from '@/utils/request'
+import { useConfirm } from '@/composables/useConfirm'
 
 const authStore = useAuthStore()
-
-// ========== 新增：辅助判断是否为admin角色 ==========
 const isAdmin = computed(() => authStore.hasRole('admin'))
+const { confirmWarning, confirmDanger } = useConfirm()
 
-// 状态
+// ====== 数据状态 ======
 const loading = ref(false)
 const saving = ref(false)
 const keyword = ref('')
+const quickSearch = ref('')
+const deptFilter = ref<number | null>(null)
+const statusFilter = ref<number | null>(null)
 const staffList = ref<any[]>([])
 const total = ref(0)
 const page = ref(1)
@@ -340,19 +460,23 @@ const tagOptions = ref<any[]>([])
 const staffRulesMap = ref<Record<number, SpecialRule[]>>({})
 const drawerVisible = ref(false)
 const isCreate = ref(false)
+const canEdit = computed(() => isCreate.value)
 const employeeNoLoading = ref(false)
 const formRef = ref<FormInstance>()
 
-// 特殊规则抽屉
+// ====== 统计 ======
+const statsActive = ref(0)
+const statsLeave = ref(0)
+const statsResigned = ref(0)
+
+// ====== 子抽屉状态 ======
 const specialRuleVisible = ref(false)
 const specialRuleStaffId = ref<number | null>(null)
 const specialRuleStaffName = ref('')
-
-// 账号管理抽屉
 const accountVisible = ref(false)
 const accountStaff = ref<any>(null)
 
-// 批量选择
+// ====== 选中状态 ======
 const selectedStaffIds = ref<number[]>([])
 
 const defaultForm = {
@@ -375,12 +499,33 @@ const rules: FormRules = {
   org_id: [{ required: true, message: '请选择组织', trigger: 'change' }],
 }
 
-// 搜索过滤
-const filteredStaffList = computed(() => {
-  return Array.isArray(staffList.value) ? staffList.value : []
+// ====== 分页信息 ======
+const paginationInfo = computed(() => {
+  const start = total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1
+  const end = Math.min(page.value * pageSize.value, total.value)
+  return { start, end }
 })
 
-// 状态标签
+// ====== 过滤展示列表 ======
+const displayList = computed(() => {
+  let list = [...(staffList.value || [])]
+  if (quickSearch.value) {
+    const kw = quickSearch.value.toLowerCase()
+    list = list.filter(s =>
+      s.name?.toLowerCase().includes(kw) ||
+      s.employee_no?.toLowerCase().includes(kw)
+    )
+  }
+  return list
+})
+
+// ====== 头像颜色池 ======
+const avatarColors = ['#C4B5FD', '#FF6B6B', '#FFD93D', '#10B981', '#06B6D4', '#F59E0B', '#8B5CF6']
+function avatarColor(id: number): string {
+  return avatarColors[id % avatarColors.length]
+}
+
+// ====== 状态映射 ======
 function statusLabel(status: number): string {
   const map: Record<number, string> = { 1: '在岗', 2: '请假', 3: '外派', 0: '停用' }
   return map[status] || '未知'
@@ -391,7 +536,7 @@ function statusType(status: number): string {
   return map[status] || 'info'
 }
 
-// 特殊规则描述
+// ====== 特殊规则描述 ======
 const ruleTypeMap: Record<string, string> = {
   exclude_shift: '排除班次',
   include_shift: '仅排班次',
@@ -405,7 +550,7 @@ function ruleDesc(rule: SpecialRule): string {
   return ruleTypeMap[rule.rule_type] || rule.rule_type
 }
 
-// 加载数据
+// ====== 数据加载 ======
 const systemAccounts = ref<any[]>([])
 
 async function loadStaff() {
@@ -413,16 +558,23 @@ async function loadStaff() {
   try {
     const params: any = { page: page.value, page_size: pageSize.value }
     if (keyword.value) params.keyword = keyword.value
+    if (deptFilter.value) params.org_id = deptFilter.value
+    if (statusFilter.value !== null && statusFilter.value !== undefined) params.status = statusFilter.value
     const res: any = await api.get('/staffs', { params })
     const list = Array.isArray(res) ? res : (res.items || [])
     staffList.value = list
     total.value = res.total || list.length
+    // 统计
+    statsActive.value = list.filter((s: any) => s.status === 1).length
+    statsLeave.value = list.filter((s: any) => s.status === 2).length
+    statsResigned.value = list.filter((s: any) => s.status === 0).length
     await loadAllRules()
     if (isAdmin.value) {
       await loadSystemAccounts()
     }
-  } catch (e) {
+  } catch {
     staffList.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -445,10 +597,8 @@ async function loadOrgs() {
     const res: any = await api.get('/options/organizations')
     const list = Array.isArray(res) ? res : (res.data || [])
     orgList.value = list
-    orgList.value.forEach((org: any) => {
-      orgNameMap.value[org.id] = org.name
-    })
-  } catch (e) {
+    list.forEach((org: any) => { orgNameMap.value[org.id] = org.name })
+  } catch {
     orgList.value = []
   }
 }
@@ -457,9 +607,8 @@ async function loadRoles() {
   try {
     const res: any = await api.get('/roles/options')
     const list = Array.isArray(res) ? res : (res.data || [])
-    // 只取角色类型，排除标识类型
     roleList.value = list.filter((r: any) => r.role_type === 'role')
-  } catch (e) {
+  } catch {
     roleList.value = []
   }
 }
@@ -482,14 +631,19 @@ async function loadAllRules() {
       map[rule.staff_id].push(rule)
     }
     staffRulesMap.value = map
-  } catch (e) {
+  } catch {
     staffRulesMap.value = {}
   }
 }
 
-// 搜索（防抖）
+// ====== 快速搜索（纯客户端过滤，不发请求） ======
+function handleQuickSearch() {
+  page.value = 1
+}
+
+// ====== 关键词搜索（服务端请求，防抖） ======
 let searchTimer: ReturnType<typeof setTimeout> | null = null
-function handleSearch() {
+function debounceSearch() {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     page.value = 1
@@ -497,7 +651,6 @@ function handleSearch() {
   }, 300)
 }
 
-// 分页切换
 function handlePageChange(newPage: number) {
   page.value = newPage
   loadStaff()
@@ -509,9 +662,27 @@ function handleSizeChange(newSize: number) {
   loadStaff()
 }
 
+// ====== 新增/编辑 ======
 function handleCreate() {
   isCreate.value = true
   formData.value = { ...defaultForm, employee_no: '', tag_role_ids: [] }
+  drawerVisible.value = true
+}
+
+function handleEdit(row: any) {
+  isCreate.value = false
+  formData.value = {
+    id: row.id,
+    name: row.name,
+    employee_no: row.employee_no,
+    phone: row.phone || '',
+    org_id: row.org_id,
+    status: row.status,
+    tags: row.tags || [],
+    tag_role_ids: (row.tag_roles || []).map((t: any) => t.id),
+    create_account: true,
+    must_change_password: true,
+  }
   drawerVisible.value = true
 }
 
@@ -531,113 +702,6 @@ async function onOrgChange(orgId: number | null) {
   }
 }
 
-// 表格选择
-function handleSelectionChange(rows: any[]) {
-  selectedStaffIds.value = rows.filter(r => !r.is_system_account).map(r => r.id)
-}
-
-function isRowSelectable(row: any) {
-  return !row.is_system_account
-}
-
-function tableRowClassName({ row }: { row: any }) {
-  return row.is_system_account ? 'system-account-row' : ''
-}
-
-// ========== 修改点2：单个重置密码增加admin角色二次校验 ==========
-async function handleResetSingle(row: any) {
-  // 系统账号重置密码必须是admin角色
-  if (row.is_system_account && !isAdmin.value) {
-    ElMessage.error('系统账号密码仅允许管理员重置')
-    return
-  }
-  try {
-    await ElMessageBox.confirm(
-      `确认将 "${row.name}" 的密码重置为默认密码（123456）？重置后首次登录需修改密码。`,
-      '重置密码',
-      { confirmButtonText: '确认重置', cancelButtonText: '取消', type: 'warning' }
-    )
-    let res: any
-    if (row.is_system_account) {
-      res = await request.post(`/api/staffs/reset-password-by-user/${row.user_id}`)
-    } else {
-      res = await request.post(`/api/staffs/${row.id}/reset-password`)
-    }
-    ElMessage.success(res.message || '密码已重置')
-    await loadStaff()
-    await loadSystemAccounts()
-  } catch {}
-}
-
-// ========== 修改点3：批量重置密码排除系统账号（双重保险） ==========
-async function handleBatchResetPwd() {
-  if (selectedStaffIds.value.length === 0) {
-    ElMessage.warning('请先选择要重置的人员')
-    return
-  }
-  try {
-    await ElMessageBox.confirm(
-      `确认将选中的 ${selectedStaffIds.value.length} 位人员密码重置为默认密码（123456）？`,
-      '批量重置密码',
-      { confirmButtonText: '确认重置', cancelButtonText: '取消', type: 'warning' }
-    )
-    const { data: res } = await request.post('/api/staffs/reset-passwords', { staff_ids: selectedStaffIds.value })
-    ElMessage.success(res.message || '批量重置完成')
-    selectedStaffIds.value = []
-    await loadStaff()
-    await loadSystemAccounts()
-  } catch {}
-}
-
-function handleAccount(row: any) {
-  accountStaff.value = { ...row }
-  accountVisible.value = true
-}
-
-function onAccountToggle(val: boolean) {
-  if (!val) {
-    formData.value.must_change_password = false
-  } else {
-    formData.value.must_change_password = true
-  }
-}
-
-async function refreshAccountData() {
-  await loadStaff()
-  if (accountStaff.value) {
-    const fresh = staffList.value.find((s: any) => s.id === accountStaff.value.id)
-    if (fresh) {
-      accountStaff.value = { ...fresh }
-    }
-  }
-}
-
-// 编辑
-function handleEdit(row: any) {
-  isCreate.value = false
-  formData.value = {
-    id: row.id,
-    name: row.name,
-    employee_no: row.employee_no,
-    phone: row.phone || '',
-    org_id: row.org_id,
-    status: row.status,
-    tags: row.tags || [],
-    tag_role_ids: (row.tag_roles || []).map((t: any) => t.id),
-    create_account: true,
-    must_change_password: true,
-  }
-  drawerVisible.value = true
-}
-
-// 特殊规则
-function handleSpecialRule(row: any) {
-  specialRuleStaffId.value = row.id
-  specialRuleStaffName.value = row.name
-  specialRuleVisible.value = true
-}
-
-// 保存
 async function handleSave() {
   if (!formRef.value) return
   const valid = await formRef.value.validate().catch(() => false)
@@ -672,52 +736,128 @@ async function handleSave() {
     drawerVisible.value = false
     await loadStaff()
     await loadAllRules()
-  } catch (e) {
+  } catch {
     // interceptor handles error
   } finally {
     saving.value = false
   }
 }
 
-// 切换状态
+// ====== 选中 ======
+function handleSelectionChange(rows: any[]) {
+  selectedStaffIds.value = rows.filter(r => !r.is_system_account).map(r => r.id)
+}
+
+function isRowSelectable(row: any) {
+  return !row.is_system_account
+}
+
+function tableRowClassName({ row }: { row: any }) {
+  return row.is_system_account ? 'system-account-row' : ''
+}
+
+// ====== 账号管理 ======
+function handleAccount(row: any) {
+  accountStaff.value = { ...row }
+  accountVisible.value = true
+}
+
+function onAccountToggle(val: boolean) {
+  if (!val) {
+    formData.value.must_change_password = false
+  } else {
+    formData.value.must_change_password = true
+  }
+}
+
+async function refreshAccountData() {
+  await loadStaff()
+  if (accountStaff.value) {
+    const fresh = staffList.value.find((s: any) => s.id === accountStaff.value.id)
+    if (fresh) {
+      accountStaff.value = { ...fresh }
+    }
+  }
+}
+
+// ====== 特殊规则 ======
+function handleSpecialRule(row: any) {
+  specialRuleStaffId.value = row.id
+  specialRuleStaffName.value = row.name
+  specialRuleVisible.value = true
+}
+
+// ====== 密码重置 ======
+async function handleResetSingle(row: any) {
+  if (row.is_system_account && !isAdmin.value) {
+    ElMessage.error('系统账号密码仅允许管理员重置')
+    return
+  }
+  try {
+    await confirmWarning(
+      `确认将 "${row.name}" 的密码重置为默认密码（123456）？重置后首次登录需修改密码。`,
+      '重置密码',
+    )
+    let res: any
+    if (row.is_system_account) {
+      res = await request.post(`/api/staffs/reset-password-by-user/${row.user_id}`)
+    } else {
+      res = await request.post(`/api/staffs/${row.id}/reset-password`)
+    }
+    ElMessage.success(res.message || '密码已重置')
+    await loadStaff()
+    await loadSystemAccounts()
+  } catch {
+    // cancel
+  }
+}
+
+async function handleBatchResetPwd() {
+  if (selectedStaffIds.value.length === 0) {
+    ElMessage.warning('请先选择要重置的人员')
+    return
+  }
+  try {
+    await confirmWarning(
+      `确认将选中的 ${selectedStaffIds.value.length} 位人员密码重置为默认密码（123456）？`,
+      '批量重置密码',
+    )
+    const { data: res } = await request.post('/api/staffs/reset-passwords', { staff_ids: selectedStaffIds.value })
+    ElMessage.success(res.message || '批量重置完成')
+    selectedStaffIds.value = []
+    await loadStaff()
+    await loadSystemAccounts()
+  } catch {
+    // cancel
+  }
+}
+
+// ====== 状态切换 ======
 async function handleToggleStatus(row: any) {
   const newStatus = row.status === 1 ? 0 : 1
   try {
-    await ElMessageBox({
-      title: '提示',
-      message: newStatus === 1 ? '确认启用该人员？' : '停用后该人员不参与自动排班，确认停用？',
-      showCancelButton: true,
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
+    await confirmWarning(newStatus === 1 ? '确认启用该人员？' : '停用后该人员不参与自动排班，确认停用？', '提示')
     await api.put(`/staffs/${row.id}`, { status: newStatus })
     ElMessage.success(newStatus === 1 ? '已启用' : '已停用')
     await loadStaff()
-  } catch (e) {
+  } catch {
     // cancel
   }
 }
 
-// 删除
+// ====== 删除 ======
 async function handleDelete(row: any) {
   try {
-    await ElMessageBox({
-      title: '确认删除？',
-      message: '删除后数据无法恢复，请慎重操作。',
-      showCancelButton: true,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
+    await confirmDanger('删除后数据无法恢复，请慎重操作。', '确认删除？')
     await api.delete(`/staffs/${row.id}`)
     ElMessage.success('删除成功')
     await loadStaff()
-  } catch (e) {
+  } catch {
     // cancel
   }
 }
 
+// ====== 初始化 ======
 onMounted(() => {
   loadStaff()
   loadOrgs()
@@ -727,53 +867,485 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ====== 页面容器 ====== */
 .staff-page {
-  background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
-  overflow: hidden;
+  min-height: 100vh;
+  background: #FFFDF5;
 }
 
+/* ====== 页面头部 ====== */
 .page-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #E6EAF0;
-}
-
-.page-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1F2D3D;
-}
-
-.page-content {
-  padding: 16px 24px;
-}
-
-.toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
 }
 
-.pagination-wrapper {
+.header-main {
   display: flex;
-  justify-content: flex-end;
-  padding: 16px 0;
+  align-items: center;
+  gap: 14px;
 }
 
-.toolbar-left {
+.header-icon {
+  width: 48px;
+  height: 48px;
+  background: #FF6B6B;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0px 0px #000000;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #000000;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.header-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #666666;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ====== 页面内容区 ====== */
+.page-content {
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ====== Neo 卡片通用 ====== */
+.neo-card {
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 6px 6px 0px 0px #000000;
+  transition: all 0.2s ease;
+}
+
+.neo-card:hover {
+  box-shadow: 8px 8px 0px 0px #000000;
+  transform: translateY(-1px);
+}
+
+/* ====== 搜索卡片 ====== */
+.search-card {
+  padding: 16px 20px;
+}
+
+.search-card:hover {
+  transform: none;
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+
+.search-row {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
+.search-input-wrap {
+  flex: 1;
+  min-width: 240px;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 18px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-input-wrap :deep(.el-input__wrapper) {
+  padding-left: 38px;
+  height: 52px !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  transition: all 0.1s ease;
+}
+
+.search-input-wrap :deep(.el-input__inner) {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.search-input-wrap :deep(.el-input__inner::placeholder) {
+  color: #999999;
+  font-weight: 500;
+}
+
+.search-input-wrap :deep(.el-input__wrapper:hover),
+.search-input-wrap :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px);
+  background: #FFD93D !important;
+}
+
+.neo-select {
+  width: 160px;
+}
+
+.neo-select :deep(.el-input__wrapper) {
+  height: 52px !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  transition: all 0.1s ease;
+}
+
+.neo-select :deep(.el-input__wrapper:hover),
+.neo-select :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px);
+  background: #FFD93D !important;
+}
+
+/* ====== 统计卡片网格 ====== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  padding: 16px 20px;
+}
+
+.stat-card:hover {
+  transform: none;
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stat-icon {
+  flex-shrink: 0;
+}
+
+.stat-icon-accent { color: #FF6B6B; }
+.stat-icon-success { color: #10B981; }
+.stat-icon-warning { color: #FFD93D; }
+.stat-icon-danger { color: #EF4444; }
+
+.stat-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #666666;
+  letter-spacing: 0.3px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 36px;
+  font-weight: 900;
+  color: #000000;
+  line-height: 1.1;
+}
+
+/* ====== 工具栏 ====== */
+.toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ====== 表格 ====== */
+.staff-table {
+  border-radius: 4px;
+}
+
+.staff-table :deep(.el-table__header th) {
+  background: #FFFDF5 !important;
+  border-bottom: 3px solid #000000 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.3px;
+  padding: 12px 0 !important;
+}
+
+.staff-table :deep(.el-table__body td) {
+  border-bottom: 2px solid #E6EAF0 !important;
+  padding: 10px 0 !important;
+}
+
+.staff-table :deep(.el-table__body tr:hover > td) {
+  background: #FFFDF5 !important;
+}
+
+/* 人员单元格 */
+.staff-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.staff-avatar {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000000;
+  flex-shrink: 0;
+}
+
+.staff-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.staff-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.staff-phone {
+  font-size: 12px;
+  color: #00000099;
+  font-weight: 500;
+}
+
+/* 标签组 */
+.tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.text-muted {
+  color: #999999;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+/* 账号信息 */
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* ====== 操作按钮 —— 原型 A 风格：纯图标方形 neo 按钮 ====== */
+.action-group {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* 统一图标按钮样式（所有列的操作按钮共用） */
+.neo-icon-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  font-size: 14px !important;
+  transition: all 0.1s ease !important;
+  cursor: pointer !important;
+  min-width: 0 !important;
+  line-height: 1 !important;
+}
+
+.neo-icon-btn:hover {
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px) !important;
+}
+
+.neo-icon-btn:active {
+  box-shadow: 1px 1px 0px 0px #000000 !important;
+  transform: translate(1px, 1px) !important;
+}
+
+.neo-icon-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: none !important;
+}
+
+/* 危险操作 — 红色背景 */
+.neo-icon-btn.neo-icon-danger {
+  background: #FF6B6B !important;
+  color: #000000 !important;
+}
+.neo-icon-btn.neo-icon-danger:hover {
+  background: #FF8A8A !important;
+}
+
+/* 警告操作 — 黄色背景 */
+.neo-icon-btn.neo-icon-warning {
+  background: #FFD93D !important;
+  color: #000000 !important;
+}
+.neo-icon-btn.neo-icon-warning:hover {
+  background: #FFE566 !important;
+}
+
+/* 成功操作 — 绿色背景 */
+.neo-icon-btn.neo-icon-success {
+  background: #10B981 !important;
+  color: #FFFFFF !important;
+}
+.neo-icon-btn.neo-icon-success:hover {
+  background: #34D399 !important;
+}
+
+/* tooltip 自定义样式 */
+:deep(.action-group .el-tooltip__popper) {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border-radius: 2px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 4px 8px !important;
+}
+
+:deep(.action-group .el-tooltip__popper::before) {
+  border: 2px solid #000000 !important;
+}
+
+/* ====== 分页 ====== */
+.pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pagination-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* ====== 抽屉 ====== */
+.drawer-body {
+  padding: 8px 24px;
+}
+.drawer-footer {
+  gap: 10px;
+  padding: 12px 24px;
+}
+.form-tip {
+  font-weight: 500;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* ====== 系统账号行 ====== */
 :deep(.system-account-row) {
   background-color: #fafafa !important;
 }
 
 :deep(.system-account-row:hover > td) {
   background-color: #f0f0f0 !important;
+}
+
+/* ====== 响应式 ====== */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .page-content {
+    padding: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-row {
+    flex-direction: column;
+  }
+
+  .search-input-wrap {
+    min-width: 100%;
+  }
+
+  .neo-select {
+    width: 100% !important;
+  }
 }
 </style>

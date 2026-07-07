@@ -1,17 +1,13 @@
 <template>
   <div
     class="shift-block"
-    :style="{
-      background: shift.shift_color + '18',
-      borderLeft: `3px solid ${shift.shift_color}`,
-    }"
     :class="{
       'has-conflict': shift.conflicts.length > 0,
       'shift-dragging': isShiftDragging,
       'staff-drop-over': isStaffDropOver,
       'shift-drop-over': isShiftSwapOver,
     }"
-    :draggable="(shift.status === 0 || shift.status === 2)"
+    :draggable="editable()"
     @click.stop="$emit('click', shift)"
     @dragstart="onShiftDragStart"
     @dragend="onShiftDragEnd"
@@ -19,40 +15,56 @@
     @dragleave="onDragLeave"
     @drop.prevent="onDrop"
   >
-    <!-- 领导标签 -->
-    <div v-if="shift.leaders?.length" class="leader-list">
-      <span v-for="(l, i) in shift.leaders" :key="i" class="leader-tag-item" :style="{ background: shift.shift_color }">{{ l.name }}</span>
-    </div>
-    <div v-else-if="shift.leader" class="leader-list">
-      <span class="leader-tag-item" :style="{ background: shift.shift_color }">{{ shift.leader.name }}</span>
-    </div>
-
-    <!-- 班次名称 + 时间 -->
-    <div class="shift-header">
-      <span class="shift-name" :style="{ color: shift.shift_color }">{{ shift.shift_name }}</span>
-      <span class="shift-time">{{ shift.start_time }}-{{ shift.end_time }}</span>
-    </div>
-
-    <!-- 值班人员（可拖拽调整顺序/移动班次） -->
-    <div class="shift-members">
+    <!-- 班次名称 + 时间 — 第一行 -->
+    <div class="shift-main-row">
       <span
-        v-for="(m, idx) in displayMembers"
-        :key="m.staff_id"
-        class="member-name"
-        :class="{
-          'member-draggable': shift.status === 0 || shift.status === 2,
-          'member-drop-before': dropTargetIdx === idx,
-        }"
-        :draggable="shift.status === 0 || shift.status === 2"
-        @dragstart.stop="onMemberDragStart($event, m.staff_id, idx)"
-        @dragend="onMemberDragEnd"
-        @dragover.prevent.stop="onMemberDragOver($event, idx)"
-        @dragleave="onMemberDragLeave"
-        @drop.prevent.stop="onMemberDrop($event, idx)"
-        :title="'拖拽调整人员'"
+        class="shift-tag shift-tag-main"
+        :style="{ background: shift.shift_color, color: getContrastColor(shift.shift_color) }"
       >
-        {{ m.name }}
+        {{ shift.shift_name }}
+        <span class="shift-time">{{ shift.start_time }}-{{ shift.end_time }}</span>
       </span>
+    </div>
+
+    <!-- 领导 + 组员 — 第二行混合排列，flex-wrap 自适应换行 -->
+    <div class="shift-person-row">
+      <!-- 领导 -->
+      <template v-if="shift.leaders?.length">
+        <span
+          v-for="l in leaderNames"
+          :key="'l-' + l"
+          class="shift-tag shift-tag-leader"
+          :style="{ background: shift.shift_color, color: getContrastColor(shift.shift_color) }"
+        >
+          {{ l }}
+        </span>
+      </template>
+      <template v-else-if="shift.leader">
+        <span
+          class="shift-tag shift-tag-leader"
+          :style="{ background: shift.shift_color, color: getContrastColor(shift.shift_color) }"
+        >
+          {{ shift.leader.name }}
+        </span>
+      </template>
+
+      <!-- 组员 -->
+      <template v-for="(m, idx) in displayMembers" :key="m.staff_id">
+        <span
+          class="shift-tag shift-tag-member"
+          :class="{ 'member-draggable': editable() }"
+          :draggable="editable()"
+          @dragstart.stop="onMemberDragStart($event, m.staff_id, idx)"
+          @dragend="onMemberDragEnd"
+          @dragover.prevent.stop="onMemberDragOver($event, idx)"
+          @dragleave="onMemberDragLeave"
+          @drop.prevent.stop="onMemberDrop($event, idx)"
+          :title="'拖拽调整人员'"
+          :style="{ borderColor: shift.shift_color }"
+        >
+          {{ m.name }}
+        </span>
+      </template>
       <span v-if="shift.members.length > 3" class="member-more">+{{ shift.members.length - 3 }}</span>
     </div>
 
@@ -62,7 +74,7 @@
     <div v-if="shift.status === 3" class="status-dot pending" title="待审核"></div>
 
     <!-- 冲突标记 -->
-    <el-icon v-if="shift.conflicts.length > 0" class="conflict-icon" color="#DC3545">
+    <el-icon v-if="shift.conflicts.length > 0" class="conflict-icon" color="#EF4444">
       <WarningFilled />
     </el-icon>
   </div>
@@ -86,6 +98,27 @@ const emit = defineEmits<{
 }>()
 
 const editable = () => props.shift.status === 0 || props.shift.status === 2
+
+// ---- 领导名单（合并 leaders 数组和 leader 对象） ----
+const leaderNames = computed(() => {
+  if (props.shift.leaders?.length) {
+    return props.shift.leaders.map(l => l.name)
+  }
+  if (props.shift.leader) {
+    return [props.shift.leader.name]
+  }
+  return []
+})
+
+// ---- 对比色：深色背景用白字，浅色背景用黑字 ----
+function getContrastColor(hex: string): string {
+  if (!hex) return '#000000'
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.55 ? '#000000' : '#FFFFFF'
+}
 
 // ---- 成员显示顺序（拖拽重排） ----
 const memberOrder = ref<number[] | null>(null)
@@ -159,18 +192,16 @@ function onMemberDrop(e: DragEvent, toIdx: number) {
   if (!staffId || !fromSid) return
 
   if (fromSid === props.shift.schedule_id) {
-    // 同班次内：调整显示顺序
     if (fromIdx !== toIdx) {
       reorderMembers(fromIdx, toIdx)
       emit('staffReorder', staffId, props.shift.schedule_id, fromIdx, toIdx)
     }
   } else {
-    // 跨班次：移动到目标班次
     emit('staffDrop', staffId, fromSid, props.shift.schedule_id)
   }
 }
 
-// ---- 统一接收拖放（区分班次互换 vs 人员移动） ----
+// ---- 统一接收拖放 ----
 const isStaffDropOver = ref(false)
 const isShiftSwapOver = ref(false)
 
@@ -178,14 +209,12 @@ function onDragOver(e: DragEvent) {
   if (!e.dataTransfer) return
   const types = e.dataTransfer.types
   if (types.includes('application/shift-swap-id')) {
-    // 班次互换：排除自身
     const fromId = parseInt(e.dataTransfer.getData('application/shift-swap-id') || '0')
     if (fromId === props.shift.schedule_id) return
     if (!editable()) return
     isShiftSwapOver.value = true
     e.dataTransfer.dropEffect = 'move'
   } else if (types.includes('application/staff-id')) {
-    // 人员移动：排除自身班次
     const fromSid = parseInt(e.dataTransfer.getData('application/from-schedule-id') || '0')
     if (fromSid === props.shift.schedule_id) return
     if (!editable()) return
@@ -220,18 +249,24 @@ function onDrop(e: DragEvent) {
 
 <style scoped>
 .shift-block {
-  border-radius: 3px;
-  padding: 4px 6px;
+  padding: 4px 5px;
   margin-bottom: 3px;
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.1s ease;
   position: relative;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  background: #FFFFFF;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .shift-block:hover {
-  filter: brightness(0.95);
-  transform: scale(1.01);
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
 }
 
 .shift-block.shift-dragging {
@@ -239,15 +274,15 @@ function onDrop(e: DragEvent) {
 }
 
 .shift-block.staff-drop-over {
-  outline: 2px dashed #0A63D8;
-  outline-offset: -1px;
-  background: #ECF5FF !important;
+  border: 2px dashed #3B82F6;
+  background: #DBEAFE !important;
+  box-shadow: 3px 3px 0px 0px #3B82F6;
 }
 
 .shift-block.shift-drop-over {
-  outline: 2px dashed #28A745;
-  outline-offset: -1px;
-  background: #F0FDF4 !important;
+  border: 2px dashed #10B981;
+  background: #D1FAE5 !important;
+  box-shadow: 3px 3px 0px 0px #10B981;
 }
 
 .shift-block[draggable="true"] {
@@ -259,108 +294,191 @@ function onDrop(e: DragEvent) {
 }
 
 .shift-block.has-conflict {
-  border: 1px solid #DC3545;
+  border: 2px solid #EF4444;
+  box-shadow: 2px 2px 0px 0px #EF4444;
 }
 
-.leader-list {
+/* ---- 班次名行 ---- */
+.shift-main-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ---- 人员行（领导+组员混排，flex-wrap 自适应换行） ---- */
+.shift-person-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
-}
-.leader-tag-item {
-  color: #FFFFFF;
-  padding: 0 5px;
-  border-radius: 2px;
-  font-size: 10px;
-  line-height: 16px;
-}
-
-.shift-header {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  margin-bottom: 2px;
+  gap: 2px;
+  min-width: 0;
 }
 
-.shift-name {
-  font-weight: 600;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shift-time {
+/* ---- 原型风格紧凑标签 ---- */
+.shift-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
   font-size: 10px;
-  color: #909399;
+  font-weight: 700;
+  line-height: 1.4;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: all 0.1s ease;
   flex-shrink: 0;
 }
 
-.shift-members {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
+.shift-tag:hover {
+  box-shadow: 1px 1px 0px 0px #000000;
+  transform: translate(-1px, -1px);
 }
 
-.member-name {
-  font-size: 11px;
-  color: #556173;
-  background: rgba(255, 255, 255, 0.6);
-  padding: 0 4px;
-  border-radius: 2px;
-  line-height: 16px;
+.shift-tag-leader {
+  color: #FFFFFF;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
 }
 
-.member-name.member-draggable {
+.shift-tag-member {
+  background: #FFFFFF;
+  color: #333333;
+  font-weight: 600;
+}
+
+.shift-tag-main {
+  color: #FFFFFF;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.shift-tag .shift-time {
+  font-size: 9px;
+  color: rgba(255,255,255,0.8);
+  margin-left: 3px;
+  font-weight: 600;
+}
+
+.shift-tag-member .shift-time {
+  color: #666666;
+}
+
+/* ---- 成员拖拽 ---- */
+.member-draggable {
   cursor: grab;
 }
 
-.member-name.member-draggable:active {
+.member-draggable:active {
   cursor: grabbing;
 }
 
-.member-name.member-draggable:hover {
-  background: rgba(10, 99, 216, 0.15);
-  color: #0A63D8;
+.member-draggable:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-color: #3B82F6 !important;
+  box-shadow: 1px 1px 0px 0px rgba(59, 130, 246, 0.3);
+  transform: translate(-1px, -1px);
 }
 
-.member-name.member-drop-before {
-  border-left: 2px solid #0A63D8;
-  padding-left: 2px;
-}
-
+/* ---- "+N 更多" ---- */
 .member-more {
   font-size: 10px;
-  color: #909399;
+  color: #999999;
   line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
+/* ---- 状态标记 ---- */
 .status-dot {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  border: 1px solid rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+
+.status-dot:hover {
+  transform: scale(1.3);
 }
 
 .status-dot.published {
-  background: #28A745;
+  background: #10B981;
 }
 
 .status-dot.recalled {
-  background: #909399;
+  background: #6B7280;
 }
 
 .status-dot.pending {
-  background: #E6A23C;
+  background: #FFD93D;
 }
 
 .conflict-icon {
   position: absolute;
-  bottom: 3px;
-  right: 3px;
-  font-size: 14px;
+  bottom: 1px;
+  right: 1px;
+  font-size: 11px;
+}
+
+/* ============================================
+   移动端适配
+   ============================================ */
+
+@media (max-width: 768px) {
+  .shift-block {
+    padding: 3px 4px;
+    margin-bottom: 2px;
+    font-size: 10px;
+  }
+
+  .shift-tag {
+    font-size: 9px;
+    padding: 1px 3px;
+  }
+
+  .shift-tag .shift-time {
+    font-size: 8px;
+  }
+
+  .shift-leader-row,
+  .shift-main-row,
+  .shift-member-row {
+    gap: 2px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .conflict-icon {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shift-block {
+    padding: 2px 3px;
+    margin-bottom: 2px;
+    font-size: 9px;
+  }
+
+  .shift-tag {
+    font-size: 8px;
+    padding: 0px 3px;
+  }
+
+  .shift-tag .shift-time {
+    font-size: 7px;
+  }
+
+  .member-more {
+    font-size: 9px;
+  }
 }
 </style>

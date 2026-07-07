@@ -20,16 +20,23 @@ router = APIRouter(tags=["消息管理"])
 @router.get("/messages", summary="获取消息列表")
 async def get_messages(
     msg_type: str | None = Query(None, description="消息类型筛选"),
-    is_read: bool | None = Query(None, description="已读状态筛选"),
+    is_read: str | None = Query(None, description="已读状态筛选: true/false"),
     keyword: str | None = Query(None, description="关键词搜索"),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     current_user: SysUser = Depends(require_permissions("message", "read")),
 ):
+    # 手动解析 is_read 字符串，避免 FastAPI Query(bool) 对 "false" 的错误解析
+    # FastAPI Query(bool) 底层调用 Python bool("false") → True（非空字符串为真）
+    # 所以必须用字符串接收，再手动判断
+    parsed_is_read: bool | None = None
+    if is_read is not None:
+        low = is_read.lower()
+        parsed_is_read = low == 'true' or low == '1' or low == 'yes' or low == 't'
     result = await MessageService.get_messages(
         db, receiver_id=current_user.id, msg_type=msg_type,
-        is_read=is_read, keyword=keyword, page=page, size=size,
+        is_read=parsed_is_read, keyword=keyword, page=page, size=size,
     )
     return {"code": 200, "data": result, "message": "success"}
 

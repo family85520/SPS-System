@@ -1,3 +1,5 @@
+/* Neo-brutalism global styles — inspired by GemDesign smart scheduling system */
+
 * {
   margin: 0;
   padding: 0;
@@ -9,16 +11,2302 @@ html, body, #app {
   width: 100%;
 }
 
+/* Import Space Grotesk for that bold neo-brutalist feel */
+/* @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&display=swap'); */
+
+body {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #FFFDF5;
+  color: #000000;
+  font-weight: 500;
+}
+
+/* Unified font weight tokens — use these everywhere instead of inline font-weight */
+.font-weight-regular    { font-weight: 500; }
+.font-weight-medium     { font-weight: 600; }
+.font-weight-bold       { font-weight: 700; }
+.font-weight-extrabold  { font-weight: 900; }
+
+/* Scrollbar — chunky, brutal */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c0c4cc;
-  border-radius: 3px;
+  background: #000000;
+  border-radius: 0;
+  border: 2px solid #FFFDF5;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #FFFDF5;
+}
+
+/* Global Element Plus overrides for neo-brutalism */
+
+/* Buttons */
+.el-button--primary {
+  background: #3B82F6 !important;
+  border-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.el-button--primary:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+.el-button--primary:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+.el-button--success {
+  background: #10B981 !important;
+  border-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.el-button--success:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+
+.el-button--warning {
+  background: #FFD93D !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.el-button--warning:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+
+.el-button--danger {
+  background: #EF4444 !important;
+  border-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.el-button--danger:hover {
+  background: #DC2626 !important;
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+
+.el-button--info {
+  background: #FFD93D !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+
+/* Cards */
+.el-card {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+.el-card.is-always-shadow,
+.el-card.is-hover-shadow:focus,
+.el-card.is-hover-shadow:active {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px) !important;
+  transition: all 0.15s ease !important;
+}
+.el-card__header {
+  border-bottom: 3px solid #000000 !important;
+  background: #FFFDF5 !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+/* Tags */
+.el-tag {
+  border: 2px solid #000000 !important;
+  border-radius: 2px !important;
+  font-weight: 700 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+.el-tag--success {
+  background: #10B981 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+.el-tag--warning {
+  background: #FFD93D !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+.el-tag--danger {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+.el-tag--info {
+  background: #F5F5F5 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+/* Inputs */
+.el-input__wrapper {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  padding: 4px 12px !important;
+  transition: all 0.1s ease !important;
+}
+.el-input__wrapper:hover {
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+}
+.el-input__wrapper.is-focus {
+  box-shadow: 4px 4px 0px 0px #3B82F6 !important;
+  border-color: #000000 !important;
+}
+.el-input__inner {
+  font-weight: 600 !important;
+  color: #000000 !important;
+}
+.el-input__inner::placeholder {
+  color: #999999 !important;
+  font-weight: 400 !important;
+}
+
+.el-textarea__inner {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  padding: 8px 12px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  transition: all 0.1s ease !important;
+}
+.el-textarea__inner:focus {
+  box-shadow: 4px 4px 0px 0px #3B82F6 !important;
+}
+
+/* Select dropdown */
+.el-select-dropdown__item {
+  font-weight: 600 !important;
+  border-bottom: 1px solid #E6EAF0 !important;
+}
+.el-select-dropdown__item:hover {
+  background: #FFFDF5 !important;
+}
+.el-select-dropdown__item.selected {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+/* Table */
+.el-table {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+.el-table__header-wrapper th {
+  background: #FFFDF5 !important;
+  border-bottom: 3px solid #000000 !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+.el-table__body-wrapper tbody tr:hover > td {
+  background: #FFFDF5 !important;
+}
+.el-table__body-wrapper td {
+  border-bottom: 2px solid #E6EAF0 !important;
+  font-weight: 500 !important;
+  color: #000000 !important;
+}
+.el-table--border {
+  border: 3px solid #000000 !important;
+}
+.el-table th.el-table__cell,
+.el-table td.el-table__cell {
+  border-color: #E6EAF0 !important;
+}
+
+/* Dialog */
+.el-dialog {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 8px 8px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+.el-dialog__header {
+  border-bottom: 3px solid #000000 !important;
+  background: #FFFDF5 !important;
+}
+.el-dialog__title {
+  font-weight: 900 !important;
+  color: #000000 !important;
+}
+.el-dialog__body {
+  color: #000000 !important;
+}
+
+/* ============================================
+   ElMessageBox override — neo-brutalism confirm dialog
+   Matches prototype shift_setting_page delete modal
+   Icon types: warning / error / success / info
+   ============================================ */
+
+.el-message-box {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 8px 8px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  padding: 0 !important;
+}
+
+.el-message-box__header {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.el-message-box__header .el-message-box__title {
+  display: block !important;
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  color: #000000 !important;
+  letter-spacing: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+}
+
+.el-message-box__content {
+  padding: 28px 28px 24px !important;
+}
+
+.el-message-box__container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+/* ====== 图标容器统一样式 ====== */
+.el-message-box__icon {
+  margin-bottom: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 隐藏 Element Plus 默认 SVG 图标 */
+.el-message-box__icon svg {
+  display: none !important;
+}
+
+.el-message-box__icon .el-message-box__status {
+  width: 80px !important;
+  height: 80px !important;
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* ====== warning — 红色方块 + ⚠ ====== */
+.el-message-box__icon--warning .el-message-box__status {
+  background: #EF4444 !important;
+}
+.el-message-box__icon--warning .el-message-box__status::before {
+  content: '⚠';
+  font-size: 42px !important;
+  color: #FFFFFF !important;
+  line-height: 1 !important;
+}
+
+/* ====== error — 红色方块 + ✕ ====== */
+.el-message-box__icon--error .el-message-box__status {
+  background: #EF4444 !important;
+}
+.el-message-box__icon--error .el-message-box__status::before {
+  content: '✕';
+  font-size: 42px !important;
+  color: #FFFFFF !important;
+  line-height: 1 !important;
+}
+
+/* ====== success — 绿色方块 + ✓ ====== */
+.el-message-box__icon--success .el-message-box__status {
+  background: #10B981 !important;
+}
+.el-message-box__icon--success .el-message-box__status::before {
+  content: '✓';
+  font-size: 44px !important;
+  color: #FFFFFF !important;
+  line-height: 1 !important;
+}
+
+/* ====== info — 蓝色方块 + ℹ ====== */
+.el-message-box__icon--info .el-message-box__status {
+  background: #3B82F6 !important;
+}
+.el-message-box__icon--info .el-message-box__status::before {
+  content: 'ℹ';
+  font-size: 42px !important;
+  color: #FFFFFF !important;
+  line-height: 1 !important;
+}
+
+/* ====== 消息文本 ====== */
+.el-message-box__message {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  line-height: 1.6 !important;
+  padding: 0 !important;
+  margin-top: 4px !important;
+}
+
+/* ====== 按钮区域 ====== */
+.el-message-box__btns {
+  padding: 0 28px 24px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 12px !important;
+}
+
+.el-message-box__btns .el-button {
+  min-width: 100px !important;
+  height: 42px !important;
+  padding: 0 24px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  transition: all 0.1s ease !important;
+}
+
+.el-message-box__btns .el-button:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+
+.el-message-box__btns .el-button:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* 取消按钮 — 白色 */
+.el-message-box__btns .el-button--default {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+}
+.el-message-box__btns .el-button--default:hover {
+  background: #FFFDF5 !important;
+}
+
+/* 确认按钮 — 红色 */
+.el-message-box__btns .el-button--danger {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+}
+.el-message-box__btns .el-button--danger:hover {
+  background: #DC2626 !important;
+}
+
+/* ElMessageBox overlay mask */
+.el-overlay {
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+/* ============================================
+   ElMessage override — neo-brutalism toast
+   Types: success / error / warning / info
+   ============================================ */
+
+.el-message {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  padding: 14px 20px !important;
+  min-width: 280px !important;
+  font-weight: 600 !important;
+}
+
+/* 成功 — 绿色系 */
+.el-message--success {
+  background: #D1FAE5 !important;
+  border-color: #10B981 !important;
+}
+.el-message--success .el-message__content {
+  color: #047857 !important;
+}
+
+/* 错误 — 红色系 */
+.el-message--error,
+.el-message--danger {
+  background: #FEE2E2 !important;
+  border-color: #EF4444 !important;
+}
+.el-message--error .el-message__content,
+.el-message--danger .el-message__content {
+  color: #DC2626 !important;
+}
+
+/* 警告 — 黄色系 */
+.el-message--warning {
+  background: #FEF3C7 !important;
+  border-color: #F59E0B !important;
+}
+.el-message--warning .el-message__content {
+  color: #92400E !important;
+}
+
+/* 信息 — 蓝色系 */
+.el-message--info {
+  background: #DBEAFE !important;
+  border-color: #3B82F6 !important;
+}
+.el-message--info .el-message__content {
+  color: #1D4ED8 !important;
+}
+
+/* 关闭按钮 */
+.el-message__closeBtn {
+  border: 2px solid #000000 !important;
+  border-radius: 2px !important;
+  color: #666666 !important;
+  font-size: 14px !important;
+  padding: 2px !important;
+}
+.el-message__closeBtn:hover {
+  color: #000000 !important;
+  background: #FFFDF5 !important;
+}
+
+/* Drawer */
+.el-drawer {
+  border: 3px solid #000000 !important;
+  border-radius: 0 !important;
+  box-shadow: 8px 0px 0px 0px #000000 !important;
+}
+.el-drawer__header {
+  border-bottom: 3px solid #000000 !important;
+  font-weight: 900 !important;
+  color: #000000 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Pagination */
+.el-pagination .el-pager li {
+  background: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transition: all 0.1s ease !important;
+}
+.el-pagination .el-pager li:hover {
+  background: #FFD93D !important;
+  transform: translate(-1px, -1px) !important;
+}
+.el-pagination .el-pager li.is-active {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+}
+
+/* Switch */
+.el-switch__core {
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+/* Radio */
+.el-radio-button__inner {
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+.el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  box-shadow: -2px 0px 0px 0px #000000 !important;
+}
+
+/* Checkbox */
+.el-checkbox__inner {
+  border: 2px solid #000000 !important;
+  border-radius: 2px !important;
+  box-shadow: 2px 2px 0px 0px #000000 inset !important;
+}
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  background: #3B82F6 !important;
+  border-color: #000000 !important;
+}
+.el-checkbox__inner::after {
+  border-color: #FFFFFF !important;
+}
+
+/* Badge */
+.el-badge__content {
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+}
+
+/* Tabs */
+.el-tabs__item {
+  font-weight: 700 !important;
+  color: #000000 !important;
+  transition: all 0.15s ease !important;
+}
+.el-tabs__item.is-active {
+  color: #3B82F6 !important;
+}
+.el-tabs__active-bar {
+  background: #3B82F6 !important;
+  height: 3px !important;
+}
+.el-tabs__nav-wrap::after {
+  background: #000000 !important;
+  height: 3px !important;
+}
+
+/* Tree */
+.el-tree-node__content:hover {
+  background: #FFFDF5 !important;
+}
+.el-tree-node.is-current > .el-tree-node__content {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  border-radius: 4px !important;
+}
+
+/* Form */
+.el-form-item__label {
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+/* Divider */
+.el-divider--horizontal {
+  border-top: 3px solid #000000 !important;
+}
+.el-divider__text {
+  background: #FFFFFF !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+/* Loading overlay */
+.el-loading-spinner .circular {
+  stroke: #3B82F6 !important;
+}
+.el-loading-spinner .path {
+  stroke: #000000 !important;
+}
+
+/* Statistic */
+.el-statistic__head {
+  color: #000000 !important;
+}
+.el-statistic .el-statistic__content-value {
+  font-weight: 900 !important;
+  color: #000000 !important;
+}
+
+/* Alert */
+.el-alert {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+}
+.el-alert--info {
+  background: #FFFDF5 !important;
+  color: #000000 !important;
+}
+
+/* Color picker */
+.el-color-picker__trigger {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  padding: 3px !important;
+}
+
+/* Empty state */
+.el-empty__description {
+  color: #999999 !important;
+  font-weight: 600 !important;
+}
+
+/* Popover / Tooltip */
+.el-popover,
+.el-tooltip__popper {
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  color: #000000 !important;
+}
+.el-tooltip__popper[data-theme='dark'] {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+}
+.el-tooltip__popper [class^='el-tooltip__popper--arrow']:before {
+  border: 2px solid #000000 !important;
+}
+
+/* Cascader */
+.el-cascader__search-node:hover {
+  background: #FFFDF5 !important;
+}
+
+/* Date picker */
+.el-picker-panel {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+.el-picker-panel__body .el-date-picker__header-label,
+.el-picker-panel__body .el-month-table .el-date-table__current span,
+.el-picker-panel__body .el-date-picker__header-label,
+.el-date-table td.current span {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+/* Transfer */
+.el-transfer-panel {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+}
+.el-transfer-panel__body {
+  min-height: 200px;
+}
+
+/* Steps */
+.el-step__head.is-finish {
+  color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+.el-step__line {
+  background: #000000 !important;
+}
+
+/* Timeline */
+.el-timeline-item__node.is-success {
+  background: #10B981 !important;
+  border: 3px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+/* Number input */
+.el-input-number .el-input__wrapper {
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border-radius: 4px !important;
+}
+
+/* Progress */
+.el-progress__text {
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+/* Tree select */
+.el-tree-select .el-select-dropdown__item.selected {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+/* ============================================
+   Unified Button Utilities (Neo-brutalism)
+   Use these instead of inline type/color styles
+   ============================================ */
+
+/* Primary action buttons (save, submit, create, confirm) */
+.btn-neo-primary {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.btn-neo-primary:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+.btn-neo-primary:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* Danger/destructive (delete, reject, refuse) */
+.btn-neo-danger {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.btn-neo-danger:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+.btn-neo-danger:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* Warning (cancel, withdraw, reset) */
+.btn-neo-warning {
+  background: #FFD93D !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.btn-neo-warning:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+.btn-neo-warning:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* Success (approve, confirm, create-child) */
+.btn-neo-success {
+  background: #10B981 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.btn-neo-success:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+.btn-neo-success:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* Info/secondary (export, view, add) */
+.btn-neo-info {
+  background: #06B6D4 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.btn-neo-info:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+.btn-neo-info:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* Small variant — used in toolbars and headers */
+.btn-neo-sm {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+}
+
+/* Ghost/plain — no fill, just border */
+.btn-neo-ghost {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.btn-neo-ghost:hover {
+  background: #FFFDF5 !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px) !important;
+}
+.btn-neo-ghost:active {
+  box-shadow: 1px 1px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* Small button size override — applied via btn-neo-sm alongside a color class */
+.el-button.btn-neo-sm {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+}
+
+/* Button group with neo style */
+.el-button-group.btn-neo-group {
+  display: inline-flex !important;
+}
+.el-button-group.btn-neo-group .el-button {
+  border-radius: 0 !important;
+}
+.el-button-group.btn-neo-group .el-button:first-child {
+  border-radius: 4px 0 0 4px !important;
+}
+.el-button-group.btn-neo-group .el-button:last-child {
+  border-radius: 0 4px 4px 0 !important;
+}
+.el-button-group.btn-neo-group .el-button + .el-button {
+  margin-left: 0 !important;
+}
+
+/* Accent (yellow highlight) button */
+.btn-neo-accent {
+  background: #FFD93D !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+.btn-neo-accent:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+.btn-neo-accent:active {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* ============================================
+   Shift Template page overrides (scoped to .shift-template-page)
+   ============================================ */
+
+/* Danger buttons */
+.shift-template-page .el-button.neo-btn--danger {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+
+.shift-template-page .el-button.neo-btn--danger:hover {
+  background: #DC2626 !important;
+}
+
+/* Neo button base — scoped can't target sibling elements */
+.shift-template-page .neo-btn {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+  background: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+.shift-template-page .neo-btn:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  transform: translate(-2px, -2px) !important;
+}
+
+.shift-template-page .neo-btn:active {
+  box-shadow: 1px 1px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+.shift-template-page .neo-btn--primary {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+.shift-template-page .neo-btn--primary:hover {
+  background: #2563EB !important;
+}
+
+/* Day selector buttons — completely custom, no EP interference */
+.shift-template-page .day-selector {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.shift-template-page .day-btn-item {
+  min-width: 44px;
+  height: 40px;
+  padding: 0 14px;
+  line-height: 40px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #000000;
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px 0px #000000;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.shift-template-page .day-btn-item:hover:not(:disabled) {
+  box-shadow: 3px 3px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.shift-template-page .day-btn-item:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+
+.shift-template-page .day-btn-item--active {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+  box-shadow: -2px 0px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+.shift-template-page .day-btn-item:disabled {
+  background: #F5F5F0 !important;
+  color: #999999 !important;
+  box-shadow: 1px 1px 0px 0px #000000 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.shift-template-page .day-btn-item:disabled.day-btn-item--active {
+  background: #93C5FD !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+  transform: translate(2px, 2px) !important;
+}
+
+/* Neo switch inline — custom component, no EP (global) */
+.neo-switch-inline {
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0px 0px #000000;
+  background: #F5F5F0;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.neo-switch-inline:hover {
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.neo-switch-inline.is-checked {
+  background: #3B82F6;
+  border-color: #000000;
+  box-shadow: -3px 3px 0px 0px #000000;
+}
+
+.neo-switch-inline .neo-switch-knob {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  box-shadow: 2px 2px 0px 0px #000000;
+  background: #FFFFFF;
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.1s ease;
+}
+
+.neo-switch-inline.is-checked .neo-switch-knob {
+  left: calc(100% - 17px);
+  background: #FFFFFF;
+  border-color: #000000;
+}
+
+.neo-switch-inline.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Neo switch inline — scoped to shift-template-page (legacy, keeps backward compat) */
+.shift-template-page .neo-switch-inline {
+  /* inherits global styles above */
+}
+
+/* ================================================================
+   Neo input — global shared styles (prototype style)
+   ================================================================ */
+
+/* Base input / input-number */
+.neo-input .el-input__wrapper:not(.el-time-select__wrapper),
+.neo-input .el-input__inner {
+  height: 56px !important;
+  min-height: 56px !important;
+  padding: 0 14px !important;
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+
+.neo-input .el-input__wrapper:not(.el-time-select__wrapper):hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+}
+
+.neo-input.el-input.is-focus .el-input__wrapper:not(.el-time-select__wrapper),
+.neo-input.el-input:focus-within .el-input__wrapper:not(.el-time-select__wrapper) {
+  background: #FFD93D !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  border: 4px solid #000000 !important;
+}
+
+.neo-input .el-input__inner {
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+.neo-input .el-input__inner::placeholder {
+  color: #999999 !important;
+  font-weight: 500 !important;
+}
+
+/* Disabled */
+.neo-input .is-disabled .el-input__wrapper:not(.el-time-select__wrapper),
+.neo-input .el-input__wrapper.is-disabled:not(.el-time-select__wrapper) {
+  background: #F5F5F0 !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  cursor: not-allowed;
+}
+
+/* Input number adjustments */
+.neo-input .el-input-number__wrapper {
+  padding: 0 8px !important;
+  height: 56px !important;
+  min-height: 56px !important;
+}
+
+.neo-input .el-input-number__decrease,
+.neo-input .el-input-number__increase {
+  border: 2px solid #000000 !important;
+  background: #FFFDF5 !important;
+  font-weight: 700 !important;
+}
+
+/* Select */
+.neo-input .el-select {
+  width: 100%;
+}
+
+.neo-input .el-select__wrapper {
+  height: 56px !important;
+  min-height: 56px !important;
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+
+.neo-input .el-select__wrapper:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+}
+
+.neo-input .el-select__wrapper.is-focused {
+  background: #FFD93D !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+}
+
+.neo-input .el-select__selected-item {
+  font-weight: 600;
+  border: 1px solid #000000;
+  border-radius: 2px;
+  background: #FFFDF5;
+}
+
+/* Time select — root element has both neo-input and el-time-select classes */
+.neo-input.el-time-select .el-input__wrapper {
+  height: 56px !important;
+  min-height: 56px !important;
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+
+.neo-input.el-time-select .el-input__wrapper:hover {
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+}
+
+.neo-input.el-time-select .el-input__wrapper.is-focus {
+  background: #FFD93D !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+}
+
+/* Form tip — prototype style */
+.form-tip {
+  font-size: 12px;
+  color: #666666;
+  margin-top: 4px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* Drawer close button — hide default EP one completely */
+.shift-template-page .shift-drawer .el-drawer__close-btn {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  pointer-events: none !important;
+}
+
+.shift-template-page .shift-drawer .el-drawer__header {
+  border-bottom: 3px solid #000000 !important;
+  background: #FFFDF5 !important;
+  padding: 16px 24px !important;
+  margin-bottom: 0 !important;
+  position: relative !important;
+}
+
+.shift-template-page .shift-drawer .el-drawer {
+  border: 3px solid #000000 !important;
+  border-radius: 0 !important;
+  box-shadow: 8px 0px 0px 0px #000000 !important;
+}
+
+.shift-template-page .shift-drawer .el-drawer__body {
+  background: #FFFFFF !important;
+  padding: 20px 24px !important;
+}
+
+/* ===================================================================
+   Shared component styles — derived from GemDesign prototype
+   All pages reference these classes instead of defining their own.
+   =================================================================== */
+
+/* ---- 2.1 Drag Upload Zone ---- */
+.drag-upload-zone {
+  border: 4px dashed #000000;
+  border-radius: 4px;
+  background: #FFFDF5;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.drag-upload-zone:hover {
+  background: #FFD93D;
+  border-style: solid;
+}
+.drag-upload-zone__icon {
+  font-size: 48px;
+  color: #000000;
+}
+.drag-upload-zone__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000000;
+}
+.drag-upload-zone__hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+}
+
+/* ---- 2.2 Alert Card ---- */
+.alert-card {
+  border: 4px solid #000000;
+  border-radius: 4px;
+  background: #FFD93D;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.alert-card--danger {
+  background: #FEE2E2;
+  border-color: #EF4444;
+}
+.alert-card--info {
+  background: #DBEAFE;
+  border-color: #3B82F6;
+}
+.alert-card__icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.alert-card__content {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.5;
+}
+
+/* ---- 2.3 Progress Bar ---- */
+.progress-bar {
+  width: 100%;
+  height: 24px;
+  background: #FFFDF5;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar__fill {
+  height: 100%;
+  background: #FFD93D;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.progress-bar__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+.progress-bar__filename {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+}
+.progress-bar__status {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+}
+
+/* ---- 2.4 Action Card Grid ---- */
+.action-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.action-card {
+  border: 4px solid #000000;
+  border-radius: 4px;
+  background: #FFFFFF;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.action-card:hover {
+  background: #FFFDF5;
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translateY(-2px);
+}
+.action-card__icon-wrap {
+  width: 64px;
+  height: 64px;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  transition: transform 0.1s ease;
+}
+.action-card:hover .action-card__icon-wrap {
+  transform: rotate(3deg);
+}
+.action-card__icon-wrap--accent {
+  background: #FF6B6B;
+  color: #FFFFFF;
+}
+.action-card__icon-wrap--yellow {
+  background: #FFD93D;
+  color: #000000;
+}
+.action-card__icon-wrap--purple {
+  background: #C4B5FD;
+  color: #000000;
+}
+.action-card__icon-wrap--black {
+  background: #000000;
+  color: #FFFFFF;
+}
+.action-card__title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #000000;
+}
+.action-card__desc {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666666;
+  line-height: 1.4;
+}
+.action-card__btn {
+  margin-top: auto;
+}
+
+/* ---- 2.5 Radio Card ---- */
+.radio-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.radio-card {
+  border: 3px solid #000000;
+  border-radius: 4px;
+  background: #FFFFFF;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.1s ease;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px 0px #000000;
+}
+.radio-card:hover {
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+.radio-card:has(input:checked),
+.radio-card--active {
+  background: #FFFDF5;
+  border-color: #3B82F6;
+  box-shadow: 4px 4px 0px 0px #3B82F6;
+}
+.radio-card input[type="radio"] {
+  width: 24px;
+  height: 24px;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  accent-color: #3B82F6;
+  flex-shrink: 0;
+}
+.radio-card__content {
+  flex: 1;
+}
+.radio-card__title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #000000;
+}
+.radio-card__desc {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ---- 2.6 Delete Confirm ---- */
+.delete-confirm-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+.delete-confirm__icon {
+  width: 80px;
+  height: 80px;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  background: #EF4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: #FFFFFF;
+  box-shadow: 4px 4px 0px 0px #000000;
+}
+.delete-confirm__title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #000000;
+}
+.delete-confirm__message {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+  line-height: 1.6;
+  max-width: 380px;
+}
+
+/* ---- 2.7 File Upload Area ---- */
+.file-upload-area {
+  border: 4px dashed #000000;
+  border-radius: 4px;
+  background: #FFFDF5;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+.file-upload-area:hover {
+  background: #FFD93D;
+  border-style: solid;
+}
+.file-upload-area__icon {
+  font-size: 40px;
+  color: #000000;
+}
+.file-upload-area__text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+}
+.file-upload-area__hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+}
+
+/* ============================================================
+   3. Shared Component Styles (from Dashboard & ShiftTemplate)
+   ============================================================ */
+
+/* ---- 3.1 Neo Card (enhanced hover version) ---- */
+.neo-card {
+  background: #FFFFFF;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 8px 8px 0px 0px #000000;
+  transition: all 0.2s ease;
+  overflow: visible;
+}
+.neo-card:hover {
+  box-shadow: 12px 12px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+}
+
+/* ---- 3.2 Card Header ---- */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 4px solid #000000;
+  background: #FFFDF5;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: #000000;
+  margin: 0;
+}
+.card-date {
+  font-size: 12px;
+  color: #666666;
+  font-weight: 600;
+}
+
+/* ---- 3.3 Stat Cards ---- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.stat-card {
+  position: relative;
+  overflow: visible;
+}
+.stat-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  transition: width 0.25s ease;
+}
+.stat-card:hover .stat-accent-bar {
+  width: 8px;
+}
+.stat-card-blue .stat-accent-bar    { background: #3B82F6; }
+.stat-card-green .stat-accent-bar   { background: #10B981; }
+.stat-card-red .stat-accent-bar     { background: #EF4444; }
+.stat-card-purple .stat-accent-bar  { background: #8B5CF6; }
+
+.stat-card-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  position: relative;
+}
+.stat-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 3px 0px 0px #000000;
+  flex-shrink: 0;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.stat-card:hover .stat-icon-wrap {
+  transform: translateY(-3px) rotate(-3deg);
+  box-shadow: 5px 5px 0px 0px #000000;
+}
+.stat-card-blue .stat-icon-wrap    { background: #DBEAFE; color: #1D4ED8; }
+.stat-card-green .stat-icon-wrap   { background: #D1FAE5; color: #047857; }
+.stat-card-red .stat-icon-wrap     { background: #FEE2E2; color: #DC2626; }
+.stat-card-purple .stat-icon-wrap  { background: #EDE9FE; color: #6D28D9; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.stat-label-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #666666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-big-number {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: #000000;
+  transition: transform 0.2s ease;
+  display: block;
+  transform-origin: left;
+}
+.stat-card:hover .stat-big-number {
+  transform: scale(1.06);
+}
+.stat-urgent-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: #EF4444;
+  border: 2px solid #000000;
+  padding: 2px 8px;
+  border-radius: 2px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* ---- 3.4 Page Toolbar ---- */
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+  flex-wrap: nowrap;
+}
+.page-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #000000;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.search-box {
+  position: relative;
+  width: 280px;
+  flex-shrink: 0;
+}
+.search-box :deep(.el-input__wrapper) {
+  padding-left: 36px;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ---- 3.5 Card Grid ---- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* ---- 3.6 Data Card ---- */
+.data-card {
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.data-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 7px 7px 0px 0px #000000;
+}
+.data-card--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.data-card:hover.data-card--disabled {
+  transform: none;
+  box-shadow: 4px 4px 0px 0px #000000;
+}
+.data-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.data-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.color-swatch {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.data-card-name {
+  font-size: 18px;
+  font-weight: 900;
+  color: #000000;
+  margin: 0;
+}
+.data-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.data-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #333;
+}
+.data-detail-icon {
+  font-size: 16px;
+  color: #555;
+  flex-shrink: 0;
+}
+.detail-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+}
+.data-card-footer {
+  border-top: 3px solid #000000;
+  padding-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+/* ---- 3.7 Neo Badge ---- */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 2px 2px 0px 0px #000000;
+  color: #FFFFFF;
+  background: #EF4444;
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+.neo-badge--active {
+  background: #3B82F6;
+  color: #FFFFFF;
+}
+.neo-badge--inactive {
+  background: #FFD93D;
+  color: #000000;
+}
+.neo-badge--red {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+
+/* ---- 3.8 Notice Card ---- */
+.notice-card {
+  border: 4px solid #000000;
+  border-radius: 4px;
+  padding: 14px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.notice-card--clickable {
+  cursor: pointer;
+}
+.notice-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: #000000;
+  transition: width 0.2s ease;
+}
+.notice-card:hover {
+  box-shadow: 7px 7px 0px 0px #000000;
+  transform: translateX(-3px);
+}
+.notice-card:hover::before {
+  width: 6px;
+}
+.notice-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.notice-title-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+}
+.notice-time {
+  font-size: 11px;
+  font-weight: 700;
+  color: #666666;
+  text-transform: uppercase;
+}
+.notice-desc {
+  font-size: 13px;
+  color: #333333;
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* ---- 3.9 Action Grid (Quick Actions) ---- */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+  padding: 20px;
+}
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.action-item:hover {
+  background: #FFFDF5;
+  border-color: #000000;
+  box-shadow: 3px 3px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+.action-item:active {
+  transform: translate(0, 0);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+.qa-icon {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0px 0px #000000;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.action-item:hover .qa-icon {
+  animation: bounce-icon 0.5s ease;
+  box-shadow: 3px 3px 0px 0px #000000;
+}
+.qa-label {
+  font-size: 12px;
+  color: #333333;
+  text-align: center;
+}
+
+/* ---- 3.10 Neo List Item ---- */
+.neo-list-item {
+  padding: 12px 14px;
+  background: #FFFDF5;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px 0px #000000;
+  transition: all 0.2s ease;
+  animation: slide-in-left 0.3s ease both;
+}
+.neo-list-item:hover {
+  background: #FFFFFF;
+  box-shadow: 5px 5px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+}
+.neo-list-item--clickable {
+  cursor: pointer;
+}
+.neo-list-item--clickable:hover {
+  border-color: #3B82F6;
+}
+.list-item-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid #000000;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.neo-list-item:hover .list-item-dot {
+  transform: scale(1.4) rotate(15deg);
+}
+
+/* ---- 3.11 Status Grid ---- */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+.status-item {
+  text-align: center;
+  padding: 16px 8px;
+  background: #FFFDF5;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px 0px #000000;
+  transition: all 0.2s;
+}
+.status-item--clickable {
+  cursor: pointer;
+}
+.status-item:hover {
+  box-shadow: 5px 5px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+  background: #FFFFFF;
+}
+.status-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #666666;
+  margin-bottom: 6px;
+}
+.status-value {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  display: block;
+  transform-origin: center;
+}
+.status-item:hover .status-value {
+  transform: scale(1.15);
+}
+.status-success { color: #10B981; }
+.status-warning { color: #FFD93D; }
+.status-info    { color: #999999; }
+
+/* ---- 3.12 Mini Stat Card ---- */
+.mini-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+.mini-stat-card {
+  padding: 14px 10px;
+  text-align: center;
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0px 0px #000000;
+  transition: all 0.2s ease;
+  animation: slide-in-left 0.3s ease both;
+}
+.mini-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+.mini-stat-value {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.mini-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #666666;
+  text-transform: uppercase;
+}
+
+/* ---- 3.13 Ranking List ---- */
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ranking-item {
+  padding: 12px 14px;
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: all 0.25s ease;
+  animation: slide-in-left 0.35s ease both;
+}
+.ranking-item:hover {
+  box-shadow: 10px 10px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+}
+.ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ranking-badge {
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 900;
+  border: 2px solid #000000;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+.ranking-item:hover .ranking-badge {
+  transform: rotate(12deg) scale(1.15);
+}
+.ranking-1 { background: #FFD93D; color: #000000; }
+.ranking-2 { background: #3B82F6; color: #FFFFFF; }
+.ranking-3 { background: #EF4444; color: #FFFFFF; }
+.ranking-other { background: #E5E7EB; color: #000000; }
+.ranking-info {
+  flex: 1;
+  min-width: 0;
+}
+.ranking-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+}
+.ranking-detail {
+  font-size: 12px;
+  color: #666666;
+  margin-top: 2px;
+}
+.ranking-score {
+  font-size: 16px;
+  font-weight: 900;
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ---- 3.14 Neo Progress Bar ---- */
+.neo-progress-wrapper {
+  width: 120px;
+  flex-shrink: 0;
+}
+.neo-progress-bg {
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 2px;
+  border: 1px solid #000000;
+  overflow: hidden;
+}
+.neo-progress-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.6s ease;
+}
+
+/* ---- 3.15 Form Layout ---- */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.form-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.2;
+}
+.form-section {
+  margin-top: 24px;
+  margin-bottom: 4px;
+}
+.form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 4px solid #000000;
+}
+.form-section-icon {
+  font-size: 20px;
+  color: #3B82F6;
+}
+.form-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+
+/* ---- 3.16 Color Picker Grid ---- */
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+.color-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.color-option input[type="radio"] {
+  display: none;
+}
+.color-swatch-lg {
+  width: 100%;
+  aspect-ratio: 1.5 / 1;
+  min-height: 48px;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  transition: all 0.1s ease;
+}
+.color-option--active .color-swatch-lg {
+  box-shadow: 0 0 0 4px #FFFDF5, 0 0 0 8px #000000;
+}
+.color-hex {
+  font-size: 11px;
+  font-weight: 700;
+  color: #666666;
+  font-family: monospace;
+}
+
+/* ---- 3.17 Drawer Custom ---- */
+.drawer-header-custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.drawer-title-lg {
+  font-size: 20px;
+  font-weight: 900;
+  color: #000000;
+  margin: 0;
+}
+.drawer-footer-custom {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 4px solid #000000;
+}
+
+/* ---- 3.18 Empty State ---- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #C0C4CC;
+}
+.empty-state--flex {
+  flex: 1;
+  padding: 0;
+}
+.empty-state p {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---- 3.19 Utility ---- */
+.flex-1 { flex: 1; }
+
+/* ---- 3.20 Edit Form ---- */
+.edit-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+}
+
+/* ---- 3.21 Form Actions ---- */
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---- 3.22 Drawer Common ---- */
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 20px;
+  border-top: 3px solid #000000;
+  background: #FFFDF5;
+}
+.drawer-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---- 3.23 Form Tip (unified) ---- */
+.form-tip {
+  font-size: 12px;
+  color: #666666;
+  margin-top: 4px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+@media (max-width: 768px) {
+  .card-header { padding: 10px 12px; }
+  .card-title { font-size: 13px; }
+  .card-date { font-size: 11px; }
+  .stat-icon-wrap { width: 42px; height: 42px; }
+  .stat-icon-wrap .el-icon { font-size: 18px !important; }
+  .stat-big-number { font-size: 28px; }
+  .stat-label-text { font-size: 11px; }
+  .stat-card-inner { padding: 14px; gap: 10px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .action-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); padding: 14px; gap: 8px; }
+  .qa-icon { width: 40px; height: 40px; }
+  .qa-label { font-size: 11px; }
+  .action-item { padding: 12px 6px; }
+  .mini-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .color-picker-grid { grid-template-columns: repeat(3, 1fr); }
+  .form-row { grid-template-columns: 1fr; }
+  .card-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .tri-row-responsive { grid-template-columns: 1fr !important; }
+}
+
+/* ---- 3.21 Shared Animations ---- */
+@keyframes pop-in {
+  0%   { transform: scale(0.85); opacity: 0; }
+  60%  { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.35); }
+}
+@keyframes bounce-icon {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-4px); }
+  60%      { transform: translateY(-2px); }
+}
+@keyframes slide-in-left {
+  from { transform: translateX(-12px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }

@@ -1,9 +1,9 @@
 <template>
-  <el-table :data="items" v-loading="loading" stripe>
+  <el-table :data="items" v-loading="loading" stripe class="swap-table">
     <el-table-column prop="request_no" label="申请编号" width="160" />
     <el-table-column label="类型" width="100">
       <template #default="{ row }">
-        <el-tag :type="row.swap_type === 'specified' ? '' : 'success'" size="small">
+        <el-tag :type="row.swap_type === 'specified' ? '' : 'success'" size="small" effect="dark">
           {{ row.swap_type === 'specified' ? '指定换班' : '开放换班' }}
         </el-tag>
       </template>
@@ -12,7 +12,7 @@
     <el-table-column label="发起人班次" min-width="160">
       <template #default="{ row }">
         <div>{{ row.requester_schedule_date }}</div>
-        <div style="font-size: 12px; color: #8492a6;">{{ row.requester_shift_name }}</div>
+        <div class="font-weight-medium" style="font-size: 12px; color: #666;">{{ row.requester_shift_name }}</div>
       </template>
     </el-table-column>
     <el-table-column label="对方/认领人" min-width="120">
@@ -24,14 +24,14 @@
       <template #default="{ row }">
         <template v-if="row.target_schedule_date">
           <div>{{ row.target_schedule_date }}</div>
-          <div style="font-size: 12px; color: #8492a6;">{{ row.target_shift_name }}</div>
+          <div class="font-weight-medium" style="font-size: 12px; color: #666;">{{ row.target_shift_name }}</div>
         </template>
         <span v-else>-</span>
       </template>
     </el-table-column>
     <el-table-column label="状态" width="120">
       <template #default="{ row }">
-        <el-tag :type="statusTagType(row.status)" size="small">
+        <el-tag :type="statusTagType(row.status)" size="small" effect="dark">
           {{ statusLabel(row.status) }}
         </el-tag>
       </template>
@@ -47,6 +47,7 @@
         <el-button
           v-if="authStore.hasPermission('swap', 'read')"
           type="primary" text size="small"
+          class="swap-action-btn"
           @click="$emit('detail', row)"
         >
           详情
@@ -56,6 +57,7 @@
           <el-button
             v-if="authStore.hasPermission('swap', 'create')"
             type="success" text size="small"
+            class="swap-action-btn"
             @click="$emit('confirm', row)"
           >
             确认
@@ -63,6 +65,7 @@
           <el-button
             v-if="authStore.hasPermission('swap', 'create')"
             type="danger" text size="small"
+            class="swap-action-btn"
             @click="$emit('refuse', row)"
           >
             拒绝
@@ -73,6 +76,7 @@
           <el-button
             v-if="authStore.hasPermission('swap', 'create')"
             type="success" text size="small"
+            class="swap-action-btn"
             @click="$emit('claim', row)"
           >
             认领
@@ -80,10 +84,10 @@
         </template>
         <!-- 待审批：需要 swap approve 权限 -->
         <template v-if="row.status === 'pending_approve' && authStore.hasPermission('swap', 'approve')">
-          <el-button type="success" text size="small" @click="$emit('approve', row)">
+          <el-button type="success" text size="small" class="swap-action-btn" @click="$emit('approve', row)">
             通过
           </el-button>
-          <el-button type="danger" text size="small" @click="$emit('reject', row)">
+          <el-button type="danger" text size="small" class="swap-action-btn" @click="$emit('reject', row)">
             拒绝
           </el-button>
         </template>
@@ -92,6 +96,7 @@
           <el-button
             v-if="authStore.hasPermission('swap', 'create')"
             type="warning" text size="small"
+            class="swap-action-btn"
             @click="$emit('cancel', row)"
           >
             撤回
@@ -171,9 +176,137 @@ const statusTagType = (s: string) => {
 </script>
 
 <style scoped>
+/* 表格 — 覆盖全局 .el-table 样式，增加优先级 */
+.swap-table :deep(.el-table) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+}
+
+.swap-table :deep(.el-table th.el-table__cell) {
+  background: #FFFDF5 !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.3px !important;
+  border-bottom: 3px solid #000000 !important;
+  border-right: 2px solid #000000 !important;
+  padding: 14px 12px !important;
+}
+
+.swap-table :deep(.el-table th.el-table__cell:last-child) {
+  border-right: none !important;
+}
+
+.swap-table :deep(.el-table td.el-table__cell) {
+  border-bottom: 2px solid #E6EAF0 !important;
+  border-right: 1px solid #F0F0F0 !important;
+  padding: 12px 12px !important;
+}
+
+.swap-table :deep(.el-table td.el-table__cell:last-child) {
+  border-right: none !important;
+}
+
+.swap-table :deep(.el-table__body tr:hover > td.el-table__cell) {
+  background: #FFFDF5 !important;
+}
+
+/* 分页 */
 .table-pagination {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   margin-top: 16px;
+  gap: 6px;
+}
+
+.table-pagination :deep(.el-pager li) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  line-height: 30px !important;
+  transition: all 0.1s ease !important;
+  color: #000000 !important;
+}
+
+.table-pagination :deep(.el-pager li:hover) {
+  background: #FFD93D !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+}
+
+.table-pagination :deep(.el-pager li.is-active) {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  font-weight: 900 !important;
+}
+
+.table-pagination :deep(.el-pagination button) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  line-height: 30px !important;
+  transition: all 0.1s ease !important;
+  color: #000000 !important;
+}
+
+.table-pagination :deep(.el-pagination button:hover:not(:disabled)) {
+  background: #FFD93D !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+}
+
+.table-pagination :deep(.el-pagination button:disabled) {
+  opacity: 0.4 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+/* 加载状态 */
+:deep(.el-loading-mask) {
+  background: rgba(255, 253, 245, 0.85) !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+}
+
+/* ============================================
+   移动端适配
+   ============================================ */
+
+@media (max-width: 768px) {
+  .swap-table :deep(.el-table) {
+    box-shadow: 4px 4px 0px 0px #000000 !important;
+  }
+
+  .swap-table :deep(.el-table th.el-table__cell) {
+    font-size: 11px !important;
+    padding: 10px 8px !important;
+  }
+
+  .swap-table :deep(.el-table td.el-table__cell) {
+    padding: 8px 8px !important;
+  }
+
+  .table-pagination {
+    justify-content: center;
+  }
+
+  .table-pagination :deep(.el-pager li) {
+    min-width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+  }
 }
 </style>

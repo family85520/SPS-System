@@ -4,6 +4,7 @@
     @update:model-value="emit('update:visible', $event)"
     title="导出统计报表"
     width="400px"
+    class="neo-dialog"
     :close-on-click-modal="!exporting"
   >
     <el-form label-width="80px">
@@ -21,7 +22,7 @@
       </el-form-item>
 
       <el-form-item label="选择组织">
-        <el-select v-model="form.orgId" placeholder="全部组织" clearable style="width: 100%">
+        <el-select v-model="form.orgId" placeholder="全部组织" clearable class="neo-input" style="width: 100%">
           <el-option
             v-for="org in orgList"
             :key="org.id"
@@ -33,8 +34,8 @@
     </el-form>
 
     <template #footer>
-      <el-button :disabled="exporting" @click="emit('update:visible', false)">取消</el-button>
-      <el-button type="primary" :loading="exporting" @click="handleExport">
+      <el-button class="btn-neo-ghost" :disabled="exporting" @click="emit('update:visible', false)">取消</el-button>
+      <el-button :loading="exporting" class="btn-neo-primary" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出
       </el-button>
@@ -116,3 +117,44 @@ async function handleExport() {
   }
 }
 </script>
+
+<style scoped>
+/* Neo 表单控件样式 */
+:deep(.el-dialog) {
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 8px 8px 0px 0px #000000 !important;
+}
+
+:deep(.el-dialog__header) {
+  border-bottom: 3px solid #000000 !important;
+  background: #FFFDF5 !important;
+  padding: 16px 20px !important;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 900 !important;
+  color: #000000 !important;
+  font-size: 18px !important;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 700 !important;
+  color: #000000 !important;
+  font-size: 14px !important;
+}
+
+:deep(.el-date-editor.el-input__wrapper) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+
+:deep(.el-select .el-select__wrapper) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+</style>

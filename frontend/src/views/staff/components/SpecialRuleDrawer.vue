@@ -8,7 +8,7 @@
   >
     <div class="drawer-body">
       <div class="drawer-toolbar">
-        <el-button type="primary" size="small" @click="handleAdd">
+        <el-button class="btn-neo-primary" size="small" @click="handleAdd">
           <el-icon><Plus /></el-icon>
           新增规则
         </el-button>
@@ -52,7 +52,7 @@
         label-position="right"
       >
         <el-form-item label="规则类型" prop="rule_type">
-          <el-select v-model="formData.rule_type" placeholder="请选择规则类型" style="width: 100%" @change="handleTypeChange">
+          <el-select v-model="formData.rule_type" placeholder="请选择规则类型" class="neo-input" @change="handleTypeChange">
             <el-option
               v-for="t in ruleTypeOptions"
               :key="t.value"
@@ -69,7 +69,7 @@
             multiple
             filterable
             placeholder="选择要排除的班次"
-            style="width: 100%"
+            class="neo-input"
           >
             <el-option
               v-for="t in shiftTemplateList"
@@ -87,7 +87,7 @@
             multiple
             filterable
             placeholder="选择仅排的班次"
-            style="width: 100%"
+            class="neo-input"
           >
             <el-option
               v-for="t in shiftTemplateList"
@@ -110,7 +110,7 @@
             multiple
             filterable
             placeholder="选择必须搭配的人员"
-            style="width: 100%"
+            class="neo-input"
           >
             <el-option
               v-for="s in staffList"
@@ -146,7 +146,7 @@
               multiple
               filterable
               placeholder="选择要排除的班次"
-              style="width: 100%"
+              class="neo-input"
             >
               <el-option
                 v-for="t in shiftTemplateList"
@@ -177,8 +177,8 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="formVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+        <el-button class="btn-neo-ghost" @click="formVisible = false">取消</el-button>
+        <el-button class="btn-neo-primary" :loading="saving" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </el-drawer>
@@ -186,7 +186,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useConfirm } from '@/composables/useConfirm'
 import { Plus } from '@element-plus/icons-vue'
 import {
   getSpecialRules,
@@ -209,6 +210,7 @@ const emit = defineEmits<{
 }>()
 
 const dayLabels = ['一', '二', '三', '四', '五', '六', '日']
+const { confirm } = useConfirm()
 
 const ruleTypeOptions = [
   { value: 'exclude_shift', label: '不排某班次' },
@@ -638,13 +640,12 @@ async function handleSave() {
 
 async function handleDelete(rule: SpecialRule) {
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'danger',
       title: '确认删除？',
       message: '删除后数据无法恢复，请慎重操作。',
-      showCancelButton: true,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '删除',
+      cancelText: '取消',
     })
     await deleteSpecialRule(rule.id)
     ElMessage.success('删除成功')
@@ -671,11 +672,7 @@ watch(visible, (val) => {
 </script>
 
 <style scoped>
-.drawer-body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
+/* .drawer-body — 已迁移至全局样式 */
 
 .drawer-toolbar {
   display: flex;

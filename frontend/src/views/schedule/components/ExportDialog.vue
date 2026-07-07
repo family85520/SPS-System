@@ -4,6 +4,7 @@
     @update:model-value="emit('update:visible', $event)"
     title="导出排班表"
     width="520px"
+    class="neo-dialog"
     :close-on-click-modal="!exporting"
   >
     <el-form label-width="80px">
@@ -22,17 +23,17 @@
       </el-form-item>
 
       <el-form-item label="导出维度">
-        <el-radio-group v-model="form.dimension">
+        <el-radio-group v-model="form.dimension" class="neo-radio-group">
           <el-radio value="org">按组织</el-radio>
           <el-radio value="person">按人员</el-radio>
         </el-radio-group>
-        <div style="font-size: 12px; color: #909399; margin-top: 4px;">
-          按组织：每日每班次一行　|　按人员：每人一行，日期为列
+        <div class="form-tip" style="font-size: 12px;">
+          按组织：每日每班次一行 | 按人员：每人一行，日期为列
         </div>
       </el-form-item>
 
       <el-form-item label="选择组织">
-        <el-select v-model="form.orgId" placeholder="全部组织" clearable style="width: 100%">
+        <el-select v-model="form.orgId" placeholder="全部组织" clearable class="neo-input" style="width: 100%">
           <el-option
             v-for="org in orgList"
             :key="org.id"
@@ -48,30 +49,30 @@
       <span style="display:flex;align-items:center;gap:4px;">
         自定义模板（仅「按组织 + Excel」可用）
         <el-tooltip placement="top" content="自定义模板仅对「按组织维度导出 Excel」生效，PDF / 按人员 / 统计报表不适用。">
-          <span style="color:#909399;cursor:help;">ⓘ</span>
+        <span class="config-tip">ⓘ</span>
         </el-tooltip>
       </span>
     </el-divider>
-    <div style="font-size:12px;color:#909399;margin-bottom:6px;">
+    <div class="form-tip" style="font-size: 12px; margin-bottom: 6px;">
       上传自定义 .xlsx 模板，使用下方变量定制排班表样式。
     </div>
 
     <!-- 变量列表 -->
     <details style="margin-bottom:8px;">
-      <summary style="cursor:pointer;font-size:13px;color:#409eff;">查看可用变量 / 操作指南（点击展开）</summary>
-      <div v-if="variables.length" style="margin-top:6px;max-height:280px;overflow-y:auto;background:#f8f9fb;padding:10px;border-radius:4px;font-size:11px;line-height:1.9;">
-        <div style="margin-bottom:10px;color:#606266;">
+      <summary class="form-tip" style="cursor:pointer;font-size:13px;color:#3B82F6;">查看可用变量 / 操作指南（点击展开）</summary>
+      <div v-if="variables.length" class="font-weight-medium" style="margin-top:6px;max-height:280px;overflow-y:auto;background:#FFFDF5;padding:10px;border:2px solid #000000;border-radius:4px;font-size:11px;line-height:1.9;">
+        <div style="margin-bottom:10px;color:#000000;">
           <b>📋 使用步骤：</b><br/>
           1. 下载默认模板或手写 .xlsx，在单元格填入下方变量<br/>
           2. 上传模板，设为默认<br/>
           3. 导出排班表时自动套用<br/>
-          <span style="color:#909399;">💡 变量有<u>索引</u>和<u>名称</u>两种写法，效果完全相同，任选一种。</span>
+          <span style="color:#666;">💡 变量有<u>索引</u>和<u>名称</u>两种写法，效果完全相同，任选一种。</span>
         </div>
         <div v-for="g in varGroups" :key="g.name" style="margin-bottom:4px;">
-          <b style="color:#303133;">{{ g.name }}</b>
+          <b style="color:#000000;">{{ g.name }}</b>
           <div style="padding-left:12px;">
             <span v-for="v in g.items" :key="v.name"
-                  style="display:inline-block;margin:1px 4px;padding:1px 6px;background:#e8ecf1;border-radius:3px;color:#555;"
+                  style="display:inline-block;margin:1px 4px;padding:1px 6px;background:#E5E7EB;border:1px solid #000000;border-radius:2px;color:#333;"
                   :title="v.desc + (v.example ? ' → ' + v.example : '')">
               {{ v.name }}
             </span>
@@ -81,27 +82,33 @@
       <div v-else style="font-size:11px;color:#999;margin-top:4px;">加载变量列表中...</div>
     </details>
 
-    <div v-for="tpl in templates" :key="tpl.id" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:#f5f7fa;border-radius:4px">
-      <span style="flex:1;font-size:13px;">{{ tpl.name }}<el-tag v-if="tpl.is_default" size="small" type="success" style="margin-left:6px;">默认</el-tag></span>
-      <el-button v-if="!tpl.is_default" size="small" @click="setDefault(tpl.id)">设为默认</el-button>
-      <el-button size="small" type="danger" @click="removeTemplate(tpl.id)">删除</el-button>
+    <div v-for="tpl in templates" :key="tpl.id" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:#FFFDF5;border:2px solid #000000;border-radius:4px;">
+      <span class="font-weight-medium" style="flex:1;font-size:13px;">{{ tpl.name }}<el-tag v-if="tpl.is_default" size="small" type="success" effect="dark" style="margin-left:6px;">默认</el-tag></span>
+      <el-button v-if="!tpl.is_default" size="small" class="btn-neo-primary" @click="setDefault(tpl.id)">设为默认</el-button>
+      <el-button size="small" class="btn-neo-danger" @click="removeTemplate(tpl.id)">删除</el-button>
     </div>
 
     <div style="margin-top:8px;display:flex;gap:8px;">
-      <input ref="fileInput" type="file" accept=".xlsx" style="display:none" @change="onFileChange" />
-      <el-button size="small" @click="downloadDefaultTemplate">
+      <el-button size="small" class="btn-neo-primary" @click="downloadDefaultTemplate">
         <el-icon><Download /></el-icon> 下载默认模板
       </el-button>
-      <el-button size="small" @click="($refs.fileInput as HTMLInputElement).click()">
-        <el-icon><Upload /></el-icon> 上传模板
-      </el-button>
-      <span v-if="uploadName" style="font-size:12px;margin-left:8px;color:#409eff;">{{ uploadName }}</span>
+    </div>
+
+    <!-- 上传模板 — 拖拽上传区域 -->
+    <div class="drag-upload-zone" style="margin-top:12px;" @click="triggerFileUpload">
+      <i class="fas fa-cloud-upload-alt drag-upload-zone__icon"></i>
+      <span class="drag-upload-zone__title">拖拽 .xlsx 文件到此处，或点击选择文件</span>
+      <span class="drag-upload-zone__hint">支持 Excel 2007+ (.xlsx) 格式的排版参数配置文件</span>
+    </div>
+    <input ref="templateFileInput" type="file" accept=".xlsx" style="display:none" @change="onFileChange" />
+    <div v-if="uploadName" class="progress-bar__info" style="margin-top:8px;">
+      <span class="progress-bar__filename">{{ uploadName }}</span>
     </div>
     </template>
 
     <template #footer>
-      <el-button :disabled="exporting" @click="emit('update:visible', false)">取消</el-button>
-      <el-button type="primary" :loading="exporting" @click="handleExport">
+      <el-button class="btn-neo-ghost" :disabled="exporting" @click="emit('update:visible', false)">取消</el-button>
+      <el-button :loading="exporting" class="btn-neo-primary" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出
       </el-button>
@@ -111,7 +118,7 @@
 
 <script setup lang="ts">
 import { reactive, watch, ref, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Download, Upload } from '@element-plus/icons-vue'
 import {
   downloadScheduleExcel,
@@ -122,6 +129,7 @@ import {
   type ExportTemplateItem,
 } from '@/api/export'
 import api from '@/api/index'
+import { useConfirm } from '@/composables/useConfirm'
 
 interface OrgOption {
   id: number
@@ -145,6 +153,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:visible': [value: boolean]
 }>()
+
+const { confirmWarning } = useConfirm()
 
 const exporting = defineModel<boolean>('loading', { default: false })
 
@@ -171,9 +181,13 @@ watch(
 
 // ===== 模板管理 =====
 const templates = ref<ExportTemplateItem[]>([])
-const fileInput = ref<HTMLInputElement | null>(null)
+const templateFileInput = ref<HTMLInputElement | null>(null)
 const uploadName = ref('')
 let uploadFile: File | null = null
+
+function triggerFileUpload() {
+  templateFileInput.value?.click()
+}
 
 interface VarItem { name: string; desc: string; category: string; example: string }
 const variables = ref<VarItem[]>([])
@@ -203,6 +217,8 @@ function onFileChange(e: Event) {
     // Auto-upload when file selected
     doUpload()
   }
+  // Reset input so same file can be selected again
+  input.value = ''
 }
 
 async function doUpload() {
@@ -227,7 +243,7 @@ async function setDefault(id: number) {
 
 async function removeTemplate(id: number) {
   try {
-    await ElMessageBox.confirm('确认删除该模板？', '删除模板', { type: 'warning' })
+    await confirmDanger('确认删除该模板？', '删除模板')
     await deleteTemplate(id)
     ElMessage.success('删除成功')
     await loadTemplates()
@@ -273,3 +289,165 @@ async function handleExport() {
   }
 }
 </script>
+
+<style scoped>
+/* Neo 表单控件样式 */
+:deep(.el-dialog) {
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 8px 8px 0px 0px #000000 !important;
+}
+
+:deep(.el-dialog__header) {
+  border-bottom: 3px solid #000000 !important;
+  background: #FFFDF5 !important;
+  padding: 16px 20px !important;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 900 !important;
+  color: #000000 !important;
+  font-size: 18px !important;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 700 !important;
+  color: #000000 !important;
+  font-size: 14px !important;
+}
+
+:deep(.el-date-editor.el-input__wrapper) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+
+:deep(.el-select .el-select__wrapper) {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+}
+
+/* 模板管理区域 Neo 风格 */
+.config-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #3B82F6;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  background: #EFF6FF;
+  box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.1);
+  cursor: help;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #666666;
+  font-weight: 600;
+}
+
+/* 变量列表容器 */
+:deep(details[style*="margin-bottom:8px"]) > div:first-child {
+  cursor: pointer;
+  font-size: 13px;
+  color: #3B82F6;
+  font-weight: 700;
+}
+
+:deep(summary.form-tip) {
+  cursor: pointer;
+  font-size: 13px;
+  color: #3B82F6;
+  font-weight: 700;
+}
+
+/* 模板列表项 Neo 卡片 */
+:deep(div[style*="border:2px solid"][style*="margin-bottom:6px"]) {
+  background: #FFFDF5;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0px 0px rgba(0,0,0,0.1);
+  transition: all 0.15s ease;
+}
+
+:deep(div[style*="border:2px solid"][style*="margin-bottom:6px"]:hover) {
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+/* 拖拽上传区域 */
+.drag-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 20px;
+  background: #FFFDF5;
+  border: 3px dashed #000000;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.05);
+}
+
+.drag-upload-zone:hover {
+  border-style: solid;
+  background: #FFFBEB;
+  box-shadow: inset 3px 3px 0px 0px rgba(0,0,0,0.08);
+  transform: translate(-1px, -1px);
+}
+
+.drag-upload-zone__icon {
+  font-size: 32px;
+  color: #3B82F6;
+  font-weight: 900;
+}
+
+.drag-upload-zone__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.drag-upload-zone__hint {
+  font-size: 12px;
+  color: #999999;
+  font-weight: 600;
+}
+
+/* 进度条信息 */
+.progress-bar__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #F0FDF4;
+  border: 2px solid #000000;
+  border-radius: 3px;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.05);
+}
+
+.progress-bar__filename {
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.progress-bar__status {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10B981;
+  padding: 2px 8px;
+  background: #D1FAE5;
+  border: 2px solid #000000;
+  border-radius: 2px;
+}
+</style>

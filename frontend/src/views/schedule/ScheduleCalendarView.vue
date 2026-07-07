@@ -2,117 +2,141 @@
   <div class="schedule-page">
     <!-- 工具栏（日历视图专用） -->
     <div v-if="activeTab === 'calendar'" class="calendar-toolbar">
-      <!-- 左侧：导航 -->
+      <!-- 左侧：月份导航 -->
       <div class="toolbar-left">
-        <el-button-group>
-          <el-button @click="navigateMonth(-1)">
+        <el-button-group class="btn-neo-group">
+          <el-button @click="navigateMonth(-1)" class="btn-neo-sm">
             <el-icon><ArrowLeft /></el-icon>
           </el-button>
-          <el-button @click="goToday">今天</el-button>
-          <el-button @click="navigateMonth(1)">
+          <el-button @click="goToday" class="btn-neo-sm btn-neo-accent">今天</el-button>
+          <el-button @click="navigateMonth(1)" class="btn-neo-sm">
             <el-icon><ArrowRight /></el-icon>
           </el-button>
         </el-button-group>
         <span class="current-month-label">{{ currentYear }}年{{ currentMonth + 1 }}月</span>
       </div>
 
-      <!-- 中间：筛选 -->
+      <!-- 中间：筛选卡片 -->
       <div class="toolbar-center">
-        <el-select
-          v-model="filterOrgId"
-          placeholder="全部组织"
-          clearable
-          style="width: 160px"
-          @change="loadCalendar"
-        >
-          <el-option
-            v-for="org in orgList"
-            :key="org.id"
-            :label="org.name"
-            :value="org.id"
-          />
-        </el-select>
+        <div class="filter-card-group">
+          <span class="filter-card-label">组织</span>
+          <el-select
+            v-model="filterOrgId"
+            placeholder="全部组织"
+            clearable
+            class="toolbar-filter"
+            @change="loadCalendar"
+          >
+            <el-option
+              v-for="org in orgList"
+              :key="org.id"
+              :label="org.name"
+              :value="org.id"
+            />
+          </el-select>
+        </div>
 
-        <el-select
-          v-model="filterStatus"
-          placeholder="全部状态"
-          clearable
-          style="width: 120px"
-          @change="loadCalendar"
-        >
-          <el-option label="草稿" :value="0" />
-          <el-option label="已发布" :value="1" />
-          <el-option label="已撤回" :value="2" />
-          <el-option label="待审核" :value="3" />
-        </el-select>
+        <div class="filter-card-group">
+          <span class="filter-card-label">状态</span>
+          <el-select
+            v-model="filterStatus"
+            placeholder="全部状态"
+            clearable
+            class="toolbar-filter"
+            @change="loadCalendar"
+          >
+            <el-option label="草稿" :value="0" />
+            <el-option label="已发布" :value="1" />
+            <el-option label="已撤回" :value="2" />
+            <el-option label="待审核" :value="3" />
+          </el-select>
+        </div>
 
-        <el-radio-group v-model="viewMode" @change="loadCalendar">
-          <el-radio-button value="month">月视图</el-radio-button>
-          <el-radio-button value="week">周视图</el-radio-button>
-        </el-radio-group>
+        <div class="filter-card-group">
+          <span class="filter-card-label">视图</span>
+          <el-radio-group v-model="viewMode" @change="loadCalendar" class="toolbar-view-toggle">
+            <el-radio-button value="month">月视图</el-radio-button>
+            <el-radio-button value="week">周视图</el-radio-button>
+          </el-radio-group>
+        </div>
       </div>
 
-      <!-- 右侧：操作 -->
+      <!-- 右侧：操作按钮 -->
       <div class="toolbar-right">
-        <el-button v-if="authStore.hasPermission('schedule', 'create')" @click="handleAutoSchedule">
+        <!-- 主要操作（始终可见） -->
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" class="btn-neo-primary btn-neo-sm" @click="handleAutoSchedule">
           <el-icon><MagicStick /></el-icon>
-          自动排班
+          <span class="btn-text">自动排班</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'create')" @click="handleAddSchedule('')">
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" class="btn-neo-success btn-neo-sm" @click="handleAddSchedule('')">
           <el-icon><Plus /></el-icon>
-          添加排班
+          <span class="btn-text">添加排班</span>
         </el-button>
-        <el-button
-          v-if="authStore.hasPermission('schedule', 'read')"
-          :loading="templateDownloading"
-          @click="handleDownloadImportTemplate"
-        >
+        <el-button v-if="authStore.hasPermission('schedule', 'read')" class="btn-neo-warning btn-neo-sm" @click="handleDownloadImportTemplate">
           <el-icon><Download /></el-icon>
-          下载模板
+          <span class="btn-text">下载模板</span>
         </el-button>
-        <el-button
-          v-if="authStore.hasPermission('schedule', 'create')"
-          :loading="scheduleImporting"
-          @click="handlePickImportFile"
-        >
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" class="btn-neo-warning btn-neo-sm" @click="showImportDialog = true">
           <el-icon><Upload /></el-icon>
-          导入排班
+          <span class="btn-text">导入</span>
         </el-button>
-        <input
-          ref="importFileInput"
-          type="file"
-          accept=".xlsx"
-          style="display: none"
-          @change="handleImportFileChange"
-        />
-        <el-button v-if="authStore.hasPermission('schedule', 'create')" :loading="validating" @click="handleValidate">
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" class="btn-neo-info btn-neo-sm" @click="handleValidate">
           <el-icon><CircleCheck /></el-icon>
-          校验
+          <span class="btn-text">校验</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'publish')" type="primary" @click="handlePublish">
+        <el-button v-if="authStore.hasPermission('schedule', 'publish')" class="btn-neo-primary btn-neo-sm" @click="handlePublish">
           <el-icon><Upload /></el-icon>
-          发布
+          <span class="btn-text">发布</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'publish')" @click="handleRecall">
+        <el-button v-if="authStore.hasPermission('schedule', 'publish')" class="btn-neo-warning btn-neo-sm" @click="handleRecall">
           <el-icon><RefreshLeft /></el-icon>
-          撤回
+          <span class="btn-text">撤回</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'delete')" type="danger" @click="handleDeleteDrafts">
+        <el-button v-if="authStore.hasPermission('schedule', 'delete')" class="btn-neo-danger btn-neo-sm" @click="handleDeleteDrafts">
           <el-icon><Delete /></el-icon>
-          清除草稿
+          <span class="btn-text">清除草稿</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'approve')" type="success" @click="handleApprove">
-          <el-icon><Select /></el-icon>
-          审核通过
-        </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'approve')" type="danger" @click="handleReject">
-          <el-icon><CloseBold /></el-icon>
-          审核拒绝
-        </el-button>
-        <el-button v-if="authStore.hasPermission('export', 'read')" @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出排班
-        </el-button>
+
+        <!-- 次要操作（折叠进更多菜单） -->
+        <el-popover
+          v-if="authStore.hasPermission('schedule', 'approve') || authStore.hasPermission('export', 'read')"
+          placement="bottom-end"
+          :width="180"
+          trigger="click"
+          popper-class="toolbar-more-popover"
+        >
+          <template #reference>
+            <el-button class="btn-neo-ghost btn-neo-sm">
+              <el-icon><More /></el-icon>
+            </el-button>
+          </template>
+          <div class="more-menu">
+            <el-button
+              v-if="authStore.hasPermission('schedule', 'approve')"
+              class="btn-neo-sm btn-more-item btn-neo-success"
+              @click="handleApprove"
+            >
+              <el-icon><Select /></el-icon>
+              <span class="btn-text">审核通过</span>
+            </el-button>
+            <el-button
+              v-if="authStore.hasPermission('schedule', 'approve')"
+              class="btn-neo-sm btn-more-item btn-neo-danger"
+              @click="handleReject"
+            >
+              <el-icon><CloseBold /></el-icon>
+              <span class="btn-text">审核拒绝</span>
+            </el-button>
+            <el-button
+              v-if="authStore.hasPermission('export', 'read')"
+              class="btn-neo-sm btn-more-item btn-neo-info"
+              @click="handleExport"
+            >
+              <el-icon><Download /></el-icon>
+              <span class="btn-text">导出</span>
+            </el-button>
+          </div>
+        </el-popover>
       </div>
     </div>
 
@@ -147,8 +171,12 @@
       />
 
       <!-- 自动排班对话框 -->
-      <el-dialog v-model="autoScheduleDialogVisible" title="自动排班" width="520px">
-        <el-form label-width="100px">
+      <el-dialog v-model="autoScheduleDialogVisible" title="自动排班" width="560px" class="neo-dialog">
+        <div class="alert-card" style="margin-bottom: 20px;">
+          <span class="alert-card__icon">⚠</span>
+          <span class="alert-card__content">系统将根据预设的排班规则自动生成本月所有员工的排班计划，是否确认执行？</span>
+        </div>
+        <el-form label-width="110px" label-position="right">
           <el-form-item label="排班周期">
             <el-date-picker
               v-model="autoScheduleForm.start_date"
@@ -158,7 +186,7 @@
               value-format="YYYY-MM-DD"
               style="width: 45%"
             />
-            <span style="margin: 0 8px; color: #909399">至</span>
+            <span class="form-tip" style="margin: 0 8px; color: #666;">至</span>
             <el-date-picker
               v-model="autoScheduleForm.end_date"
               type="date"
@@ -169,7 +197,7 @@
             />
           </el-form-item>
           <el-form-item label="排班范围" required>
-            <el-select v-model="autoScheduleForm.org_id" placeholder="选择组织" style="width: 100%" @change="handleAutoOrgChange">
+            <el-select v-model="autoScheduleForm.org_id" placeholder="选择组织" class="neo-input" @change="handleAutoOrgChange">
               <el-option v-for="org in orgList" :key="org.id" :label="org.name" :value="org.id" />
             </el-select>
           </el-form-item>
@@ -190,7 +218,7 @@
               multiple
               filterable
               placeholder="选择参与排班的人员"
-              style="width: 100%"
+              class="neo-input"
             >
               <el-option
                 v-for="s in allStaffList"
@@ -205,32 +233,32 @@
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="autoScheduleDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="autoScheduleLoading" @click="handleAutoGenerate">
+          <el-button class="btn-neo-ghost" @click="autoScheduleDialogVisible = false">取消</el-button>
+          <el-button :loading="autoScheduleLoading" class="btn-neo-primary" @click="handleAutoGenerate">
             一键生成
           </el-button>
         </template>
       </el-dialog>
 
       <!-- 校验报告 -->
-      <el-dialog v-model="validationDialogVisible" title="约束校验报告" width="640px">
+      <el-dialog v-model="validationDialogVisible" title="约束校验报告" width="680px" class="neo-dialog">
         <template v-if="validationResult">
-          <div style="display: flex; gap: 24px; margin-bottom: 20px;">
+          <div style="display: flex; gap: 20px; margin-bottom: 20px;">
             <el-statistic title="通过" :value="validationResult.passed_count">
-              <template #suffix><span style="color: #28A745">项</span></template>
+              <template #suffix><span style="color: #10B981">项</span></template>
             </el-statistic>
             <el-statistic title="警告" :value="validationResult.warning_count">
-              <template #suffix><span style="color: #FFC107">项</span></template>
+              <template #suffix><span style="color: #FFD93D">项</span></template>
             </el-statistic>
             <el-statistic title="失败" :value="validationResult.failed_count">
-              <template #suffix><span style="color: #DC3545">项</span></template>
+              <template #suffix><span style="color: #EF4444">项</span></template>
             </el-statistic>
           </div>
 
-          <el-tabs>
+          <el-tabs class="neo-tabs">
             <el-tab-pane :label="`已通过（${validationResult.passed_count}）`">
-              <div v-for="(item, idx) in validationResult.passed" :key="idx" style="padding: 6px 0; font-size: 13px;">
-                <span style="color: #28A745;">✓</span> {{ item.rule_name }}
+              <div v-for="(item, idx) in validationResult.passed" :key="idx" class="font-weight-medium" style="padding: 6px 0; font-size: 13px;">
+                <span style="color: #10B981;">✓</span> {{ item.rule_name }}
               </div>
             </el-tab-pane>
             <el-tab-pane :label="`警告（${validationResult.warning_count}）`">
@@ -250,11 +278,12 @@
           </el-tabs>
         </template>
         <template #footer>
-          <el-button @click="validationDialogVisible = false">关闭</el-button>
+          <el-button class="btn-neo-ghost" @click="validationDialogVisible = false">关闭</el-button>
           <el-button
             v-if="authStore.hasPermission('schedule', 'publish')"
             type="primary"
             :disabled="!validationResult || validationResult.failed_count > 0"
+            class="btn-neo-primary"
             @click="handlePublishFromValidation"
           >
             确认发布
@@ -286,6 +315,7 @@
     <!-- 导出弹窗 -->
     <ExportDialog
       v-model:visible="exportDialogVisible"
+      v-model:loading="exportLoading"
       :start-date="currentMonthRange.start"
       :end-date="currentMonthRange.end"
       :org-id="filterOrgId"
@@ -293,8 +323,8 @@
     />
 
     <!-- 新建排班对话框 -->
-    <el-dialog v-model="createDialogVisible" title="新建排班" width="420px">
-      <el-form label-width="80px">
+    <el-dialog v-model="createDialogVisible" title="新建排班" width="460px" class="neo-dialog">
+      <el-form label-width="90px" label-position="right">
         <el-form-item label="日期">
           <el-date-picker
             v-model="createForm.date"
@@ -306,7 +336,7 @@
           />
         </el-form-item>
         <el-form-item label="班次模板" required>
-          <el-select v-model="createForm.shift_id" placeholder="选择班次模板" style="width: 100%">
+          <el-select v-model="createForm.shift_id" placeholder="选择班次模板" class="neo-input">
             <el-option
               v-for="t in shiftTemplateList"
               :key="t.id"
@@ -321,7 +351,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="组织" required>
-          <el-select v-model="createForm.org_id" placeholder="选择组织" style="width: 100%">
+          <el-select v-model="createForm.org_id" placeholder="选择组织" class="neo-input">
             <el-option
               v-for="org in orgList"
               :key="org.id"
@@ -332,8 +362,28 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="creating" @click="handleCreateSubmit">创建</el-button>
+        <el-button class="btn-neo-ghost" @click="createDialogVisible = false">取消</el-button>
+        <el-button :loading="creating" class="btn-neo-primary" @click="handleCreateSubmit">创建</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 导入排班弹窗 — 拖拽上传 -->
+    <el-dialog v-model="showImportDialog" title="导入排班" width="560px" class="neo-dialog" :close-on-click-modal="false">
+      <div class="drag-upload-zone" @click="triggerImportFile">
+        <i class="fas fa-cloud-upload-alt drag-upload-zone__icon"></i>
+        <span class="drag-upload-zone__title">拖拽 .xlsx 文件到此处，或点击选择文件</span>
+        <span class="drag-upload-zone__hint">支持 Excel 2007+ (.xlsx) 格式</span>
+      </div>
+      <input ref="importFileInput" type="file" accept=".xlsx" style="display:none" @change="handleImportFileChange" />
+      <div v-if="importFileName" class="progress-bar__info" style="margin-top:12px;">
+        <span class="progress-bar__filename">已选择：{{ importFileName }}</span>
+        <span class="progress-bar__status" v-if="scheduleImporting">导入中...</span>
+      </div>
+      <template #footer>
+        <el-button class="btn-neo-ghost" @click="showImportDialog = false">取消</el-button>
+        <el-button :loading="scheduleImporting" class="btn-neo-primary" @click="doImportFile" :disabled="!importFileForImport">
+          开始导入
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -342,7 +392,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirm } from '@/composables/useConfirm'
 import {
   ArrowLeft,
   ArrowRight,
@@ -355,6 +406,7 @@ import {
   Select,
   CloseBold,
   Delete,
+  More,
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/index'
@@ -389,6 +441,7 @@ const now = new Date()
 const currentYear = ref(now.getFullYear())
 const currentMonth = ref(now.getMonth())
 const viewMode = ref<'month' | 'week'>('month')
+const { confirm } = useConfirm()
 const calendarData = ref<CalendarDate[]>([])
 
 // ==================== 筛选 ====================
@@ -406,7 +459,6 @@ async function loadOrgs() {
     const res: any = await api.get('/options/organizations')
     orgList.value = Array.isArray(res) ? res : (res.data || [])
   } catch (e) {
-    // 选项接口只需登录权限，正常不应失败；静默处理
     orgList.value = []
   }
 }
@@ -620,7 +672,6 @@ async function loadAllStaff() {
     const res: any = await api.get('/staffs/options', { params })
     let list = Array.isArray(res) ? res : (res.data || res.items || [])
 
-    // 收集需要从排班人员列表中排除的候选人ID
     const excludeIds = new Set<number>()
     const selectedIds = autoScheduleForm.shift_template_ids
     for (const t of shiftTemplateList.value) {
@@ -633,13 +684,11 @@ async function loadAllStaff() {
       }
     }
 
-    // 过滤掉特殊人员组和值班领导组候选人
     if (excludeIds.size > 0) {
       list = list.filter((s: any) => !excludeIds.has(s.id))
     }
 
     allStaffList.value = list
-    // 清除不在当前列表中的已选人员
     const validIds = allStaffList.value.map((s: any) => s.id)
     autoScheduleForm.staff_ids = autoScheduleForm.staff_ids.filter(id => validIds.includes(id))
   } catch (e) {
@@ -648,7 +697,6 @@ async function loadAllStaff() {
 }
 
 function handleAutoSchedule() {
-  // 默认当月
   const y = currentYear.value
   const m = currentMonth.value
   autoScheduleForm.start_date = `${y}-${String(m + 1).padStart(2, '0')}-01`
@@ -695,11 +743,7 @@ async function handleAutoGenerate() {
     ElMessage.success(`自动排班完成：共生成 ${res.report?.total_shifts || 0} 条排班`)
 
     if (res.conflicts && res.conflicts.length > 0) {
-      ElMessageBox({
-        title: '排班冲突提示',
-        message: res.conflicts.slice(0, 10).join('\n') + (res.conflicts.length > 10 ? `\n...共${res.conflicts.length}条` : ''),
-        type: 'warning',
-      })
+      ElMessage.warning(`排班发现 ${res.conflicts.length} 条冲突`)
     }
 
     await loadCalendar()
@@ -726,7 +770,7 @@ const currentMonthRange = computed(() => {
 // ==================== 导出排班 ====================
 
 const exportDialogVisible = ref(false)
-const importFileInput = ref<HTMLInputElement | null>(null)
+const exportLoading = ref(false)
 const templateDownloading = ref(false)
 const scheduleImporting = ref(false)
 
@@ -751,11 +795,49 @@ async function handleDownloadImportTemplate() {
   }
 }
 
-function handlePickImportFile() {
+// ==================== 导入排班 ====================
+
+const showImportDialog = ref(false)
+const importFileInput = ref<HTMLInputElement | null>(null)
+const importFileForImport = ref<File | null>(null)
+const importFileName = ref('')
+
+function triggerImportFile() {
   importFileInput.value?.click()
 }
 
-async function handleImportFileChange(event: Event) {
+async function doImportFile() {
+  if (!importFileForImport.value) {
+    ElMessage.warning('请先选择文件')
+    return
+  }
+  try {
+    await confirm({
+      type: 'warning',
+      title: '确认导入排班？',
+      message: '导入会创建草稿排班；若同日期/组织/班次已有草稿或已撤回记录，会覆盖人员明细。已发布或待审核排班不会被覆盖。',
+      confirmText: '确认导入',
+      cancelText: '取消',
+    })
+    scheduleImporting.value = true
+    try {
+      const res: any = await importScheduleTemplate(importFileForImport.value!, filterOrgId.value)
+      ElMessage.success(res.message || '排班导入完成')
+      importFileForImport.value = null
+      importFileName.value = ''
+      showImportDialog.value = false
+      await loadCalendar()
+    } catch (e) {
+      // interceptor handles error
+    } finally {
+      scheduleImporting.value = false
+    }
+  } catch (e) {
+    // 用户取消
+  }
+}
+
+function handleImportFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
@@ -764,30 +846,8 @@ async function handleImportFileChange(event: Event) {
     ElMessage.warning('请上传 .xlsx 格式的排班模板')
     return
   }
-
-  try {
-    await ElMessageBox({
-      title: '确认导入排班？',
-      message: '导入会创建草稿排班；若同日期/组织/班次已有草稿或已撤回记录，会覆盖人员明细。已发布或待审核排班不会被覆盖。',
-      showCancelButton: true,
-      confirmButtonText: '确认导入',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-  } catch (e) {
-    return
-  }
-
-  scheduleImporting.value = true
-  try {
-    const res: any = await importScheduleTemplate(file, filterOrgId.value)
-    ElMessage.success(res.message || '排班导入完成')
-    await loadCalendar()
-  } catch (e) {
-    // interceptor handles error
-  } finally {
-    scheduleImporting.value = false
-  }
+  importFileForImport.value = file
+  importFileName.value = file.name
 }
 
 // ==================== 约束校验 ====================
@@ -833,13 +893,12 @@ async function handlePublish() {
   }
 
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'warning',
       title: '确认发布？',
       message: `确认发布当前视图中的 ${ids.length} 条排班？发布后排班将被锁定，变更需通过调班流程。`,
-      showCancelButton: true,
-      confirmButtonText: '确认发布',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '确认发布',
+      cancelText: '取消',
     })
     const res = await publishSchedules(ids)
     ElMessage.success(`成功发布 ${res.count ?? ids.length} 条排班`)
@@ -857,17 +916,16 @@ async function handleRecall() {
   }
 
   const y = currentYear.value
-  const m = currentMonth.value + 1 // 0-indexed → 1-indexed
+  const m = currentMonth.value + 1
   const monthLabel = `${y}年${m}月`
 
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'warning',
       title: '确认撤回？',
       message: `确认撤回 ${monthLabel} 所有已发布/待审核的排班？撤回后排班将变为草稿。`,
-      showCancelButton: true,
-      confirmButtonText: '确认撤回',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '确认撤回',
+      cancelText: '取消',
     })
     const res = await recallSchedulesByMonth(orgId, y, m)
     if (res.count === 0) {
@@ -889,13 +947,12 @@ async function handleApprove() {
   }
 
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'warning',
       title: '确认审核通过？',
       message: `确认通过当前视图中的 ${pendingIds.length} 条排班？通过后排班将被锁定。`,
-      showCancelButton: true,
-      confirmButtonText: '通过',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '通过',
+      cancelText: '取消',
     })
     const res = await approveSchedules(pendingIds)
     ElMessage.success(`审核通过 ${res.count ?? pendingIds.length} 条排班`)
@@ -913,13 +970,12 @@ async function handleReject() {
   }
 
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'warning',
       title: '确认拒绝？',
       message: `确认拒绝当前视图中的 ${pendingIds.length} 条排班？拒绝后排班将打回草稿。`,
-      showCancelButton: true,
-      confirmButtonText: '拒绝',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '拒绝',
+      cancelText: '取消',
     })
     const res = await rejectSchedules(pendingIds)
     ElMessage.success(`已拒绝 ${res.count ?? pendingIds.length} 条排班`)
@@ -931,13 +987,12 @@ async function handleReject() {
 
 async function handleDeleteDrafts() {
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'danger',
       title: '确认清除草稿？',
       message: '将删除当前视图中所有草稿和已撤回的排班，已发布和待审核的排班不受影响。此操作不可恢复。',
-      showCancelButton: true,
-      confirmButtonText: '确认删除',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '确认删除',
+      cancelText: '取消',
     })
 
     const range = getDateRange()
@@ -968,14 +1023,10 @@ function collectScheduleIdsByStatus(statuses: number | number[]): number[] {
   return [...new Set(ids)]
 }
 
-// ==================== 校验报告中发布 ====================
-
 async function handlePublishFromValidation() {
   validationDialogVisible.value = false
   await handlePublish()
 }
-
-// ==================== 工具函数 ====================
 
 function formatDateStr(d: Date): string {
   const y = d.getFullYear()
@@ -984,16 +1035,12 @@ function formatDateStr(d: Date): string {
   return `${y}-${m}-${dd}`
 }
 
-// ==================== 初始化 ====================
-
 onMounted(async () => {
   await Promise.all([loadOrgs(), loadShiftTemplates()])
   await loadCalendar()
 
-  // 从工作台快捷操作跳转时，自动打开自动排班弹窗
   if (route.query.auto === '1') {
     handleAutoSchedule()
-    // 清除 query 参数，避免刷新时重复触发
     router.replace({ path: '/schedule' })
   }
 })
@@ -1004,96 +1051,248 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 56px - 40px);
-  background: #F5F7FA;
-  padding: 16px;
+  background: #FFFDF5;
+  padding: 0;
   min-width: 900px;
   overflow-x: auto;
 }
+
 /* Tab 栏 */
 .tab-bar {
   display: flex;
   gap: 0;
-  margin-bottom: 16px;
+  margin: 20px 20px 0;
   background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
+  border: 3px solid #000000;
+  border-radius: 4px 4px 0 0;
+  box-shadow: 4px 4px 0px 0px #000000;
   overflow: hidden;
 }
 
 .tab-item {
-  padding: 12px 24px;
+  padding: 12px 28px;
   font-size: 14px;
-  font-weight: 500;
-  color: #556173;
+  font-weight: 700;
+  color: #000000;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+  transition: all 0.15s;
+  user-select: none;
 }
 
 .tab-item:hover {
-  color: #0A63D8;
+  background: #FFFDF5;
 }
 
 .tab-item.active {
-  color: #0A63D8;
-  border-bottom-color: #0A63D8;
-  background: #EBF5FF;
+  color: #FFFFFF;
+  background: #3B82F6;
+  border-bottom-color: #000000;
 }
 
 /* 工具栏 */
 .calendar-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
   background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  margin: 0 20px 16px;
   flex-wrap: wrap;
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .current-month-label {
   font-size: 18px;
-  font-weight: 600;
-  color: #1F2D3D;
+  font-weight: 900;
+  color: #000000;
+  white-space: nowrap;
 }
 
 .toolbar-center {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+}
+
+/* 筛选卡片组 — Neo 卡片样式，带标签 */
+.filter-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0px 0px #000000;
+  padding: 8px 10px;
+  transition: all 0.15s ease;
+}
+
+.filter-card-group:hover {
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.filter-card-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: #555555;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  line-height: 1;
+}
+
+.toolbar-center .toolbar-filter {
+  width: 150px !important;
+  flex: 0 0 auto;
+}
+
+.toolbar-center .toolbar-view-toggle {
+  flex: 0 0 auto;
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* 按钮文字 — 大屏显示，小屏隐藏 */
+.btn-text {
+  display: inline;
+  white-space: nowrap;
+}
+
+/* ============================================
+   工具栏筛选控件样式（统一 Neo 风格）
+   ============================================ */
+
+/* 下拉选择 — 紧凑 Neo 风格 */
+.toolbar-filter .el-select__wrapper {
+  height: 36px !important;
+  min-height: 36px !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  padding: 0 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  transition: all 0.1s ease !important;
+}
+
+.toolbar-filter .el-select__wrapper:hover {
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+}
+
+.toolbar-filter .el-select__wrapper.is-focused {
+  box-shadow: 4px 4px 0px 0px #FFD93D !important;
+  border-color: #000000 !important;
+}
+
+.toolbar-filter .el-input__inner {
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  color: #000000 !important;
+}
+
+.toolbar-filter .el-input__inner::placeholder {
+  color: #999999 !important;
+  font-weight: 600 !important;
+}
+
+/* 视图切换 — 统一 Neo 风格 */
+.toolbar-view-toggle .el-radio-button__inner {
+  height: 36px !important;
+  min-height: 36px !important;
+  line-height: 36px !important;
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  background: #FFFFFF !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  padding: 0 16px !important;
+  color: #000000 !important;
+  transition: all 0.1s ease !important;
+}
+
+.toolbar-view-toggle .el-radio-button__inner:hover {
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px);
+}
+
+/* 选中态 — 用 label 层级设颜色，避免 __inner 被全局样式覆盖 */
+.toolbar-view-toggle .el-radio-button.is-active .el-radio-button__inner {
+  background: #3B82F6 !important;
+  color: #FFFFFF !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border-color: #000000 !important;
+  font-weight: 900 !important;
+}
+
+/* 相邻兄弟：选中第一个时，第二个左边不要重复阴影 */
+.toolbar-view-toggle .el-radio-button:first-child.is-active .el-radio-button__inner {
+  border-radius: 4px 0 0 4px !important;
+}
+
+.toolbar-view-toggle .el-radio-button:last-child.is-active .el-radio-button__inner {
+  border-radius: 0 4px 4px 0 !important;
+}
+
+.toolbar-view-toggle .el-radio-button__original-radio {
+  display: none !important;
 }
 
 /* 日历主体 */
 .calendar-body {
   flex: 1;
+  margin: 0 20px 20px;
   background: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(31, 45, 61, 0.06);
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* 更多菜单 popover */
+.toolbar-more-popover {
+  border: 3px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  background: #FFFFFF !important;
+  padding: 8px !important;
+}
+
+.more-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.more-menu .btn-more-item {
+  width: 100% !important;
+  justify-content: flex-start;
+}
+
+.more-menu .btn-more-item .btn-text {
+  display: inline;
 }
 
 /* 班次说明 */
@@ -1104,64 +1303,511 @@ onMounted(async () => {
 }
 
 .violation-item.warning {
-  background: #FFF8E1;
-  border-left: 3px solid #FFC107;
+  background: #FFD93D;
+  border-left: 4px solid #000000;
 }
 
 .violation-item.error {
-  background: #FFF5F5;
-  border-left: 3px solid #DC3545;
+  background: #FEE2E2;
+  border-left: 4px solid #EF4444;
 }
 
 .violation-title {
   font-size: 14px;
-  font-weight: 600;
-  color: #1F2D3D;
+  font-weight: 700;
+  color: #000000;
   margin-bottom: 4px;
 }
 
 .violation-msg {
   font-size: 13px;
-  color: #556173;
+  color: #333;
   margin-bottom: 2px;
 }
 
 .violation-meta {
   font-size: 12px;
-  color: #909399;
+  color: #666;
 }
+
 .shift-legend {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  border-top: 1px solid #E6EAF0;
-  background: #FAFBFC;
+  border-top: 3px solid #000000;
+  background: #FFFDF5;
   flex-shrink: 0;
   flex-wrap: wrap;
 }
 
 .legend-title {
   font-size: 13px;
-  font-weight: 600;
-  color: #556173;
+  font-weight: 900;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 4px 8px;
+  border: 2px solid #000000;
+  border-radius: 3px;
+  background: #FFFFFF;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.08);
+  transition: all 0.15s ease;
+}
+
+.legend-item:hover {
+  box-shadow: 3px 3px 0px 0px #000000;
+  transform: translate(-1px, -1px);
 }
 
 .legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #000000;
   flex-shrink: 0;
 }
 
 .legend-text {
   font-size: 13px;
-  color: #1F2D3D;
+  font-weight: 700;
+  color: #000000;
+  white-space: nowrap;
+}
+
+/* ========== 新增样式 ========== */
+
+/* 筛选栏卡片 */
+.filter-card {
+  background: #FFFFFF;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 6px 6px 0px 0px #000000;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.filter-card:hover {
+  box-shadow: 8px 8px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-label-text {
+  font-size: 12px;
+  font-weight: 900;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 班次图例卡片 */
+.legend-card {
+  background: #FFFFFF;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 6px 6px 0px 0px #000000;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.legend-card:hover {
+  box-shadow: 8px 8px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.legend-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.legend-card-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 8px;
+}
+
+.legend-color-box {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #000000;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-card-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-card-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
+}
+
+/* 统计卡片 */
+.stat-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stat-card {
+  background: #FFFFFF;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 6px 6px 0px 0px #000000;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 10px 10px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stat-card-icon {
+  font-size: 20px;
+  color: #000000;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #000000;
+  border-radius: 3px;
+  background: #FFFDF5;
+}
+
+.stat-card-label {
+  font-size: 12px;
+  font-weight: 900;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card-value {
+  font-size: 32px;
+  font-weight: 900;
+  color: #000000;
+  line-height: 1;
+}
+
+/* 自动排班对话框样式增强 */
+.neo-dialog :deep(.el-dialog__header) {
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
+  padding: 16px 20px;
+}
+
+.neo-dialog :deep(.el-dialog__title) {
+  font-weight: 900 !important;
+  color: #000000;
+  font-size: 18px;
+}
+
+.neo-dialog :deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+/* 校验报告标签页样式 */
+.neo-tabs :deep(.el-tabs__header) {
+  border-bottom: 3px solid #000000;
+  background: #FFFDF5;
+}
+
+.neo-tabs :deep(.el-tabs__item) {
+  font-weight: 700 !important;
+  color: #000000 !important;
+  border: 2px solid transparent !important;
+  border-bottom: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.neo-tabs :deep(.el-tabs__item.is-active) {
+  background: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+  border-bottom: 2px solid #FFFFFF !important;
+  color: #3B82F6 !important;
+  font-weight: 900 !important;
+}
+
+.neo-tabs :deep(.el-tabs__active-bar) {
+  display: none;
+}
+
+.neo-tabs :deep(.el-tabs__content) {
+  padding: 16px 0;
+}
+
+/* 校验结果项 */
+.validation-item {
+  padding: 10px 12px;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  transition: all 0.15s ease;
+}
+
+.validation-item:hover {
+  box-shadow: 3px 3px 0px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.validation-item.passed {
+  background: #D1FAE5;
+  border-color: #000000;
+}
+
+.validation-item.warning {
+  background: #FFD93D;
+  border-color: #000000;
+}
+
+.validation-item.error {
+  background: #FEE2E2;
+  border-color: #EF4444;
+}
+
+.validation-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.validation-item-msg {
+  font-size: 13px;
+  color: #333333;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.validation-item-meta {
+  font-size: 12px;
+  color: #666666;
+  font-weight: 600;
+}
+
+/* 筛选按钮 */
+.filter-btn {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FFD93D;
+  color: #000000;
+  border: 4px solid #000000;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.filter-btn:hover {
+  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translate(-2px, -2px);
+}
+
+.filter-btn:active {
+  box-shadow: 2px 2px 0px 0px #000000;
+  transform: translate(2px, 2px);
+}
+
+/* ============================================
+   移动端适配
+   ============================================ */
+
+/* 页面整体 */
+@media (max-width: 1024px) {
+  /* 平板：按钮文字隐藏，只显示图标 */
+  .btn-text {
+    display: none;
+  }
+
+  .toolbar-right .el-button {
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule-page {
+    min-width: unset;
+    overflow-x: visible;
+    height: auto;
+  }
+
+  /* Tab 栏 */
+  .tab-bar {
+    margin: 12px 12px 0;
+  }
+
+  .tab-item {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  /* 工具栏 */
+  .calendar-toolbar {
+    margin: 0 12px 12px;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .toolbar-left {
+    gap: 6px;
+  }
+
+  .current-month-label {
+    font-size: 14px;
+  }
+
+  /* 筛选区 — 全宽换行 */
+  .toolbar-center {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .filter-card-group {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 120px;
+    padding: 6px 8px;
+  }
+
+  .filter-card-group:last-child {
+    flex: 1 1 100%;
+  }
+
+  .toolbar-center .toolbar-filter {
+    width: 100% !important;
+  }
+
+  .toolbar-center .toolbar-view-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .toolbar-center .toolbar-view-toggle .el-radio-button__inner {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* 按钮区 — 全宽换行 */
+  .toolbar-right {
+    width: 100%;
+    justify-content: stretch;
+    gap: 4px;
+  }
+
+  .toolbar-right .el-button {
+    flex: 1 1 calc(33.33% - 4px);
+    min-width: 0;
+    padding: 6px 4px;
+    font-size: 11px;
+    height: 34px;
+    justify-content: center;
+  }
+
+  /* 日历主体 */
+  .calendar-body {
+    margin: 0 12px 12px;
+    overflow: visible;
+  }
+
+  /* 班次图例 */
+  .shift-legend {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .legend-item {
+    padding: 3px 6px;
+    font-size: 12px;
+  }
+
+  .legend-text {
+    font-size: 12px;
+  }
+
+  /* 对话框 */
+  .neo-dialog :deep(.el-dialog) {
+    width: 95% !important;
+    margin: 20px auto;
+  }
+
+  .neo-dialog :deep(.el-dialog__body) {
+    padding: 12px;
+  }
+}
+
+/* 小屏手机 */
+@media (max-width: 480px) {
+  .calendar-toolbar {
+    padding: 8px 10px;
+    margin: 0 8px 8px;
+  }
+
+  .current-month-label {
+    font-size: 13px;
+  }
+
+  .toolbar-right .el-button {
+    flex: 1 1 calc(50% - 4px);
+    font-size: 11px;
+    height: 32px;
+  }
+
+  .tab-item {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .calendar-body {
+    margin: 0 8px 8px;
+  }
 }
 </style>

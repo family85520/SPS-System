@@ -3,18 +3,19 @@
     :model-value="visible"
     title="发起调班申请"
     width="600px"
+    class="swap-dialog"
     @close="$emit('update:visible', false)"
   >
     <el-form :model="form" label-width="100px" ref="formRef" :rules="rules">
       <el-form-item label="调班类型" prop="swap_type">
-        <el-radio-group v-model="form.swap_type" @change="onTypeChange">
+        <el-radio-group v-model="form.swap_type" @change="onTypeChange" class="neo-radio-group">
           <el-radio value="specified">指定换班</el-radio>
           <el-radio value="open">开放换班</el-radio>
         </el-radio-group>
       </el-form-item>
 
       <el-form-item label="我的班次" prop="requester_schedule_id">
-        <el-select v-model="form.requester_schedule_id" placeholder="选择要换的班次" style="width: 100%">
+        <el-select v-model="form.requester_schedule_id" placeholder="选择要换的班次" class="neo-input">
           <el-option
             v-for="s in mySchedules"
             :key="s.id"
@@ -35,6 +36,7 @@
             :loading="targetLoading"
             style="width: 100%"
             @change="onTargetChange"
+            class="neo-input"
           >
             <el-option
               v-for="u in targetUsers"
@@ -46,7 +48,7 @@
         </el-form-item>
 
         <el-form-item label="对方班次" prop="target_schedule_id" v-if="form.target_id">
-          <el-select v-model="form.target_schedule_id" placeholder="选择对方班次" style="width: 100%">
+          <el-select v-model="form.target_schedule_id" placeholder="选择对方班次" class="neo-input">
             <el-option
               v-for="s in targetSchedules"
               :key="s.id"
@@ -67,11 +69,16 @@
           show-word-limit
         />
       </el-form-item>
+
+      <div class="alert-card" style="margin-top:8px;">
+        <span class="alert-card__icon">ℹ</span>
+        <span class="alert-card__content">提交申请后，对方需确认同意方可完成换班。开放换班模式下，其他符合条件的同事也可认领。</span>
+      </div>
     </el-form>
 
     <template #footer>
-      <el-button @click="$emit('update:visible', false)">取消</el-button>
-      <el-button type="primary" :loading="submitting" @click="handleSubmit">提交申请</el-button>
+      <el-button class="btn-neo-ghost btn-neo-sm" @click="$emit('update:visible', false)">取消</el-button>
+      <el-button class="btn-neo-primary btn-neo-sm" :loading="submitting" @click="handleSubmit">提交申请</el-button>
     </template>
   </el-dialog>
 </template>
@@ -199,3 +206,104 @@ watch(() => props.visible, (val) => {
   }
 })
 </script>
+
+<style scoped>
+/* 弹窗 — 覆盖全局 .el-dialog */
+.swap-dialog :deep(.el-dialog) {
+  border: 4px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 10px 10px 0px 0px #000000 !important;
+  background: #FFFDF5 !important;
+}
+
+.swap-dialog :deep(.el-dialog__header) {
+  border-bottom: 3px solid #000000 !important;
+  background: #FFFDF5 !important;
+  padding: 16px 20px !important;
+  margin: 0 !important;
+}
+
+.swap-dialog :deep(.el-dialog__title) {
+  font-weight: 900 !important;
+  color: #000000 !important;
+  font-size: 16px !important;
+  letter-spacing: 0.3px !important;
+}
+
+.swap-dialog :deep(.el-dialog__body) {
+  padding: 20px !important;
+  background: #FFFDF5 !important;
+}
+
+.swap-dialog :deep(.el-dialog__footer) {
+  border-top: 3px solid #000000 !important;
+  padding: 14px 20px !important;
+  background: #FFFDF5 !important;
+}
+
+/* 表单标签 */
+:deep(.el-form-item__label) {
+  font-weight: 800 !important;
+  color: #000000 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.2px !important;
+}
+
+/* 单选按钮 Neo 风格 */
+.neo-radio-group {
+  display: flex !important;
+  gap: 10px !important;
+}
+
+.neo-radio-group :deep(.el-radio) {
+  margin-right: 0 !important;
+}
+
+.neo-radio-group :deep(.el-radio__label) {
+  font-weight: 700 !important;
+  font-size: 13px !important;
+}
+
+.neo-radio-group :deep(.el-radio__input) {
+  border: 3px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  border-radius: 4px !important;
+  transition: all 0.1s ease !important;
+}
+
+.neo-radio-group :deep(.el-radio__input.is-checked .el-radio__inner) {
+  background: #3B82F6 !important;
+  border-color: #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+.neo-radio-group :deep(.el-radio__input.is-checked + .el-radio__label) {
+  font-weight: 900 !important;
+  color: #000000 !important;
+}
+
+/* 字数统计 */
+:deep(.el-textarea .el-input__count) {
+  background: transparent !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  color: #999999 !important;
+}
+
+/* ============================================
+   移动端适配
+   ============================================ */
+
+@media (max-width: 768px) {
+  .swap-dialog :deep(.el-dialog) {
+    width: 95% !important;
+    box-shadow: 6px 6px 0px 0px #000000 !important;
+  }
+
+  .btn-neo-primary,
+  .btn-neo-ghost {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+</style>

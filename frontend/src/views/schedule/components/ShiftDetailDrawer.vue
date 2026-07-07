@@ -3,7 +3,7 @@
     :model-value="visible"
     :title="drawerTitle"
     direction="rtl"
-    size="420px"
+    size="460px"
     @close="handleClose"
   >
     <template v-if="schedule">
@@ -27,7 +27,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">状态</span>
-          <el-tag :type="statusTagType" size="small">{{ statusText }}</el-tag>
+          <el-tag :type="statusTagType" size="small" effect="dark">{{ statusText }}</el-tag>
         </div>
       </div>
 
@@ -59,13 +59,12 @@
           值班人员（{{ memberDetails.length }}人）
         </div>
 
-        <!-- 已分配人员列表 -->
         <div class="member-list">
           <div v-for="d in memberDetails" :key="d.id" class="member-item">
             <div class="member-info">
               <span class="member-name">{{ d.staff_name }}</span>
-              <el-tag v-if="d.is_substitute" size="small" type="warning">替班</el-tag>
-              <el-tag v-if="d.role_type === 'leader'" size="small" type="success">领导</el-tag>
+              <el-tag v-if="d.is_substitute" size="small" type="warning" effect="dark">替班</el-tag>
+              <el-tag v-if="d.role_type === 'leader'" size="small" type="success" effect="dark">领导</el-tag>
             </div>
             <el-button
               v-if="isDraft && authStore.hasPermission('schedule', 'delete')"
@@ -80,7 +79,6 @@
           <el-empty v-if="memberDetails.length === 0" description="暂无值班人员" :image-size="48" />
         </div>
 
-        <!-- 添加人员：需要 schedule update 权限 -->
         <div v-if="isDraft && authStore.hasPermission('schedule', 'update')" class="add-member-area">
           <StaffSelector
             v-model="newStaffId"
@@ -90,11 +88,11 @@
           />
           <div class="add-member-options">
             <el-checkbox v-model="isSubstitute" label="替班" size="small" />
-            <el-radio-group v-model="newRoleType" size="small">
+            <el-radio-group v-model="newRoleType" size="small" class="neo-radio-group">
               <el-radio-button value="member">成员</el-radio-button>
               <el-radio-button value="leader">领导</el-radio-button>
             </el-radio-group>
-            <el-button type="primary" size="small" :disabled="!newStaffId" @click="handleAddMember">
+            <el-button size="small" :disabled="!newStaffId" class="btn-neo-primary" @click="handleAddMember">
               添加
             </el-button>
           </div>
@@ -105,7 +103,7 @@
       <template v-if="conflicts.length > 0">
         <el-divider />
         <div class="section">
-          <div class="section-title" style="color: #DC3545">
+          <div class="section-title" style="color: #EF4444">
             <el-icon><WarningFilled /></el-icon>
             冲突提示
           </div>
@@ -119,16 +117,16 @@
 
       <!-- 操作按钮 -->
       <div class="drawer-footer">
-        <!-- 删除：需要 schedule delete 权限 -->
         <el-button
           v-if="isDraft && authStore.hasPermission('schedule', 'delete')"
           type="danger"
+          class="btn-neo-danger"
           @click="handleDelete"
         >
           删除
         </el-button>
         <div style="flex: 1" />
-        <el-button @click="handleClose">关闭</el-button>
+        <el-button class="btn-neo-ghost" @click="handleClose">关闭</el-button>
       </div>
     </template>
   </el-drawer>
@@ -136,7 +134,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { useConfirm } from '@/composables/useConfirm'
 import { WarningFilled } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Schedule, ScheduleDetail, CalendarShift } from '@/api/schedule'
@@ -159,17 +158,12 @@ const emit = defineEmits<{
   (e: 'refresh'): void
 }>()
 
-// ==================== 权限 ====================
-
 const authStore = useAuthStore()
-
-// ==================== 状态 ====================
+const { confirm } = useConfirm()
 
 const newStaffId = ref<number | null>(null)
 const isSubstitute = ref(false)
 const newRoleType = ref<string>('member')
-
-// ==================== 计算属性 ====================
 
 const drawerTitle = computed(() => {
   if (!props.schedule) return '排班详情'
@@ -199,8 +193,6 @@ const existingStaffIds = computed(() => {
 const conflicts = computed(() => {
   return props.calendarShift?.conflicts || []
 })
-
-// ==================== 操作 ====================
 
 async function handleLeaderChange(staffId: number | number[] | null) {
   if (!props.schedule || staffId === null || staffId === undefined || typeof staffId === 'object') return
@@ -241,13 +233,12 @@ async function handleAddMember() {
 async function handleRemoveMember(detail: ScheduleDetail) {
   if (!props.schedule) return
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'danger',
       title: '确认移除？',
       message: `确认移除「${detail.staff_name}」的值班安排？`,
-      showCancelButton: true,
-      confirmButtonText: '移除',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '移除',
+      cancelText: '取消',
     })
     await removeStaff(props.schedule.id, detail.staff_id)
     ElMessage.success('移除成功')
@@ -260,13 +251,12 @@ async function handleRemoveMember(detail: ScheduleDetail) {
 async function handleDelete() {
   if (!props.schedule) return
   try {
-    await ElMessageBox({
+    await confirm({
+      type: 'danger',
       title: '确认删除？',
       message: `确认删除 ${props.schedule.date} ${props.schedule.shift_name} 的排班记录？删除后无法恢复。`,
-      showCancelButton: true,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
+      confirmText: '删除',
+      cancelText: '取消',
     })
     await deleteSchedule(props.schedule.id)
     ElMessage.success('删除成功')
@@ -297,27 +287,31 @@ function handleClose() {
 
 .info-label {
   width: 60px;
-  color: #909399;
+  color: #666;
   flex-shrink: 0;
+  font-weight: 700;
 }
 
 .info-value {
-  color: #1F2D3D;
+  color: #000000;
   display: flex;
   align-items: center;
   gap: 6px;
+  font-weight: 600;
 }
 
 .color-dot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 2px;
+  border: 2px solid #000000;
   flex-shrink: 0;
 }
 
 .time-text {
   font-size: 12px;
-  color: #909399;
+  color: #666;
+  font-weight: 600;
 }
 
 .section {
@@ -326,8 +320,8 @@ function handleClose() {
 
 .section-title {
   font-size: 14px;
-  font-weight: 600;
-  color: #1F2D3D;
+  font-weight: 900;
+  color: #000000;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -336,15 +330,17 @@ function handleClose() {
 
 .current-leader {
   font-size: 14px;
-  color: #556173;
+  color: #333;
   padding: 4px 0;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  font-weight: 600;
 }
 .leader-name-item {
   font-size: 14px;
-  color: #556173;
+  color: #333;
+  font-weight: 600;
 }
 
 .member-list {
@@ -358,9 +354,16 @@ function handleClose() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
-  background: #F5F7FA;
-  border-radius: 4px;
+  padding: 10px 12px;
+  background: #FFFDF5;
+  border: 3px solid #000000;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.06);
+  transition: all 0.15s ease;
+}
+
+.member-item:hover {
+  box-shadow: 4px 4px 0px 0px #000000;
+  transform: translate(-1px, -1px);
 }
 
 .member-info {
@@ -371,13 +374,16 @@ function handleClose() {
 
 .member-name {
   font-size: 14px;
-  color: #1F2D3D;
+  color: #000000;
+  font-weight: 700;
 }
 
 .add-member-area {
-  border: 1px dashed #E6EAF0;
-  border-radius: 6px;
-  padding: 12px;
+  border: 3px dashed #000000;
+  border-radius: 4px;
+  padding: 14px;
+  background: #FFFDF5;
+  box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.05);
 }
 
 .add-member-options {
@@ -385,6 +391,7 @@ function handleClose() {
   align-items: center;
   gap: 12px;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .conflict-list {
@@ -395,18 +402,27 @@ function handleClose() {
 
 .conflict-item {
   font-size: 13px;
-  color: #DC3545;
-  padding: 8px 10px;
-  background: #FFF5F5;
-  border-radius: 4px;
-  border-left: 3px solid #DC3545;
+  color: #EF4444;
+  padding: 10px 12px;
+  background: #FEE2E2;
+  border: 3px solid #000000;
+  border-left: 4px solid #EF4444;
+  border-radius: 3px;
+  font-weight: 600;
+  box-shadow: 2px 2px 0px 0px rgba(239,68,68,0.15);
+  transition: all 0.15s ease;
+}
+
+.conflict-item:hover {
+  box-shadow: 3px 3px 0px 0px rgba(239,68,68,0.25);
+  transform: translate(-1px, -1px);
 }
 
 .drawer-footer {
   display: flex;
   align-items: center;
   padding-top: 16px;
-  border-top: 1px solid #E6EAF0;
+  border-top: 3px solid #000000;
   margin-top: 16px;
 }
 </style>
