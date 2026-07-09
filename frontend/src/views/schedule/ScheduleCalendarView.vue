@@ -99,7 +99,7 @@
 
         <!-- 次要操作（折叠进更多菜单） -->
         <el-popover
-          v-if="authStore.hasPermission('schedule', 'approve') || authStore.hasPermission('export', 'read')"
+          v-if="authStore.hasPermission('schedule', 'approve') || authStore.hasPermission('schedule', 'export')"
           placement="bottom-end"
           :width="180"
           trigger="click"
@@ -128,7 +128,7 @@
               <span class="btn-text">审核拒绝</span>
             </el-button>
             <el-button
-              v-if="authStore.hasPermission('export', 'read')"
+              v-if="authStore.hasPermission('schedule', 'export')"
               class="btn-neo-sm btn-more-item btn-neo-info"
               @click="handleExport"
             >

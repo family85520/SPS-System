@@ -19,7 +19,7 @@
         <el-option v-for="org in orgList" :key="org.id" :label="org.name" :value="org.id" />
       </el-select>
       <el-button class="btn-neo-primary" @click="loadStatistics">查询</el-button>
-      <el-button v-if="authStore.hasPermission('export', 'read')" class="btn-neo-primary" @click="handleExport">
+      <el-button v-if="authStore.hasPermission('schedule', 'export')" class="btn-neo-primary" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出
       </el-button>
