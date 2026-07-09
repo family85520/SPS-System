@@ -21,14 +21,12 @@ async def init_default_data(db: AsyncSession):
              "constraint": ["read", "create", "update"],
              "swap": ["read", "approve"],
              "message": ["read", "create"],
-             "export": ["read"],
          }},
         {"name": "组长", "code": "leader", "is_system": True,
          "permissions": {
              "schedule": ["read"],
              "swap": ["read", "create"],
              "message": ["read"],
-             "export": ["read"],
          }},
         {"name": "普通队员", "code": "member", "is_system": True,
          "permissions": {

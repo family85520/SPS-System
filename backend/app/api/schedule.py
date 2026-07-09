@@ -159,7 +159,7 @@ async def download_schedule_import_template(
     start_date: str | None = Query(None, description="开始日期 YYYY-MM-DD，可选"),
     end_date: str | None = Query(None, description="结束日期 YYYY-MM-DD，可选"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("schedule", "read")),
+    current_user: SysUser = Depends(require_permissions("schedule", "create")),
 ):
     sd = _parse_date(start_date, "start_date") if start_date else None
     ed = _parse_date(end_date, "end_date") if end_date else None
@@ -501,7 +501,7 @@ async def validate_schedules(
     end_date: str = Query(..., description="结束日期 YYYY-MM-DD"),
     org_id: int | None = Query(None, description="组织ID"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("schedule", "read")),
+    current_user: SysUser = Depends(require_permissions("schedule", "create")),
 ):
     from app.models.constraint import SchConstraint
     from app.models.special_rule import SchSpecialRule

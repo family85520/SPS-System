@@ -72,7 +72,7 @@
           <el-icon><Plus /></el-icon>
           <span class="btn-text">添加排班</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'read')" class="btn-neo-warning btn-neo-sm" @click="handleDownloadImportTemplate">
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" class="btn-neo-warning btn-neo-sm" @click="handleDownloadImportTemplate">
           <el-icon><Download /></el-icon>
           <span class="btn-text">下载模板</span>
         </el-button>
@@ -80,7 +80,7 @@
           <el-icon><Upload /></el-icon>
           <span class="btn-text">导入</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'read')" class="btn-neo-info btn-neo-sm" @click="handleValidate">
+        <el-button v-if="authStore.hasPermission('schedule', 'create')" class="btn-neo-info btn-neo-sm" @click="handleValidate">
           <el-icon><CircleCheck /></el-icon>
           <span class="btn-text">校验</span>
         </el-button>

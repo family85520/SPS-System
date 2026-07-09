@@ -60,11 +60,6 @@ async def get_permission_schema(
                 "label": "消息中心",
                 "actions": ["read", "create", "delete"],
             },
-            {
-                "key": "export",
-                "label": "数据导出",
-                "actions": ["read"],
-            },
         ],
         "actions": [
             {"key": "read", "label": "查看"},

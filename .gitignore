@@ -1,23 +1,104 @@
+# ============================================
+# Python
+# ============================================
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.mako
 
+# ============================================
+# Virtual environments
+# ============================================
+venv/
+.venv/
+backend/venv/
+
+# ============================================
+# Environment & secrets
+# ============================================
+.env
+.env.*
+!.env.example
+
+# ============================================
+# Databases & caches
+# ============================================
+*.sqlite*
+*.db-journal
+
+# ============================================
+# Logs
+# ============================================
+*.log
+
+# ============================================
+# IDE & editors
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============================================
+# OS files
+# ============================================
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Frontend build artifacts
+# ============================================
+node_modules/
+frontend/dist/
+
+# ============================================
+# Testing & coverage
+# ============================================
 .pytest_cache/
+backend/.pytest_cache/
+frontend/.pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 
-venv/
-.venv/
-backend/venv/
-
-.env
-.env.*
-!.env.example
-
+# ============================================
+# AI / Claude Code tools
+# ============================================
 .claude/
+superpowers/
+.playwright-cli
+.run-sps
+.agents
 
-node_modules/
-dist/
-frontend/dist/
+# ============================================
+# SDD temporary artifacts
+# (briefs, reports, review packages)
+# ============================================
+!docs/superpowers/plans/
+!docs/superpowers/specs/
+*.brief.md
+*.report.md
+*.diff.md
+*.pkg.md
+
+# ============================================
+# AI-generated analysis files in project root
+# (keep docs/ ones, discard root-level ones)
+# ============================================
+*comparison.md
+*style-analysis.md
+next_chat.txt
+project_tree.txt
+
+# ============================================
+# Backup & temp files
+# ============================================
+*.bak
+*.orig
