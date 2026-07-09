@@ -84,8 +84,8 @@
 
     <div v-for="tpl in templates" :key="tpl.id" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:#FFFDF5;border:2px solid #000000;border-radius:4px;">
       <span class="font-weight-medium" style="flex:1;font-size:13px;">{{ tpl.name }}<el-tag v-if="tpl.is_default" size="small" type="success" effect="dark" style="margin-left:6px;">默认</el-tag></span>
-      <el-button v-if="!tpl.is_default" size="small" class="btn-neo-primary" @click="setDefault(tpl.id)">设为默认</el-button>
-      <el-button size="small" class="btn-neo-danger" @click="removeTemplate(tpl.id)">删除</el-button>
+      <el-button v-if="!tpl.is_default && authStore.hasPermission('schedule', 'update')" size="small" class="btn-neo-primary" @click="setDefault(tpl.id)">设为默认</el-button>
+      <el-button v-if="authStore.hasPermission('schedule', 'delete')" size="small" class="btn-neo-danger" @click="removeTemplate(tpl.id)">删除</el-button>
     </div>
 
     <div style="margin-top:8px;display:flex;gap:8px;">
@@ -95,7 +95,7 @@
     </div>
 
     <!-- 上传模板 — 拖拽上传区域 -->
-    <div class="drag-upload-zone" style="margin-top:12px;" @click="triggerFileUpload">
+    <div v-if="authStore.hasPermission('schedule', 'update')" class="drag-upload-zone" style="margin-top:12px;" @click="triggerFileUpload">
       <i class="fas fa-cloud-upload-alt drag-upload-zone__icon"></i>
       <span class="drag-upload-zone__title">拖拽 .xlsx 文件到此处，或点击选择文件</span>
       <span class="drag-upload-zone__hint">支持 Excel 2007+ (.xlsx) 格式的排版参数配置文件</span>
@@ -130,6 +130,9 @@ import {
 } from '@/api/export'
 import api from '@/api/index'
 import { useConfirm } from '@/composables/useConfirm'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 interface OrgOption {
   id: number
