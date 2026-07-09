@@ -48,7 +48,7 @@ async def get_permission_schema(
             {
                 "key": "schedule",
                 "label": "排班管理",
-                "actions": ["read", "create", "update", "delete", "publish", "approve"],
+                "actions": ["read", "create", "update", "delete", "publish", "approve", "import", "export"],
             },
             {
                 "key": "swap",
@@ -73,6 +73,8 @@ async def get_permission_schema(
             {"key": "delete", "label": "删除"},
             {"key": "publish", "label": "发布"},
             {"key": "approve", "label": "审批"},
+            {"key": "import", "label": "导入"},
+            {"key": "export", "label": "导出"},
         ],
     }
 
