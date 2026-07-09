@@ -313,10 +313,10 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
   overflow: hidden;
 }
 
@@ -326,15 +326,15 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
   flex-wrap: wrap;
   box-shadow: inset 0 -3px 0px 0px rgba(0,0,0,0.05);
 }
 
 .filter-label {
   font-size: 13px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   font-weight: 700;
 }
 
@@ -365,11 +365,11 @@ onMounted(async () => {
 
 .td-name {
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .td-no {
-  color: #666;
+  color: var(--neo-color-text-secondary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -387,8 +387,8 @@ onMounted(async () => {
 .td-badge {
   display: inline-block;
   padding: 3px 10px;
-  border: 2px solid #000000;
-  border-radius: 3px;
+  border: 2px solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   font-size: 12px;
   font-weight: 700;
   box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.1);
@@ -396,8 +396,8 @@ onMounted(async () => {
 }
 
 .td-badge:hover {
-  box-shadow: 2px 2px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-active);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .badge-night { background: #DBEAFE; color: #1D4ED8; }
@@ -411,24 +411,24 @@ onMounted(async () => {
   height: 26px;
   line-height: 26px;
   text-align: center;
-  border-radius: 3px;
+  border-radius: var(--neo-radius-md);
   font-size: 12px;
   font-weight: 900;
   display: inline-block;
-  border: 2px solid #000000;
+  border: 2px solid var(--neo-color-border);
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.15);
   transition: all 0.15s ease;
 }
 
 .rank-badge:hover {
-  box-shadow: 3px 3px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-md);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
-.rank-1 { background: #FFD93D; color: #000000; }
-.rank-2 { background: #E5E7EB; color: #000000; }
-.rank-3 { background: #F97316; color: #FFFFFF; }
-.rank-other { background: #FFFDF5; color: #556173; }
+.rank-1 { background: #FFD93D; color: var(--neo-color-text-primary); }
+.rank-2 { background: #E5E7EB; color: var(--neo-color-text-primary); }
+.rank-3 { background: #F97316; color: var(--neo-color-bg-card); }
+.rank-other { background: var(--neo-color-bg-primary); color: #556173; }
 
 /* 权重条 */
 .weight-cell {
@@ -441,9 +441,9 @@ onMounted(async () => {
 .weight-bar-bg {
   width: 80px;
   height: 10px;
-  background: #FFFDF5;
-  border: 2px solid #000000;
-  border-radius: 2px;
+  background: var(--neo-color-bg-primary);
+  border: 2px solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
   overflow: hidden;
   box-shadow: inset 1px 1px 0px 0px rgba(0,0,0,0.1);
 }
@@ -459,7 +459,7 @@ onMounted(async () => {
   font-size: 13px;
   min-width: 36px;
   text-align: right;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 /* 排名高亮行 */
@@ -474,7 +474,7 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .statistics-panel {
     border-width: 2px;
-    box-shadow: 3px 3px 0px 0px #000000;
+    box-shadow: var(--neo-shadow-md);
   }
 
   .filter-bar {

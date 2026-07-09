@@ -154,7 +154,7 @@ const emit = defineEmits<{
   'update:visible': [value: boolean]
 }>()
 
-const { confirmWarning } = useConfirm()
+const { confirmWarning, confirmDanger } = useConfirm()
 
 const exporting = defineModel<boolean>('loading', { default: false })
 
@@ -293,41 +293,41 @@ async function handleExport() {
 <style scoped>
 /* Neo 表单控件样式 */
 :deep(.el-dialog) {
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 8px 8px 0px 0px #000000 !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-lg) !important;
 }
 
 :deep(.el-dialog__header) {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
   padding: 16px 20px !important;
 }
 
 :deep(.el-dialog__title) {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 18px !important;
 }
 
 :deep(.el-form-item__label) {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 14px !important;
 }
 
 :deep(.el-date-editor.el-input__wrapper) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 
 :deep(.el-select .el-select__wrapper) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 
 /* 模板管理区域 Neo 风格 */
@@ -339,17 +339,17 @@ async function handleExport() {
   height: 18px;
   font-size: 12px;
   font-weight: 900;
-  color: #3B82F6;
-  border: 2px solid #000000;
-  border-radius: 2px;
-  background: #EFF6FF;
+  color: var(--neo-color-accent-blue);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
+  background: var(--neo-color-info-bg);
   box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.1);
   cursor: help;
 }
 
 .form-tip {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
@@ -357,29 +357,29 @@ async function handleExport() {
 :deep(details[style*="margin-bottom:8px"]) > div:first-child {
   cursor: pointer;
   font-size: 13px;
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   font-weight: 700;
 }
 
 :deep(summary.form-tip) {
   cursor: pointer;
   font-size: 13px;
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   font-weight: 700;
 }
 
 /* 模板列表项 Neo 卡片 */
 :deep(div[style*="border:2px solid"][style*="margin-bottom:6px"]) {
-  background: #FFFDF5;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  background: var(--neo-color-bg-primary);
+  border: 3px solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   box-shadow: 3px 3px 0px 0px rgba(0,0,0,0.1);
   transition: all 0.15s ease;
 }
 
 :deep(div[style*="border:2px solid"][style*="margin-bottom:6px"]:hover) {
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--neo-color-border);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 /* 拖拽上传区域 */
@@ -390,9 +390,9 @@ async function handleExport() {
   justify-content: center;
   gap: 8px;
   padding: 32px 20px;
-  background: #FFFDF5;
-  border: 3px dashed #000000;
-  border-radius: 4px;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) dashed var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   cursor: pointer;
   transition: all 0.15s ease;
   box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.05);
@@ -400,26 +400,26 @@ async function handleExport() {
 
 .drag-upload-zone:hover {
   border-style: solid;
-  background: #FFFBEB;
+  background: var(--neo-color-warning-bg);
   box-shadow: inset 3px 3px 0px 0px rgba(0,0,0,0.08);
-  transform: translate(-1px, -1px);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .drag-upload-zone__icon {
   font-size: 32px;
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   font-weight: 900;
 }
 
 .drag-upload-zone__title {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .drag-upload-zone__hint {
   font-size: 12px;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   font-weight: 600;
 }
 
@@ -429,25 +429,25 @@ async function handleExport() {
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: #F0FDF4;
-  border: 2px solid #000000;
-  border-radius: 3px;
+  background: var(--neo-color-success-bg);
+  border: 2px solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.05);
 }
 
 .progress-bar__filename {
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .progress-bar__status {
   font-size: 12px;
   font-weight: 700;
-  color: #10B981;
+  color: var(--neo-color-accent-green);
   padding: 2px 8px;
-  background: #D1FAE5;
-  border: 2px solid #000000;
-  border-radius: 2px;
+  background: var(--neo-color-success-bg);
+  border: 2px solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
 }
 </style>

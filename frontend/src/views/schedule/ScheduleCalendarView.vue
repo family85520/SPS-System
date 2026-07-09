@@ -1051,7 +1051,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 56px - 40px);
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
   padding: 0;
   min-width: 900px;
   overflow-x: auto;
@@ -1062,10 +1062,10 @@ onMounted(async () => {
   display: flex;
   gap: 0;
   margin: 20px 20px 0;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px 4px 0 0;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md) var(--neo-radius-md) 0 0;
+  box-shadow: var(--neo-shadow-default);
   overflow: hidden;
 }
 
@@ -1073,7 +1073,7 @@ onMounted(async () => {
   padding: 12px 28px;
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.15s;
@@ -1081,13 +1081,13 @@ onMounted(async () => {
 }
 
 .tab-item:hover {
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 
 .tab-item.active {
-  color: #FFFFFF;
-  background: #3B82F6;
-  border-bottom-color: #000000;
+  color: var(--neo-color-bg-card);
+  background: var(--neo-color-accent-blue);
+  border-bottom-color: var(--neo-color-border);
 }
 
 /* 工具栏 */
@@ -1096,10 +1096,10 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
   margin: 0 20px 16px;
   flex-wrap: wrap;
 }
@@ -1114,7 +1114,7 @@ onMounted(async () => {
 .current-month-label {
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   white-space: nowrap;
 }
 
@@ -1132,23 +1132,23 @@ onMounted(async () => {
   flex-direction: column;
   gap: 4px;
   flex-shrink: 0;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-xs);
   padding: 8px 10px;
   transition: all 0.15s ease;
 }
 
 .filter-card-group:hover {
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .filter-card-label {
   font-size: 10px;
   font-weight: 900;
-  color: #555555;
+  color: var(--neo-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   line-height: 1;
@@ -1185,10 +1185,10 @@ onMounted(async () => {
 .toolbar-filter .el-select__wrapper {
   height: 36px !important;
   min-height: 36px !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-xs) !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 0 10px !important;
   font-size: 13px !important;
   font-weight: 700 !important;
@@ -1196,22 +1196,22 @@ onMounted(async () => {
 }
 
 .toolbar-filter .el-select__wrapper:hover {
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-hover) !important;
 }
 
 .toolbar-filter .el-select__wrapper.is-focused {
-  box-shadow: 4px 4px 0px 0px #FFD93D !important;
-  border-color: #000000 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-yellow) !important;
+  border-color: var(--neo-color-border) !important;
 }
 
 .toolbar-filter .el-input__inner {
   font-weight: 700 !important;
   font-size: 13px !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 .toolbar-filter .el-input__inner::placeholder {
-  color: #999999 !important;
+  color: var(--neo-color-text-muted) !important;
   font-weight: 600 !important;
 }
 
@@ -1220,28 +1220,28 @@ onMounted(async () => {
   height: 36px !important;
   min-height: 36px !important;
   line-height: 36px !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
   box-shadow: none !important;
-  background: #FFFFFF !important;
+  background: var(--neo-color-bg-card) !important;
   font-size: 13px !important;
   font-weight: 700 !important;
   padding: 0 16px !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   transition: all 0.1s ease !important;
 }
 
 .toolbar-view-toggle .el-radio-button__inner:hover {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-sm) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 /* 选中态 — 用 label 层级设颜色，避免 __inner 被全局样式覆盖 */
 .toolbar-view-toggle .el-radio-button.is-active .el-radio-button__inner {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  border-color: #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  border-color: var(--neo-color-border) !important;
   font-weight: 900 !important;
 }
 
@@ -1262,10 +1262,10 @@ onMounted(async () => {
 .calendar-body {
   flex: 1;
   margin: 0 20px 20px;
-  background: #FFFFFF;
-  border: 3px solid #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
   border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-hover);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1273,10 +1273,10 @@ onMounted(async () => {
 
 /* 更多菜单 popover */
 .toolbar-more-popover {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 8px !important;
 }
 
@@ -1303,31 +1303,31 @@ onMounted(async () => {
 }
 
 .violation-item.warning {
-  background: #FFD93D;
-  border-left: 4px solid #000000;
+  background: var(--neo-color-accent-yellow);
+  border-left: var(--neo-border-ultra) solid var(--neo-color-border);
 }
 
 .violation-item.error {
-  background: #FEE2E2;
-  border-left: 4px solid #EF4444;
+  background: var(--neo-color-danger-bg);
+  border-left: var(--neo-border-ultra) solid var(--neo-color-accent-red);
 }
 
 .violation-title {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin-bottom: 4px;
 }
 
 .violation-msg {
   font-size: 13px;
-  color: #333;
+  color: var(--neo-color-text-secondary);
   margin-bottom: 2px;
 }
 
 .violation-meta {
   font-size: 12px;
-  color: #666;
+  color: var(--neo-color-text-secondary);
 }
 
 .shift-legend {
@@ -1335,8 +1335,8 @@ onMounted(async () => {
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  border-top: 3px solid #000000;
-  background: #FFFDF5;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -1344,7 +1344,7 @@ onMounted(async () => {
 .legend-title {
   font-size: 13px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1354,29 +1354,29 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  border: 2px solid #000000;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
   border-radius: 3px;
-  background: #FFFFFF;
+  background: var(--neo-color-bg-card);
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.08);
   transition: all 0.15s ease;
 }
 
 .legend-item:hover {
-  box-shadow: 3px 3px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-md);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .legend-dot {
   width: 14px;
   height: 14px;
-  border: 2px solid #000000;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
   flex-shrink: 0;
 }
 
 .legend-text {
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   white-space: nowrap;
 }
 
@@ -1384,18 +1384,18 @@ onMounted(async () => {
 
 /* 筛选栏卡片 */
 .filter-card {
-  background: #FFFFFF;
-  border: 4px solid #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
   border-radius: 4px;
-  box-shadow: 6px 6px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
   padding: 16px;
   margin-bottom: 12px;
   transition: all 0.2s ease;
 }
 
 .filter-card:hover {
-  box-shadow: 8px 8px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .filter-grid {
@@ -1413,25 +1413,25 @@ onMounted(async () => {
 .filter-label-text {
   font-size: 12px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 /* 班次图例卡片 */
 .legend-card {
-  background: #FFFFFF;
-  border: 4px solid #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
   border-radius: 4px;
-  box-shadow: 6px 6px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
   padding: 14px 16px;
   margin-bottom: 12px;
   transition: all 0.2s ease;
 }
 
 .legend-card:hover {
-  box-shadow: 8px 8px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .legend-card-row {
@@ -1444,7 +1444,7 @@ onMounted(async () => {
 .legend-card-title {
   font-size: 12px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-right: 8px;
@@ -1453,7 +1453,7 @@ onMounted(async () => {
 .legend-color-box {
   width: 20px;
   height: 20px;
-  border: 2px solid #000000;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
   border-radius: 2px;
   flex-shrink: 0;
 }
@@ -1467,7 +1467,7 @@ onMounted(async () => {
 .legend-card-text {
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 /* 统计卡片 */
@@ -1479,17 +1479,17 @@ onMounted(async () => {
 }
 
 .stat-card {
-  background: #FFFFFF;
-  border: 4px solid #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
   border-radius: 4px;
-  box-shadow: 6px 6px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
   padding: 20px;
   transition: all 0.2s ease;
 }
 
 .stat-card:hover {
   box-shadow: 10px 10px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 
 .stat-card-header {
@@ -1501,21 +1501,21 @@ onMounted(async () => {
 
 .stat-card-icon {
   font-size: 20px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #000000;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
   border-radius: 3px;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 
 .stat-card-label {
   font-size: 12px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1523,20 +1523,20 @@ onMounted(async () => {
 .stat-card-value {
   font-size: 32px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   line-height: 1;
 }
 
 /* 自动排班对话框样式增强 */
 .neo-dialog :deep(.el-dialog__header) {
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
   padding: 16px 20px;
 }
 
 .neo-dialog :deep(.el-dialog__title) {
   font-weight: 900 !important;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   font-size: 18px;
 }
 
@@ -1546,23 +1546,23 @@ onMounted(async () => {
 
 /* 校验报告标签页样式 */
 .neo-tabs :deep(.el-tabs__header) {
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
 }
 
 .neo-tabs :deep(.el-tabs__item) {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   border: 2px solid transparent !important;
   border-bottom: none !important;
   transition: all 0.15s ease !important;
 }
 
 .neo-tabs :deep(.el-tabs__item.is-active) {
-  background: #FFFFFF !important;
-  border: 2px solid #000000 !important;
-  border-bottom: 2px solid #FFFFFF !important;
-  color: #3B82F6 !important;
+  background: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-bottom: 2px solid var(--neo-color-bg-card) !important;
+  color: var(--neo-color-accent-blue) !important;
   font-weight: 900 !important;
 }
 
@@ -1577,36 +1577,36 @@ onMounted(async () => {
 /* 校验结果项 */
 .validation-item {
   padding: 10px 12px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   margin-bottom: 8px;
   transition: all 0.15s ease;
 }
 
 .validation-item:hover {
-  box-shadow: 3px 3px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .validation-item.passed {
-  background: #D1FAE5;
-  border-color: #000000;
+  background: var(--neo-color-success-bg);
+  border-color: var(--neo-color-border);
 }
 
 .validation-item.warning {
-  background: #FFD93D;
-  border-color: #000000;
+  background: var(--neo-color-accent-yellow);
+  border-color: var(--neo-color-border);
 }
 
 .validation-item.error {
-  background: #FEE2E2;
-  border-color: #EF4444;
+  background: var(--neo-color-danger-bg);
+  border-color: var(--neo-color-accent-red);
 }
 
 .validation-item-title {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin-bottom: 4px;
   display: flex;
   align-items: center;
@@ -1615,14 +1615,14 @@ onMounted(async () => {
 
 .validation-item-msg {
   font-size: 13px;
-  color: #333333;
+  color: var(--neo-color-text-secondary);
   margin-bottom: 2px;
   font-weight: 600;
 }
 
 .validation-item-meta {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
@@ -1634,11 +1634,11 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #FFD93D;
-  color: #000000;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-accent-yellow);
+  color: var(--neo-color-text-primary);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-hover);
   font-weight: 900;
   font-size: 14px;
   text-transform: uppercase;
@@ -1648,13 +1648,13 @@ onMounted(async () => {
 }
 
 .filter-btn:hover {
-  box-shadow: 6px 6px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow-default);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 
 .filter-btn:active {
-  box-shadow: 2px 2px 0px 0px #000000;
-  transform: translate(2px, 2px);
+  box-shadow: var(--neo-shadow-active);
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active));
 }
 
 /* ============================================

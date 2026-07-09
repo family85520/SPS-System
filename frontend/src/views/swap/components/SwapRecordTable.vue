@@ -178,19 +178,19 @@ const statusTagType = (s: string) => {
 <style scoped>
 /* 表格 — 覆盖全局 .el-table 样式，增加优先级 */
 .swap-table :deep(.el-table) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 6px 6px 0px 0px #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
 }
 
 .swap-table :deep(.el-table th.el-table__cell) {
-  background: #FFFDF5 !important;
-  color: #000000 !important;
+  background: var(--neo-color-bg-primary) !important;
+  color: var(--neo-color-text-primary) !important;
   font-weight: 900 !important;
   font-size: 13px !important;
   letter-spacing: 0.3px !important;
-  border-bottom: 3px solid #000000 !important;
-  border-right: 2px solid #000000 !important;
+  border-bottom: 3px solid var(--neo-color-border) !important;
+  border-right: 2px solid var(--neo-color-border) !important;
   padding: 14px 12px !important;
 }
 
@@ -209,7 +209,7 @@ const statusTagType = (s: string) => {
 }
 
 .swap-table :deep(.el-table__body tr:hover > td.el-table__cell) {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 /* 分页 */
@@ -222,63 +222,63 @@ const statusTagType = (s: string) => {
 }
 
 .table-pagination :deep(.el-pager li) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 700 !important;
   font-size: 13px !important;
   min-width: 36px !important;
   height: 36px !important;
   line-height: 30px !important;
   transition: all 0.1s ease !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 .table-pagination :deep(.el-pager li:hover) {
-  background: #FFD93D !important;
-  transform: translate(-1px, -1px) !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
+  box-shadow: var(--neo-shadow-md) !important;
 }
 
 .table-pagination :deep(.el-pager li.is-active) {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  border-color: #000000 !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-color: var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-md) !important;
   font-weight: 900 !important;
 }
 
 .table-pagination :deep(.el-pagination button) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 700 !important;
   font-size: 13px !important;
   min-width: 36px !important;
   height: 36px !important;
   line-height: 30px !important;
   transition: all 0.1s ease !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 .table-pagination :deep(.el-pagination button:hover:not(:disabled)) {
-  background: #FFD93D !important;
-  transform: translate(-1px, -1px) !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
+  box-shadow: var(--neo-shadow-md) !important;
 }
 
 .table-pagination :deep(.el-pagination button:disabled) {
   opacity: 0.4 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-active) !important;
 }
 
 /* 加载状态 */
 :deep(.el-loading-mask) {
   background: rgba(255, 253, 245, 0.85) !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
 }
 
 /* ============================================
@@ -287,7 +287,7 @@ const statusTagType = (s: string) => {
 
 @media (max-width: 768px) {
   .swap-table :deep(.el-table) {
-    box-shadow: 4px 4px 0px 0px #000000 !important;
+    box-shadow: var(--neo-shadow-md) !important;
   }
 
   .swap-table :deep(.el-table th.el-table__cell) {

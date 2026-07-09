@@ -303,8 +303,8 @@ onMounted(() => {
   align-items: stretch;
   gap: 12px;
   padding: 16px 20px;
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
   flex-wrap: wrap;
 }
 
@@ -314,23 +314,23 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
   flex-shrink: 0;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
   padding: 8px 12px;
   transition: all 0.12s ease;
 }
 
 .filter-card-group:hover {
-  box-shadow: 6px 6px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .filter-card-label {
   font-size: 10px;
   font-weight: 900;
-  color: #555555;
+  color: var(--neo-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   line-height: 1;
@@ -351,7 +351,7 @@ onMounted(() => {
 
 .swap-tabs :deep(.el-tabs__item) {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   border: 3px solid transparent !important;
   border-bottom: none !important;
   transition: all 0.12s ease !important;
@@ -361,10 +361,10 @@ onMounted(() => {
 }
 
 .swap-tabs :deep(.el-tabs__item.is-active) {
-  background: #3B82F6 !important;
-  border: 3px solid #000000 !important;
-  border-bottom: 3px solid #FFFDF5 !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-accent-blue) !important;
+  border: 3px solid var(--neo-color-border) !important;
+  border-bottom: 3px solid var(--neo-color-bg-primary) !important;
+  color: var(--neo-color-bg-card) !important;
   font-weight: 900 !important;
   transform: translateY(1px);
 }
@@ -382,10 +382,10 @@ onMounted(() => {
 .filter-bar .toolbar-filter .el-select__wrapper {
   height: 38px !important;
   min-height: 38px !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: 3px solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 0 10px !important;
   font-size: 13px !important;
   font-weight: 700 !important;
@@ -393,24 +393,24 @@ onMounted(() => {
 }
 
 .filter-bar .toolbar-filter .el-select__wrapper:hover {
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  background: #FFFDF5 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .filter-bar .toolbar-filter .el-select__wrapper.is-focused {
-  box-shadow: 4px 4px 0px 0px #FFD93D !important;
-  border-color: #000000 !important;
-  background: #FFFDF5 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-yellow) !important;
+  border-color: var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .filter-bar .toolbar-filter .el-input__inner {
   font-weight: 700 !important;
   font-size: 13px !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 .filter-bar .toolbar-filter .el-input__inner::placeholder {
-  color: #999999 !important;
+  color: var(--neo-color-text-muted) !important;
   font-weight: 600 !important;
 }
 
@@ -430,50 +430,50 @@ onMounted(() => {
 
 /* 弹窗 — 覆盖全局 .el-dialog */
 .swap-dialog :deep(.el-dialog) {
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
   box-shadow: 10px 10px 0px 0px #000000 !important;
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .swap-dialog :deep(.el-dialog__header) {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: 3px solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
   padding: 16px 20px !important;
   margin: 0 !important;
 }
 
 .swap-dialog :deep(.el-dialog__title) {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 16px !important;
   letter-spacing: 0.3px !important;
 }
 
 .swap-dialog :deep(.el-dialog__body) {
   padding: 20px !important;
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .swap-dialog :deep(.el-dialog__footer) {
-  border-top: 3px solid #000000 !important;
+  border-top: 3px solid var(--neo-color-border) !important;
   padding: 14px 20px !important;
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .swap-dialog :deep(.el-textarea__inner) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: 3px solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 600 !important;
   font-size: 13px !important;
   transition: all 0.1s ease !important;
 }
 
 .swap-dialog :deep(.el-textarea__inner:focus) {
-  box-shadow: 4px 4px 0px 0px #FFD93D !important;
-  background: #FFFDF5 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-yellow) !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 /* ============================================

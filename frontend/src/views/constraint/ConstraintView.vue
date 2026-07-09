@@ -708,7 +708,7 @@ onMounted(() => {
   height: calc(100vh - 56px - 40px);
   gap: 20px;
   padding: 20px;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
   overflow: hidden;
   min-width: 900px;
   animation: slide-in-left 0.3s ease both;
@@ -717,10 +717,10 @@ onMounted(() => {
 /* ---- Left / Right Panels — neo-card style ---- */
 .left-panel,
 .right-panel {
-  background: #FFFFFF;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  box-shadow: 8px 8px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -740,12 +740,12 @@ onMounted(() => {
 /* ---- Panel Header ---- */
 .panel-header {
   padding: 16px 20px;
-  border-bottom: 4px solid #000000;
+  border-bottom: var(--neo-border-ultra) solid var(--neo-color-border);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 
 .panel-header-title {
@@ -757,27 +757,27 @@ onMounted(() => {
 .panel-icon {
   width: 36px;
   height: 36px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  box-shadow: 3px 3px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-md);
   flex-shrink: 0;
   transition: transform 0.15s ease;
 }
 
 .panel-icon--blue {
-  background: #DBEAFE;
-  color: #1D4ED8;
+  background: var(--neo-color-info-bg);
+  color: var(--neo-color-accent-blue-hover);
 }
 
 .panel-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -798,10 +798,10 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  background: #FFFFFF;
-  box-shadow: 4px 4px 0px 0px #000000;
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-bg-card);
+  box-shadow: var(--neo-shadow-default);
   cursor: pointer;
   transition: all 0.15s ease;
   animation: slide-in-left 0.3s ease both;
@@ -810,20 +810,20 @@ onMounted(() => {
 }
 
 .rule-item:hover {
-  box-shadow: 6px 6px 0px 0px #000000;
-  transform: translate(-2px, -2px);
-  background: #FFFDF5;
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
+  background: var(--neo-color-bg-primary);
 }
 
 .rule-item.active {
-  background: #FFFDF5;
-  border-color: #3B82F6;
+  background: var(--neo-color-bg-primary);
+  border-color: var(--neo-color-accent-blue);
   box-shadow: 5px 5px 0px 0px #3B82F6;
 }
 
 .rule-item.active:hover {
   box-shadow: 8px 8px 0px 0px #3B82F6;
-  transform: translate(-3px, -3px);
+  transform: translate(var(--neo-translate-lg), var(--neo-translate-lg));
 }
 
 .rule-item.disabled {
@@ -832,21 +832,21 @@ onMounted(() => {
 
 .rule-item.disabled:hover {
   transform: none;
-  box-shadow: 4px 4px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
 }
 
 /* ---- Rule Item Icon ---- */
 .rule-item-icon {
   width: 44px;
   height: 44px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
   transition: transform 0.2s ease;
 }
 
@@ -854,14 +854,14 @@ onMounted(() => {
   transform: rotate(3deg);
 }
 
-.rule-item-icon--yellow { background: #FFD93D; color: #000000; }
-.rule-item-icon--red { background: #FF6B6B; color: #FFFFFF; }
-.rule-item-icon--blue { background: #DBEAFE; color: #1D4ED8; }
+.rule-item-icon--yellow { background: var(--neo-color-accent-yellow); color: var(--neo-color-text-primary); }
+.rule-item-icon--red { background: #FF6B6B; color: var(--neo-color-bg-card); }
+.rule-item-icon--blue { background: var(--neo-color-info-bg); color: var(--neo-color-accent-blue-hover); }
 .rule-item-icon--green { background: #D1FAE5; color: #047857; }
 .rule-item-icon--purple { background: #EDE9FE; color: #6D28D9; }
 .rule-item-icon--cyan { background: #CFFAFE; color: #0E7490; }
-.rule-item-icon--accent { background: #FF6B6B; color: #FFFFFF; }
-.rule-item-icon--black { background: #000000; color: #FFFFFF; }
+.rule-item-icon--accent { background: #FF6B6B; color: var(--neo-color-bg-card); }
+.rule-item-icon--black { background: var(--neo-color-text-primary); color: var(--neo-color-bg-card); }
 
 /* ---- Rule Item Body ---- */
 .rule-item-body {
@@ -881,7 +881,7 @@ onMounted(() => {
 .rule-name {
   font-size: 15px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -890,12 +890,12 @@ onMounted(() => {
 
 /* ---- Preset badge — neo-badge style ---- */
 .preset-badge {
-  background: #FFD93D !important;
-  color: #000000 !important;
-  border: 2px solid #000000 !important;
-  border-radius: 2px !important;
+  background: var(--neo-color-accent-yellow) !important;
+  color: var(--neo-color-text-primary) !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-sm) !important;
   font-weight: 700 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-active) !important;
   font-size: 11px !important;
   padding: 0 6px !important;
   height: 20px !important;
@@ -916,20 +916,20 @@ onMounted(() => {
   min-width: 24px;
   height: 20px;
   padding: 0 6px;
-  border: 2px solid #000000;
-  border-radius: 2px;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
   font-size: 12px;
   font-weight: 900;
-  box-shadow: 2px 2px 0px 0px #000000;
-  color: #FFFFFF;
-  background: #3B82F6;
+  box-shadow: var(--neo-shadow-active);
+  color: var(--neo-color-bg-card);
+  background: var(--neo-color-accent-blue);
   flex-shrink: 0;
 }
 
 .rule-type-label {
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
 }
 
 /* ---- Rule Empty State ---- */
@@ -965,19 +965,19 @@ onMounted(() => {
   padding: 16px 0;
   margin-top: 8px;
   margin-bottom: 4px;
-  border-top: 4px solid #000000;
+  border-top: var(--neo-border-ultra) solid var(--neo-color-border);
 }
 
 .form-section-icon {
   font-size: 20px;
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   flex-shrink: 0;
 }
 
 .form-section-title {
   font-size: 16px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -985,7 +985,7 @@ onMounted(() => {
 /* ---- Priority Tip ---- */
 .priority-tip {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-left: 12px;
   font-weight: 600;
 }
@@ -993,7 +993,7 @@ onMounted(() => {
 /* ---- Param Unit ---- */
 .param-unit {
   font-size: 14px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin-left: 8px;
   font-weight: 700;
 }
@@ -1019,13 +1019,13 @@ onMounted(() => {
 .empty-state-icon-wrap {
   width: 80px;
   height: 80px;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  background: #F5F5F0;
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-disabled);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 4px 4px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
   transition: transform 0.2s ease;
 }
 
@@ -1037,7 +1037,7 @@ onMounted(() => {
   margin-top: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   text-align: center;
   line-height: 1.6;
 }
@@ -1045,7 +1045,7 @@ onMounted(() => {
 /* ---- Type Hint ---- */
 .type-hint {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-top: 4px;
   line-height: 1.5;
   font-weight: 600;
@@ -1056,7 +1056,7 @@ onMounted(() => {
   width: 32px !important;
   height: 18px !important;
   border-width: 2px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-active) !important;
   flex-shrink: 0;
 }
 
@@ -1064,7 +1064,7 @@ onMounted(() => {
   width: 10px !important;
   height: 10px !important;
   border-width: 1px !important;
-  box-shadow: 1px 1px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-xs) !important;
 }
 
 /* ---- Responsive ---- */

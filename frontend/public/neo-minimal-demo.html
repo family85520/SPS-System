@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPS Neo-Minimal Design Tokens Demo</title>
+<style>
+/* ============================================================
+   Neo-Minimal Design Tokens — 极简 Neo 风格
+   精简变量、去除多余装饰、保留核心 Neo 骨架
+   ============================================================ */
+:root {
+  /* 背景 — 单一暖白 */
+  --neo-bg: #FAFAFA;
+  --neo-bg-card: #FFFFFF;
+
+  /* 文本 — 黑白灰三级 */
+  --neo-text: #1A1A1A;
+  --neo-text-sec: #666666;
+  --neo-text-muted: #999999;
+
+  /* 强调色 — 仅保留一个蓝色 */
+  --neo-accent: #2563EB;
+  --neo-accent-hover: #1D4ED8;
+  --neo-accent-light: #EFF6FF;
+
+  /* 功能色 — 仅红绿各一 */
+  --neo-danger: #DC2626;
+  --neo-success: #16A34A;
+
+  /* 描边 — 统一 2px */
+  --neo-border: #1A1A1A;
+  --neo-border-light: #E5E5E5;
+
+  /* 圆角 — 统一 3px */
+  --neo-radius: 3px;
+
+  /* 阴影 — 统一 3px 偏移 */
+  --neo-shadow: 3px 3px 0px 0px #1A1A1A;
+  --neo-shadow-hover: 5px 5px 0px 0px #1A1A1A;
+  --neo-shadow-active: 1px 1px 0px 0px #1A1A1A;
+
+  /* 字体 */
+  --neo-font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --neo-fw-regular: 500;
+  --neo-fw-bold: 700;
+  --neo-fw-extrabold: 900;
+
+  /* 间距 */
+  --neo-sp-xs: 4px;
+  --neo-sp-sm: 8px;
+  --neo-sp-md: 12px;
+  --neo-sp-lg: 16px;
+  --neo-sp-xl: 20px;
+  --neo-sp-2xl: 24px;
+
+  /* 过渡 */
+  --neo-tf: 0.1s;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--neo-font);
+  font-weight: var(--neo-fw-regular);
+  background: var(--neo-bg);
+  color: var(--neo-text);
+  padding: var(--neo-sp-2xl);
+  line-height: 1.5;
+}
+
+/* ---- Sections ---- */
+.demo-section { margin-bottom: var(--neo-sp-2xl); }
+.demo-section-title {
+  font-size: 11px;
+  font-weight: var(--neo-fw-bold);
+  color: var(--neo-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: var(--neo-sp-lg);
+  padding-bottom: var(--neo-sp-sm);
+  border-bottom: 2px solid var(--neo-border-light);
+}
+.demo-grid { display: flex; flex-wrap: wrap; gap: var(--neo-sp-md); align-items: center; }
+.flex-row { display: flex; align-items: center; gap: var(--neo-sp-md); flex-wrap: wrap; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--neo-sp-lg); }
+
+/* ---- Buttons ---- */
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--neo-sp-sm) var(--neo-sp-lg);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-fw-bold);
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  box-shadow: var(--neo-shadow);
+  cursor: pointer;
+  transition: all var(--neo-tf);
+  height: 40px;
+  text-decoration: none;
+  background: var(--neo-bg-card);
+  color: var(--neo-text);
+}
+.neo-btn:hover {
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(-2px, -2px);
+}
+.neo-btn:active {
+  box-shadow: var(--neo-shadow-active);
+  transform: translate(1px, 1px);
+}
+.neo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: var(--neo-shadow-active);
+  transform: none;
+}
+.neo-btn--accent { background: var(--neo-accent); color: #FFF; border-color: var(--neo-accent); }
+.neo-btn--accent:hover { background: var(--neo-accent-hover); border-color: var(--neo-accent-hover); }
+.neo-btn--danger { background: var(--neo-danger); color: #FFF; border-color: var(--neo-danger); }
+.neo-btn--success { background: var(--neo-success); color: #FFF; border-color: var(--neo-success); }
+.neo-btn--sm { padding: 4px 10px; font-size: 12px; height: 32px; }
+
+/* ---- Cards ---- */
+.neo-card {
+  background: var(--neo-bg-card);
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  box-shadow: var(--neo-shadow);
+  transition: all var(--neo-tf);
+  overflow: hidden;
+}
+.neo-card:hover {
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(-2px, -2px);
+}
+.neo-card__header {
+  padding: var(--neo-sp-md) var(--neo-sp-lg);
+  border-bottom: 2px solid var(--neo-border);
+  background: var(--neo-bg);
+}
+.neo-card__title {
+  font-size: 14px;
+  font-weight: var(--neo-fw-extrabold);
+}
+.neo-card__body { padding: var(--neo-sp-lg); }
+
+/* Stat Card */
+.stat-card {
+  padding: var(--neo-sp-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--neo-sp-lg);
+}
+.stat-card__icon {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: var(--neo-accent-light);
+}
+.stat-card__info { flex: 1; }
+.stat-card__label {
+  font-size: 11px;
+  font-weight: var(--neo-fw-bold);
+  color: var(--neo-text-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-card__value {
+  font-size: 30px;
+  font-weight: var(--neo-fw-extrabold);
+  color: var(--neo-accent);
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+/* ---- Tags ---- */
+.neo-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: var(--neo-fw-bold);
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  height: 24px;
+}
+.neo-tag--accent { background: var(--neo-accent); color: #FFF; }
+.neo-tag--danger { background: var(--neo-danger); color: #FFF; }
+.neo-tag--success { background: var(--neo-success); color: #FFF; }
+.neo-tag--ghost { background: transparent; color: var(--neo-text); }
+
+/* ---- Badges ---- */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: var(--neo-fw-extrabold);
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  background: var(--neo-danger);
+  color: #FFF;
+}
+
+/* ---- Inputs ---- */
+.neo-input {
+  width: 100%;
+  padding: var(--neo-sp-sm) var(--neo-sp-md);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-fw-regular);
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  box-shadow: 2px 2px 0px 0px #1A1A1A;
+  background: var(--neo-bg-card);
+  color: var(--neo-text);
+  transition: all var(--neo-tf);
+  outline: none;
+  height: 40px;
+}
+.neo-input::placeholder { color: var(--neo-text-muted); }
+.neo-input:hover { box-shadow: 3px 3px 0px 0px #1A1A1A; }
+.neo-input:focus {
+  border-color: var(--neo-accent);
+  box-shadow: 2px 2px 0px 0px var(--neo-accent);
+  background: var(--neo-accent-light);
+}
+.neo-input--disabled {
+  background: var(--neo-bg);
+  box-shadow: 1px 1px 0px 0px #1A1A1A;
+  color: var(--neo-text-muted);
+  cursor: not-allowed;
+}
+
+/* ---- Alerts ---- */
+.neo-alert {
+  padding: var(--neo-sp-lg);
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  display: flex;
+  gap: var(--neo-sp-md);
+  align-items: flex-start;
+}
+.neo-alert--info { background: var(--neo-accent-light); border-color: var(--neo-accent); }
+.neo-alert--danger { background: #FEF2F2; border-color: var(--neo-danger); }
+.neo-alert__icon { font-size: 18px; flex-shrink: 0; }
+.neo-alert__content { font-size: 13px; font-weight: var(--neo-fw-bold); color: var(--neo-text); }
+
+/* ---- Progress ---- */
+.neo-progress {
+  width: 100%;
+  height: 6px;
+  background: var(--neo-bg);
+  border: 2px solid var(--neo-border);
+  border-radius: var(--neo-radius);
+  overflow: hidden;
+}
+.neo-progress__fill {
+  height: 100%;
+  background: var(--neo-accent);
+  border-radius: 1px;
+  transition: width 0.5s ease;
+}
+
+/* ---- Form ---- */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--neo-sp-lg); }
+.form-group { margin-bottom: var(--neo-sp-lg); }
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: var(--neo-fw-bold);
+  color: var(--neo-text);
+  margin-bottom: var(--neo-sp-xs);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  body { padding: var(--neo-sp-lg); }
+  .form-row { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Buttons / 按钮</h2>
+  <div class="demo-grid">
+    <button class="neo-btn neo-btn--accent">Primary</button>
+    <button class="neo-btn neo-btn--success">Success</button>
+    <button class="neo-btn neo-btn--danger">Danger</button>
+    <button class="neo-btn">Ghost</button>
+  </div>
+  <div class="demo-grid" style="margin-top: 12px;">
+    <button class="neo-btn neo-btn--accent neo-btn--sm">Small</button>
+    <button class="neo-btn neo-btn--accent">Default</button>
+    <button class="neo-btn neo-btn--accent" disabled>Disabled</button>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Stat Cards / 统计卡片</h2>
+  <div class="stat-grid">
+    <div class="neo-card stat-card">
+      <div class="stat-card__icon">&#128100;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">总员工数</div>
+        <div class="stat-card__value">128</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card">
+      <div class="stat-card__icon">&#127970;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">组织数量</div>
+        <div class="stat-card__value">12</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card">
+      <div class="stat-card__icon">&#128272;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">待审批</div>
+        <div class="stat-card__value">7</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Tags & Badges / 标签与徽章</h2>
+  <div class="flex-row">
+    <span class="neo-tag neo-tag--accent">进行中</span>
+    <span class="neo-tag neo-tag--success">已完成</span>
+    <span class="neo-tag neo-tag--danger">已拒绝</span>
+    <span class="neo-tag neo-tag--ghost">普通</span>
+  </div>
+  <div class="flex-row" style="margin-top: 12px;">
+    <span class="neo-badge">3</span>
+    <span class="neo-badge">!</span>
+    <span class="neo-badge" style="background: var(--neo-accent);">12</span>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Form / 表单</h2>
+  <div style="max-width: 480px;">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">用户名</label>
+        <input class="neo-input" type="text" placeholder="请输入用户名" value="admin">
+      </div>
+      <div class="form-group">
+        <label class="form-label">部门</label>
+        <input class="neo-input" type="text" placeholder="请选择部门" value="技术部" readonly>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">状态</label>
+      <input class="neo-input neo-input--disabled" type="text" value="已禁用" disabled>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Alerts / 告警</h2>
+  <div style="max-width: 560px; display: flex; flex-direction: column; gap: 12px;">
+    <div class="neo-alert neo-alert--info">
+      <span class="neo-alert__icon">&#8505;</span>
+      <span class="neo-alert__content">系统将于今晚 23:00 进行例行维护。</span>
+    </div>
+    <div class="neo-alert neo-alert--danger">
+      <span class="neo-alert__icon">&#10060;</span>
+      <span class="neo-alert__content">该模板已被 5 个排班计划引用，删除将影响数据。</span>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Progress / 进度</h2>
+  <div style="max-width: 480px; display: flex; flex-direction: column; gap: 16px;">
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-text-sec);">排班完成率</span>
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-accent);">78%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill" style="width: 78%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-text-sec);">约束满足率</span>
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-success);">92%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill" style="width: 92%; background: var(--neo-success);"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

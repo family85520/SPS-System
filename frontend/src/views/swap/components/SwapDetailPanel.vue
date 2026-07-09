@@ -223,29 +223,29 @@ const statusTagType = (s: string) => {
 <style scoped>
 /* 抽屉 — 覆盖全局 .el-drawer */
 .swap-drawer :deep(.el-drawer) {
-  border: 4px solid #000000 !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
   border-radius: 0 !important;
   box-shadow: -10px 0px 0px 0px #000000 !important;
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .swap-drawer :deep(.el-drawer__header) {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
   padding: 18px 24px !important;
   margin-bottom: 0 !important;
 }
 
 .swap-drawer :deep(.el-drawer__title) {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 18px !important;
   letter-spacing: 0.5px !important;
 }
 
 .swap-drawer :deep(.el-drawer__close-btn) {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* 信息卡片 — 利用全局 .neo-card，仅加内边距 */
@@ -258,14 +258,14 @@ const statusTagType = (s: string) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
 }
 
 .info-section-title {
   font-size: 14px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -273,25 +273,25 @@ const statusTagType = (s: string) => {
 /* Neo 风格 el-descriptions */
 .neo-descriptions :deep(.el-descriptions__label) {
   font-weight: 700 !important;
-  color: #555555 !important;
-  background: #FFFDF5 !important;
-  border: 2px solid #000000 !important;
+  color: var(--neo-color-text-secondary) !important;
+  background: var(--neo-color-bg-primary) !important;
+  border: 2px solid var(--neo-color-border) !important;
   font-size: 13px !important;
 }
 
 .neo-descriptions :deep(.el-descriptions__content) {
   font-weight: 600 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 13px !important;
 }
 
 .neo-descriptions :deep(.el-descriptions__cell) {
-  border-bottom: 2px solid #000000 !important;
+  border-bottom: 2px solid var(--neo-color-border) !important;
   padding: 10px 16px !important;
 }
 
 .neo-descriptions :deep(.el-descriptions__border .el-descriptions__cell) {
-  border-left: 2px solid #000000 !important;
+  border-left: 2px solid var(--neo-color-border) !important;
 }
 
 /* 多行描述 */
@@ -303,17 +303,17 @@ const statusTagType = (s: string) => {
 
 .desc-line {
   font-weight: 600;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .text-muted {
-  color: #999999;
+  color: var(--neo-color-text-muted);
   font-style: italic;
 }
 
 .td-value {
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 /* 流程状态区域 */
@@ -324,7 +324,7 @@ const statusTagType = (s: string) => {
 .section-title {
   font-size: 14px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin-bottom: 16px;
   display: flex;
   align-items: center;
@@ -340,28 +340,28 @@ const statusTagType = (s: string) => {
 
 .neo-timeline-item :deep(.el-timeline-item__timestamp) {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 12px !important;
-  background: #FFFDF5 !important;
-  border: 2px solid #000000 !important;
+  background: var(--neo-color-bg-primary) !important;
+  border: 2px solid var(--neo-color-border) !important;
   border-radius: 3px !important;
   padding: 3px 10px !important;
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.1) !important;
 }
 
 .neo-timeline-item :deep(.el-timeline-item__node) {
-  border: 3px solid #000000 !important;
+  border: 3px solid var(--neo-color-border) !important;
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.15) !important;
 }
 
 .neo-timeline-item :deep(.el-timeline-item__tail) {
-  border-left: 3px solid #000000 !important;
+  border-left: 3px solid var(--neo-color-border) !important;
 }
 
 .timeline-text {
   font-size: 13px;
   font-weight: 600;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .timeline-waiting {
@@ -385,8 +385,8 @@ const statusTagType = (s: string) => {
   font-weight: 600;
   margin-top: 4px;
   padding: 4px 8px;
-  background: #FEE2E2;
-  border: 2px solid #000000;
+  background: var(--neo-color-danger-bg);
+  border: 2px solid var(--neo-color-border);
   border-left: 3px solid #EF4444;
   border-radius: 2px;
 }

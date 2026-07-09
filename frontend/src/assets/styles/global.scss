@@ -1,5 +1,8 @@
 /* Neo-brutalism global styles — inspired by GemDesign smart scheduling system */
 
+/* Import design tokens as CSS custom properties on :root */
+@import url('./_tokens.css');
+
 * {
   margin: 0;
   padding: 0;
@@ -16,8 +19,8 @@ html, body, #app {
 
 body {
   font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #FFFDF5;
-  color: #000000;
+  background: var(--neo-color-bg-primary) !important;
+  color: var(--neo-color-text-primary) !important;
   font-weight: 500;
 }
 
@@ -34,236 +37,236 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #000000;
-  border-radius: 0;
-  border: 2px solid #FFFDF5;
+  background: var(--neo-color-text-primary) !important;
+  border-radius: var(--neo-radius-none) !important;
+  border: 2px solid var(--neo-color-bg-primary) !important;
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 
 /* Global Element Plus overrides for neo-brutalism */
 
 /* Buttons */
 .el-button--primary {
-  background: #3B82F6 !important;
-  border-color: #000000 !important;
-  color: #FFFFFF !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  border-color: var(--neo-color-border) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .el-button--primary:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 .el-button--primary:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 .el-button--success {
-  background: #10B981 !important;
-  border-color: #000000 !important;
-  color: #FFFFFF !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-green) !important;
+  border-color: var(--neo-color-border) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .el-button--success:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 
 .el-button--warning {
-  background: #FFD93D !important;
-  border-color: #000000 !important;
-  color: #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  border-color: var(--neo-color-border) !important;
+  color: var(--neo-color-text-primary) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .el-button--warning:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 
 .el-button--danger {
-  background: #EF4444 !important;
-  border-color: #000000 !important;
-  color: #FFFFFF !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-red) !important;
+  border-color: var(--neo-color-border) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .el-button--danger:hover {
-  background: #DC2626 !important;
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  background: var(--neo-color-accent-red-hover) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 
 .el-button--info {
-  background: #FFD93D !important;
-  border-color: #000000 !important;
-  color: #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  border-color: var(--neo-color-border) !important;
+  color: var(--neo-color-text-primary) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 
 /* Cards */
 .el-card {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 .el-card.is-always-shadow,
 .el-card.is-hover-shadow:focus,
 .el-card.is-hover-shadow:active {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-1px, -1px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
   transition: all 0.15s ease !important;
 }
 .el-card__header {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-header) !important;
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* Tags */
 .el-tag {
-  border: 2px solid #000000 !important;
-  border-radius: 2px !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-sm) !important;
   font-weight: 700 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-active) !important;
 }
 .el-tag--success {
-  background: #10B981 !important;
-  color: #FFFFFF !important;
-  border-color: #000000 !important;
+  background: var(--neo-color-accent-green) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-color: var(--neo-color-border) !important;
 }
 .el-tag--warning {
-  background: #FFD93D !important;
-  color: #000000 !important;
-  border-color: #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  color: var(--neo-color-text-primary) !important;
+  border-color: var(--neo-color-border) !important;
 }
 .el-tag--danger {
-  background: #EF4444 !important;
-  color: #FFFFFF !important;
-  border-color: #000000 !important;
+  background: var(--neo-color-accent-red) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-color: var(--neo-color-border) !important;
 }
 .el-tag--info {
-  background: #F5F5F5 !important;
-  color: #000000 !important;
-  border-color: #000000 !important;
+  background: var(--neo-color-disabled) !important;
+  color: var(--neo-color-text-primary) !important;
+  border-color: var(--neo-color-border) !important;
 }
 
 /* Inputs */
 .el-input__wrapper {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 4px 12px !important;
   transition: all 0.1s ease !important;
 }
 .el-input__wrapper:hover {
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-default) !important;
 }
 .el-input__wrapper.is-focus {
-  box-shadow: 4px 4px 0px 0px #3B82F6 !important;
-  border-color: #000000 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-blue) !important;
+  border-color: var(--neo-color-border) !important;
 }
 .el-input__inner {
   font-weight: 600 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .el-input__inner::placeholder {
-  color: #999999 !important;
+  color: var(--neo-color-text-muted) !important;
   font-weight: 400 !important;
 }
 
 .el-textarea__inner {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 8px 12px !important;
   font-weight: 600 !important;
   font-family: inherit !important;
   transition: all 0.1s ease !important;
 }
 .el-textarea__inner:focus {
-  box-shadow: 4px 4px 0px 0px #3B82F6 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-blue) !important;
 }
 
 /* Select dropdown */
 .el-select-dropdown__item {
   font-weight: 600 !important;
-  border-bottom: 1px solid #E6EAF0 !important;
+  border-bottom: 1px solid var(--neo-color-border-light) !important;
 }
 .el-select-dropdown__item:hover {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 .el-select-dropdown__item.selected {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
 }
 
 /* Table */
 .el-table {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 .el-table__header-wrapper th {
-  background: #FFFDF5 !important;
-  border-bottom: 3px solid #000000 !important;
+  background: var(--neo-color-bg-header) !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .el-table__body-wrapper tbody tr:hover > td {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 .el-table__body-wrapper td {
-  border-bottom: 2px solid #E6EAF0 !important;
+  border-bottom: var(--neo-border-thin) solid var(--neo-color-border-light) !important;
   font-weight: 500 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .el-table--border {
-  border: 3px solid #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
 }
 .el-table th.el-table__cell,
 .el-table td.el-table__cell {
-  border-color: #E6EAF0 !important;
+  border-color: var(--neo-color-border-light) !important;
 }
 
 /* Dialog */
 .el-dialog {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 8px 8px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-lg) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 .el-dialog__header {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-header) !important;
 }
 .el-dialog__title {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .el-dialog__body {
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* ============================================
@@ -273,10 +276,10 @@ body {
    ============================================ */
 
 .el-message-box {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 8px 8px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-lg) !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 0 !important;
 }
 
@@ -290,7 +293,7 @@ body {
   display: block !important;
   font-size: 26px !important;
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   letter-spacing: 1px !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -325,9 +328,9 @@ body {
 .el-message-box__icon .el-message-box__status {
   width: 80px !important;
   height: 80px !important;
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
@@ -338,45 +341,45 @@ body {
 
 /* ====== warning — 红色方块 + ⚠ ====== */
 .el-message-box__icon--warning .el-message-box__status {
-  background: #EF4444 !important;
+  background: var(--neo-color-accent-red) !important;
 }
 .el-message-box__icon--warning .el-message-box__status::before {
   content: '⚠';
   font-size: 42px !important;
-  color: #FFFFFF !important;
+  color: var(--neo-color-bg-card) !important;
   line-height: 1 !important;
 }
 
 /* ====== error — 红色方块 + ✕ ====== */
 .el-message-box__icon--error .el-message-box__status {
-  background: #EF4444 !important;
+  background: var(--neo-color-accent-red) !important;
 }
 .el-message-box__icon--error .el-message-box__status::before {
   content: '✕';
   font-size: 42px !important;
-  color: #FFFFFF !important;
+  color: var(--neo-color-bg-card) !important;
   line-height: 1 !important;
 }
 
 /* ====== success — 绿色方块 + ✓ ====== */
 .el-message-box__icon--success .el-message-box__status {
-  background: #10B981 !important;
+  background: var(--neo-color-accent-green) !important;
 }
 .el-message-box__icon--success .el-message-box__status::before {
   content: '✓';
   font-size: 44px !important;
-  color: #FFFFFF !important;
+  color: var(--neo-color-bg-card) !important;
   line-height: 1 !important;
 }
 
 /* ====== info — 蓝色方块 + ℹ ====== */
 .el-message-box__icon--info .el-message-box__status {
-  background: #3B82F6 !important;
+  background: var(--neo-color-accent-blue) !important;
 }
 .el-message-box__icon--info .el-message-box__status::before {
   content: 'ℹ';
   font-size: 42px !important;
-  color: #FFFFFF !important;
+  color: var(--neo-color-bg-card) !important;
   line-height: 1 !important;
 }
 
@@ -384,7 +387,7 @@ body {
 .el-message-box__message {
   font-size: 15px !important;
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   line-height: 1.6 !important;
   padding: 0 !important;
   margin-top: 4px !important;
@@ -405,43 +408,43 @@ body {
   padding: 0 24px !important;
   font-size: 14px !important;
   font-weight: 700 !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   transition: all 0.1s ease !important;
 }
 
 .el-message-box__btns .el-button:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 
 .el-message-box__btns .el-button:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* 取消按钮 — 白色 */
 .el-message-box__btns .el-button--default {
-  background: #FFFFFF !important;
-  color: #000000 !important;
+  background: var(--neo-color-bg-card) !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .el-message-box__btns .el-button--default:hover {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 /* 确认按钮 — 红色 */
 .el-message-box__btns .el-button--danger {
-  background: #EF4444 !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-accent-red) !important;
+  color: var(--neo-color-bg-card) !important;
 }
 .el-message-box__btns .el-button--danger:hover {
-  background: #DC2626 !important;
+  background: var(--neo-color-accent-red-hover) !important;
 }
 
 /* ElMessageBox overlay mask */
 .el-overlay {
-  background: rgba(0, 0, 0, 0.5) !important;
+  background: var(--neo-color-overlay-mask) !important;
   backdrop-filter: blur(2px) !important;
 }
 
@@ -451,10 +454,10 @@ body {
    ============================================ */
 
 .el-message {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 14px 20px !important;
   min-width: 280px !important;
   font-weight: 600 !important;
@@ -500,221 +503,221 @@ body {
 
 /* 关闭按钮 */
 .el-message__closeBtn {
-  border: 2px solid #000000 !important;
-  border-radius: 2px !important;
-  color: #666666 !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-sm) !important;
+  color: var(--neo-color-text-secondary) !important;
   font-size: 14px !important;
   padding: 2px !important;
 }
 .el-message__closeBtn:hover {
-  color: #000000 !important;
-  background: #FFFDF5 !important;
+  color: var(--neo-color-text-primary) !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 /* Drawer */
 .el-drawer {
-  border: 3px solid #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
   border-radius: 0 !important;
-  box-shadow: 8px 0px 0px 0px #000000 !important;
+  box-shadow: 8px 0px 0px 0px var(--neo-color-text-primary) !important;
 }
 .el-drawer__header {
-  border-bottom: 3px solid #000000 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   margin-bottom: 0 !important;
 }
 
 /* Pagination */
 .el-pagination .el-pager li {
-  background: #FFFFFF !important;
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
+  background: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
   font-weight: 700 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-active) !important;
   transition: all 0.1s ease !important;
 }
 .el-pagination .el-pager li:hover {
-  background: #FFD93D !important;
-  transform: translate(-1px, -1px) !important;
+  background: var(--neo-color-accent-yellow) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
 }
 .el-pagination .el-pager li.is-active {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
 }
 
 /* Switch */
 .el-switch__core {
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-active) !important;
 }
 
 /* Radio */
 .el-radio-button__inner {
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
   font-weight: 700 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 .el-radio-button__original-radio:checked + .el-radio-button__inner {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  box-shadow: -2px 0px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  box-shadow: -2px 0px 0px 0px var(--neo-color-text-primary) !important;
 }
 
 /* Checkbox */
 .el-checkbox__inner {
-  border: 2px solid #000000 !important;
-  border-radius: 2px !important;
-  box-shadow: 2px 2px 0px 0px #000000 inset !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-sm) !important;
+  box-shadow: 2px 2px 0px 0px var(--neo-color-text-primary) inset !important;
 }
 .el-checkbox__input.is-checked .el-checkbox__inner {
-  background: #3B82F6 !important;
-  border-color: #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  border-color: var(--neo-color-border) !important;
 }
 .el-checkbox__inner::after {
-  border-color: #FFFFFF !important;
+  border-color: var(--neo-color-bg-card) !important;
 }
 
 /* Badge */
 .el-badge__content {
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
   font-weight: 700 !important;
 }
 
 /* Tabs */
 .el-tabs__item {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   transition: all 0.15s ease !important;
 }
 .el-tabs__item.is-active {
-  color: #3B82F6 !important;
+  color: var(--neo-color-accent-blue) !important;
 }
 .el-tabs__active-bar {
-  background: #3B82F6 !important;
+  background: var(--neo-color-accent-blue) !important;
   height: 3px !important;
 }
 .el-tabs__nav-wrap::after {
-  background: #000000 !important;
+  background: var(--neo-color-text-primary) !important;
   height: 3px !important;
 }
 
 /* Tree */
 .el-tree-node__content:hover {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 .el-tree-node.is-current > .el-tree-node__content {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  border-radius: 4px !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-radius: var(--neo-radius-md) !important;
 }
 
 /* Form */
 .el-form-item__label {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* Divider */
 .el-divider--horizontal {
-  border-top: 3px solid #000000 !important;
+  border-top: var(--neo-border-thick) solid var(--neo-color-text-primary) !important;
 }
 .el-divider__text {
-  background: #FFFFFF !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* Loading overlay */
 .el-loading-spinner .circular {
-  stroke: #3B82F6 !important;
+  stroke: var(--neo-color-accent-blue) !important;
 }
 .el-loading-spinner .path {
-  stroke: #000000 !important;
+  stroke: var(--neo-color-text-primary) !important;
 }
 
 /* Statistic */
 .el-statistic__head {
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .el-statistic .el-statistic__content-value {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* Alert */
 .el-alert {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
 }
 .el-alert--info {
-  background: #FFFDF5 !important;
-  color: #000000 !important;
+  background: var(--neo-color-bg-primary) !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* Color picker */
 .el-color-picker__trigger {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
   padding: 3px !important;
 }
 
 /* Empty state */
 .el-empty__description {
-  color: #999999 !important;
+  color: var(--neo-color-text-muted) !important;
   font-weight: 600 !important;
 }
 
 /* Popover / Tooltip */
 .el-popover,
 .el-tooltip__popper {
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
-  color: #000000 !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  background: var(--neo-color-bg-card) !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .el-tooltip__popper[data-theme='dark'] {
-  background: #000000 !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-text-primary) !important;
+  color: var(--neo-color-bg-card) !important;
 }
 .el-tooltip__popper [class^='el-tooltip__popper--arrow']:before {
-  border: 2px solid #000000 !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
 }
 
 /* Cascader */
 .el-cascader__search-node:hover {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 /* Date picker */
 .el-picker-panel {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 .el-picker-panel__body .el-date-picker__header-label,
 .el-picker-panel__body .el-month-table .el-date-table__current span,
 .el-picker-panel__body .el-date-picker__header-label,
 .el-date-table td.current span {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  border-radius: 4px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-active) !important;
 }
 
 /* Transfer */
 .el-transfer-panel {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
 }
 .el-transfer-panel__body {
   min-height: 200px;
@@ -722,36 +725,36 @@ body {
 
 /* Steps */
 .el-step__head.is-finish {
-  color: #3B82F6 !important;
-  border-color: #3B82F6 !important;
+  color: var(--neo-color-accent-blue) !important;
+  border-color: var(--neo-color-accent-blue) !important;
 }
 .el-step__line {
-  background: #000000 !important;
+  background: var(--neo-color-text-primary) !important;
 }
 
 /* Timeline */
 .el-timeline-item__node.is-success {
-  background: #10B981 !important;
-  border: 3px solid #000000 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-green) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-active) !important;
 }
 
 /* Number input */
 .el-input-number .el-input__wrapper {
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
+  border-radius: var(--neo-radius-md) !important;
 }
 
 /* Progress */
 .el-progress__text {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* Tree select */
 .el-tree-select .el-select-dropdown__item.selected {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
 }
 
 /* ============================================
@@ -761,97 +764,97 @@ body {
 
 /* Primary action buttons (save, submit, create, confirm) */
 .btn-neo-primary {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .btn-neo-primary:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 .btn-neo-primary:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* Danger/destructive (delete, reject, refuse) */
 .btn-neo-danger {
-  background: #EF4444 !important;
-  color: #FFFFFF !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-red) !important;
+  color: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .btn-neo-danger:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 .btn-neo-danger:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* Warning (cancel, withdraw, reset) */
 .btn-neo-warning {
-  background: #FFD93D !important;
-  color: #000000 !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  color: var(--neo-color-text-primary) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .btn-neo-warning:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 .btn-neo-warning:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* Success (approve, confirm, create-child) */
 .btn-neo-success {
-  background: #10B981 !important;
-  color: #FFFFFF !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-green) !important;
+  color: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .btn-neo-success:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 .btn-neo-success:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* Info/secondary (export, view, add) */
 .btn-neo-info {
-  background: #06B6D4 !important;
-  color: #FFFFFF !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-cyan) !important;
+  color: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .btn-neo-info:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 .btn-neo-info:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* Small variant — used in toolbars and headers */
@@ -862,22 +865,22 @@ body {
 
 /* Ghost/plain — no fill, just border */
 .btn-neo-ghost {
-  background: #FFFFFF !important;
-  color: #000000 !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: var(--neo-color-bg-card) !important;
+  color: var(--neo-color-text-primary) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .btn-neo-ghost:hover {
-  background: #FFFDF5 !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  transform: translate(-1px, -1px) !important;
+  background: var(--neo-color-bg-primary) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
 }
 .btn-neo-ghost:active {
-  box-shadow: 1px 1px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px 0px var(--neo-color-text-primary) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* Small button size override — applied via btn-neo-sm alongside a color class */
@@ -894,10 +897,10 @@ body {
   border-radius: 0 !important;
 }
 .el-button-group.btn-neo-group .el-button:first-child {
-  border-radius: 4px 0 0 4px !important;
+  border-radius: var(--neo-radius-md) 0 0 var(--neo-radius-md) !important;
 }
 .el-button-group.btn-neo-group .el-button:last-child {
-  border-radius: 0 4px 4px 0 !important;
+  border-radius: 0 var(--neo-radius-md) var(--neo-radius-md) 0 !important;
 }
 .el-button-group.btn-neo-group .el-button + .el-button {
   margin-left: 0 !important;
@@ -905,21 +908,21 @@ body {
 
 /* Accent (yellow highlight) button */
 .btn-neo-accent {
-  background: #FFD93D !important;
-  color: #000000 !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  color: var(--neo-color-text-primary) !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 .btn-neo-accent:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 .btn-neo-accent:active {
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* ============================================
@@ -928,43 +931,43 @@ body {
 
 /* Danger buttons */
 .shift-template-page .el-button.neo-btn--danger {
-  background: #EF4444 !important;
-  color: #FFFFFF !important;
-  border-color: #000000 !important;
+  background: var(--neo-color-accent-red) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-color: var(--neo-color-border) !important;
 }
 
 .shift-template-page .el-button.neo-btn--danger:hover {
-  background: #DC2626 !important;
+  background: var(--neo-color-accent-red-hover) !important;
 }
 
 /* Neo button base — scoped can't target sibling elements */
 .shift-template-page .neo-btn {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
-  background: #FFFFFF !important;
-  color: #000000 !important;
+  background: var(--neo-color-bg-card) !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 .shift-template-page .neo-btn:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
-  transform: translate(-2px, -2px) !important;
+  box-shadow: var(--neo-shadow-hover) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover)) !important;
 }
 
 .shift-template-page .neo-btn:active {
-  box-shadow: 1px 1px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px 0px var(--neo-color-text-primary) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 .shift-template-page .neo-btn--primary {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
 }
 
 .shift-template-page .neo-btn--primary:hover {
-  background: #2563EB !important;
+  background: var(--neo-color-accent-blue-hover) !important;
 }
 
 /* Day selector buttons — completely custom, no EP interference */
@@ -982,47 +985,47 @@ body {
   text-align: center;
   font-weight: 700;
   font-size: 14px;
-  color: #000000;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 2px 2px 0px 0px #000000;
+  color: var(--neo-color-text-primary);
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-active);
   cursor: pointer;
   transition: all 0.1s ease;
   user-select: none;
 }
 
 .shift-template-page .day-btn-item:hover:not(:disabled) {
-  box-shadow: 3px 3px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .shift-template-page .day-btn-item:active:not(:disabled) {
   transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0px 0px #000000;
+  box-shadow: 1px 1px 0px 0px var(--neo-color-text-primary);
 }
 
 .shift-template-page .day-btn-item--active {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  border-color: #000000 !important;
-  box-shadow: -2px 0px 0px 0px #000000 !important;
-  transform: translate(2px, 2px) !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  border-color: var(--neo-color-border) !important;
+  box-shadow: -2px 0px 0px 0px var(--neo-color-text-primary) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 .shift-template-page .day-btn-item:disabled {
-  background: #F5F5F0 !important;
-  color: #999999 !important;
-  box-shadow: 1px 1px 0px 0px #000000 !important;
+  background: var(--neo-color-disabled) !important;
+  color: var(--neo-color-text-muted) !important;
+  box-shadow: 1px 1px 0px 0px var(--neo-color-text-primary) !important;
   cursor: not-allowed !important;
   opacity: 0.6;
 }
 
 .shift-template-page .day-btn-item:disabled.day-btn-item--active {
-  background: #93C5FD !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
   box-shadow: none !important;
-  transform: translate(2px, 2px) !important;
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active)) !important;
 }
 
 /* Neo switch inline — custom component, no EP (global) */
@@ -1031,10 +1034,10 @@ body {
   align-items: center;
   width: 44px;
   height: 24px;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0px 0px #000000;
-  background: #F5F5F0;
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary);
+  background: var(--neo-color-disabled);
   cursor: pointer;
   transition: all 0.1s ease;
   position: relative;
@@ -1042,23 +1045,23 @@ body {
 }
 
 .neo-switch-inline:hover {
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--neo-color-text-primary);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .neo-switch-inline.is-checked {
-  background: #3B82F6;
-  border-color: #000000;
-  box-shadow: -3px 3px 0px 0px #000000;
+  background: var(--neo-color-accent-blue);
+  border-color: var(--neo-color-text-primary);
+  box-shadow: -3px 3px 0px 0px var(--neo-color-text-primary);
 }
 
 .neo-switch-inline .neo-switch-knob {
   width: 14px;
   height: 14px;
-  border: 2px solid #000000;
-  border-radius: 2px;
-  box-shadow: 2px 2px 0px 0px #000000;
-  background: #FFFFFF;
+  border: var(--neo-border-thin) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-sm);
+  box-shadow: var(--neo-shadow-active);
+  background: var(--neo-color-bg-card);
   position: absolute;
   left: 3px;
   top: 50%;
@@ -1068,8 +1071,8 @@ body {
 
 .neo-switch-inline.is-checked .neo-switch-knob {
   left: calc(100% - 17px);
-  background: #FFFFFF;
-  border-color: #000000;
+  background: var(--neo-color-bg-card);
+  border-color: var(--neo-color-text-primary);
 }
 
 .neo-switch-inline.is-disabled {
@@ -1092,41 +1095,41 @@ body {
   height: 56px !important;
   min-height: 56px !important;
   padding: 0 14px !important;
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 5px 5px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary) !important;
+  background: var(--neo-color-bg-card) !important;
   font-size: 16px !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 
 .neo-input .el-input__wrapper:not(.el-time-select__wrapper):hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-hover) !important;
 }
 
 .neo-input.el-input.is-focus .el-input__wrapper:not(.el-time-select__wrapper),
 .neo-input.el-input:focus-within .el-input__wrapper:not(.el-time-select__wrapper) {
-  background: #FFD93D !important;
-  box-shadow: 5px 5px 0px 0px #000000 !important;
-  border: 4px solid #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary) !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
 }
 
 .neo-input .el-input__inner {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 .neo-input .el-input__inner::placeholder {
-  color: #999999 !important;
+  color: var(--neo-color-text-muted) !important;
   font-weight: 500 !important;
 }
 
 /* Disabled */
 .neo-input .is-disabled .el-input__wrapper:not(.el-time-select__wrapper),
 .neo-input .el-input__wrapper.is-disabled:not(.el-time-select__wrapper) {
-  background: #F5F5F0 !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: var(--neo-color-disabled) !important;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary) !important;
   cursor: not-allowed;
 }
 
@@ -1139,8 +1142,8 @@ body {
 
 .neo-input .el-input-number__decrease,
 .neo-input .el-input-number__increase {
-  border: 2px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-header) !important;
   font-weight: 700 !important;
 }
 
@@ -1152,55 +1155,55 @@ body {
 .neo-input .el-select__wrapper {
   height: 56px !important;
   min-height: 56px !important;
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 5px 5px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary) !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 
 .neo-input .el-select__wrapper:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-hover) !important;
 }
 
 .neo-input .el-select__wrapper.is-focused {
-  background: #FFD93D !important;
-  box-shadow: 5px 5px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary) !important;
 }
 
 .neo-input .el-select__selected-item {
   font-weight: 600;
-  border: 1px solid #000000;
-  border-radius: 2px;
-  background: #FFFDF5;
+  border: 1px solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-sm);
+  background: var(--neo-color-bg-header);
 }
 
 /* Time select — root element has both neo-input and el-time-select classes */
 .neo-input.el-time-select .el-input__wrapper {
   height: 56px !important;
   min-height: 56px !important;
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 5px 5px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary) !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
 }
 
 .neo-input.el-time-select .el-input__wrapper:hover {
-  box-shadow: 6px 6px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-hover) !important;
 }
 
 .neo-input.el-time-select .el-input__wrapper.is-focus {
-  background: #FFD93D !important;
-  box-shadow: 5px 5px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary) !important;
 }
 
 /* Form tip — prototype style */
 .form-tip {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-top: 4px;
   line-height: 1.5;
   font-weight: 600;
@@ -1223,21 +1226,21 @@ body {
 }
 
 .shift-template-page .shift-drawer .el-drawer__header {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-header) !important;
   padding: 16px 24px !important;
   margin-bottom: 0 !important;
   position: relative !important;
 }
 
 .shift-template-page .shift-drawer .el-drawer {
-  border: 3px solid #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
   border-radius: 0 !important;
-  box-shadow: 8px 0px 0px 0px #000000 !important;
+  box-shadow: 8px 0px 0px 0px var(--neo-color-text-primary) !important;
 }
 
 .shift-template-page .shift-drawer .el-drawer__body {
-  background: #FFFFFF !important;
+  background: var(--neo-color-bg-card) !important;
   padding: 20px 24px !important;
 }
 
@@ -1248,9 +1251,9 @@ body {
 
 /* ---- 2.1 Drag Upload Zone ---- */
 .drag-upload-zone {
-  border: 4px dashed #000000;
-  border-radius: 4px;
-  background: #FFFDF5;
+  border: var(--neo-border-ultra) dashed var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-bg-primary);
   padding: 32px 24px;
   display: flex;
   flex-direction: column;
@@ -1261,41 +1264,41 @@ body {
   cursor: pointer;
 }
 .drag-upload-zone:hover {
-  background: #FFD93D;
+  background: var(--neo-color-accent-yellow);
   border-style: solid;
 }
 .drag-upload-zone__icon {
   font-size: 48px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .drag-upload-zone__title {
   font-size: 16px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .drag-upload-zone__hint {
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
 }
 
 /* ---- 2.2 Alert Card ---- */
 .alert-card {
-  border: 4px solid #000000;
-  border-radius: 4px;
-  background: #FFD93D;
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-accent-yellow);
   padding: 16px;
   display: flex;
   gap: 12px;
   align-items: flex-start;
 }
 .alert-card--danger {
-  background: #FEE2E2;
-  border-color: #EF4444;
+  background: var(--neo-color-danger-bg);
+  border-color: var(--neo-color-accent-red);
 }
 .alert-card--info {
-  background: #DBEAFE;
-  border-color: #3B82F6;
+  background: var(--neo-color-info-bg);
+  border-color: var(--neo-color-accent-blue);
 }
 .alert-card__icon {
   font-size: 24px;
@@ -1305,7 +1308,7 @@ body {
 .alert-card__content {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   line-height: 1.5;
 }
 
@@ -1313,15 +1316,15 @@ body {
 .progress-bar {
   width: 100%;
   height: 24px;
-  background: #FFFDF5;
-  border: 4px solid #000000;
-  border-radius: 4px;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
   overflow: hidden;
 }
 .progress-bar__fill {
   height: 100%;
-  background: #FFD93D;
-  border-radius: 2px;
+  background: var(--neo-color-accent-yellow);
+  border-radius: var(--neo-radius-sm);
   transition: width 0.5s ease;
 }
 .progress-bar__info {
@@ -1333,12 +1336,12 @@ body {
 .progress-bar__filename {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .progress-bar__status {
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
 }
 
 /* ---- 2.4 Action Card Grid ---- */
@@ -1348,9 +1351,9 @@ body {
   gap: 16px;
 }
 .action-card {
-  border: 4px solid #000000;
-  border-radius: 4px;
-  background: #FFFFFF;
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-bg-card);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -1359,15 +1362,15 @@ body {
   cursor: pointer;
 }
 .action-card:hover {
-  background: #FFFDF5;
-  box-shadow: 6px 6px 0px 0px #000000;
-  transform: translateY(-2px);
+  background: var(--neo-color-bg-primary);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translateY(var(--neo-translate-hover));
 }
 .action-card__icon-wrap {
   width: 64px;
   height: 64px;
-  border: 4px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1379,29 +1382,29 @@ body {
 }
 .action-card__icon-wrap--accent {
   background: #FF6B6B;
-  color: #FFFFFF;
+  color: var(--neo-color-bg-card);
 }
 .action-card__icon-wrap--yellow {
-  background: #FFD93D;
-  color: #000000;
+  background: var(--neo-color-accent-yellow);
+  color: var(--neo-color-text-primary);
 }
 .action-card__icon-wrap--purple {
   background: #C4B5FD;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .action-card__icon-wrap--black {
-  background: #000000;
-  color: #FFFFFF;
+  background: var(--neo-color-text-primary);
+  color: var(--neo-color-bg-card);
 }
 .action-card__title {
   font-size: 16px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .action-card__desc {
   font-size: 13px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   line-height: 1.4;
 }
 .action-card__btn {
@@ -1415,33 +1418,33 @@ body {
   gap: 12px;
 }
 .radio-card {
-  border: 3px solid #000000;
-  border-radius: 4px;
-  background: #FFFFFF;
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-bg-card);
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   transition: all 0.1s ease;
   cursor: pointer;
-  box-shadow: 3px 3px 0px 0px #000000;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary);
 }
 .radio-card:hover {
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--neo-color-text-primary);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 .radio-card:has(input:checked),
 .radio-card--active {
-  background: #FFFDF5;
-  border-color: #3B82F6;
-  box-shadow: 4px 4px 0px 0px #3B82F6;
+  background: var(--neo-color-bg-primary);
+  border-color: var(--neo-color-accent-blue);
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-blue);
 }
 .radio-card input[type="radio"] {
   width: 24px;
   height: 24px;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  accent-color: #3B82F6;
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  accent-color: var(--neo-color-accent-blue);
   flex-shrink: 0;
 }
 .radio-card__content {
@@ -1450,12 +1453,12 @@ body {
 .radio-card__title {
   font-size: 16px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .radio-card__desc {
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-top: 4px;
   line-height: 1.4;
 }
@@ -1471,34 +1474,34 @@ body {
 .delete-confirm__icon {
   width: 80px;
   height: 80px;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  background: #EF4444;
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-accent-red);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 36px;
-  color: #FFFFFF;
-  box-shadow: 4px 4px 0px 0px #000000;
+  color: var(--neo-color-bg-card);
+  box-shadow: var(--neo-shadow-default);
 }
 .delete-confirm__title {
   font-size: 24px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .delete-confirm__message {
   font-size: 14px;
   font-weight: 600;
-  color: #333333;
+  color: var(--neo-color-text-secondary);
   line-height: 1.6;
   max-width: 380px;
 }
 
 /* ---- 2.7 File Upload Area ---- */
 .file-upload-area {
-  border: 4px dashed #000000;
-  border-radius: 4px;
-  background: #FFFDF5;
+  border: var(--neo-border-ultra) dashed var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-bg-primary);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -1507,22 +1510,22 @@ body {
   transition: all 0.15s ease;
 }
 .file-upload-area:hover {
-  background: #FFD93D;
+  background: var(--neo-color-accent-yellow);
   border-style: solid;
 }
 .file-upload-area__icon {
   font-size: 40px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .file-upload-area__text {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .file-upload-area__hint {
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
 }
 
 /* ============================================================
@@ -1531,16 +1534,16 @@ body {
 
 /* ---- 3.1 Neo Card (enhanced hover version) ---- */
 .neo-card {
-  background: #FFFFFF;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  box-shadow: 8px 8px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-lg);
   transition: all 0.2s ease;
   overflow: visible;
 }
 .neo-card:hover {
-  box-shadow: 12px 12px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow-xl);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 
 /* ---- 3.2 Card Header ---- */
@@ -1549,18 +1552,18 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
-  border-bottom: 4px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  background: var(--neo-color-bg-primary);
 }
 .card-title {
   font-size: 15px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
 }
 .card-date {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
@@ -1585,10 +1588,10 @@ body {
 .stat-card:hover .stat-accent-bar {
   width: 8px;
 }
-.stat-card-blue .stat-accent-bar    { background: #3B82F6; }
-.stat-card-green .stat-accent-bar   { background: #10B981; }
-.stat-card-red .stat-accent-bar     { background: #EF4444; }
-.stat-card-purple .stat-accent-bar  { background: #8B5CF6; }
+.stat-card-blue .stat-accent-bar    { background: var(--neo-color-accent-blue); }
+.stat-card-green .stat-accent-bar   { background: var(--neo-color-accent-green); }
+.stat-card-red .stat-accent-bar     { background: var(--neo-color-accent-red); }
+.stat-card-purple .stat-accent-bar  { background: var(--neo-color-accent-purple); }
 
 .stat-card-inner {
   display: flex;
@@ -1600,18 +1603,18 @@ body {
 .stat-icon-wrap {
   width: 52px;
   height: 52px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 3px 3px 0px 0px #000000;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary);
   flex-shrink: 0;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .stat-card:hover .stat-icon-wrap {
-  transform: translateY(-3px) rotate(-3deg);
-  box-shadow: 5px 5px 0px 0px #000000;
+  transform: translateY(var(--neo-translate-hover)) rotate(-3deg);
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary);
 }
 .stat-card-blue .stat-icon-wrap    { background: #DBEAFE; color: #1D4ED8; }
 .stat-card-green .stat-icon-wrap   { background: #D1FAE5; color: #047857; }
@@ -1628,7 +1631,7 @@ body {
 .stat-label-text {
   font-size: 12px;
   font-weight: 700;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1636,7 +1639,7 @@ body {
   font-size: 36px;
   font-weight: 900;
   line-height: 1.1;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   transition: transform 0.2s ease;
   display: block;
   transform-origin: left;
@@ -1647,11 +1650,11 @@ body {
 .stat-urgent-tag {
   font-size: 11px;
   font-weight: 700;
-  color: #FFFFFF;
-  background: #EF4444;
-  border: 2px solid #000000;
+  color: var(--neo-color-bg-card);
+  background: var(--neo-color-accent-red);
+  border: var(--neo-border-thin) solid var(--neo-color-text-primary);
   padding: 2px 8px;
-  border-radius: 2px;
+  border-radius: var(--neo-radius-sm);
   position: absolute;
   top: 12px;
   right: 12px;
@@ -1669,7 +1672,7 @@ body {
 .page-title {
   font-size: 20px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -1697,7 +1700,7 @@ body {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: var(--neo-color-text-secondary);
   font-size: 16px;
   pointer-events: none;
   z-index: 1;
@@ -1712,10 +1715,10 @@ body {
 
 /* ---- 3.6 Data Card ---- */
 .data-card {
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -1724,8 +1727,8 @@ body {
   transition: all 0.15s ease;
 }
 .data-card:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 7px 7px 0px 0px #000000;
+  transform: translate(var(--neo-translate-lg), var(--neo-translate-lg));
+  box-shadow: 7px 7px 0px 0px var(--neo-color-text-primary);
 }
 .data-card--disabled {
   opacity: 0.55;
@@ -1733,7 +1736,7 @@ body {
 }
 .data-card:hover.data-card--disabled {
   transform: none;
-  box-shadow: 4px 4px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
 }
 .data-card-header {
   display: flex;
@@ -1749,14 +1752,14 @@ body {
 .color-swatch {
   width: 16px;
   height: 16px;
-  border: 2px solid #000000;
-  border-radius: 2px;
+  border: var(--neo-border-thin) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-sm);
   flex-shrink: 0;
 }
 .data-card-name {
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
 }
 .data-card-body {
@@ -1769,20 +1772,20 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #333;
+  color: var(--neo-color-text-secondary);
 }
 .data-detail-icon {
   font-size: 16px;
-  color: #555;
+  color: var(--neo-color-text-secondary);
   flex-shrink: 0;
 }
 .detail-text {
   font-size: 14px;
   font-weight: 600;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .data-card-footer {
-  border-top: 3px solid #000000;
+  border-top: var(--neo-border-thick) solid var(--neo-color-text-primary);
   padding-top: 12px;
   display: flex;
   gap: 8px;
@@ -1796,35 +1799,35 @@ body {
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
-  border: 2px solid #000000;
-  border-radius: 2px;
+  border: var(--neo-border-thin) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-sm);
   font-size: 12px;
   font-weight: 900;
-  box-shadow: 2px 2px 0px 0px #000000;
-  color: #FFFFFF;
-  background: #EF4444;
+  box-shadow: var(--neo-shadow-active);
+  color: var(--neo-color-bg-card);
+  background: var(--neo-color-accent-red);
   flex-shrink: 0;
   margin: 0 4px;
 }
 .neo-badge--active {
-  background: #3B82F6;
-  color: #FFFFFF;
+  background: var(--neo-color-accent-blue);
+  color: var(--neo-color-bg-card);
 }
 .neo-badge--inactive {
-  background: #FFD93D;
-  color: #000000;
+  background: var(--neo-color-accent-yellow);
+  color: var(--neo-color-text-primary);
 }
 .neo-badge--red {
-  background: #EF4444;
-  color: #FFFFFF;
+  background: var(--neo-color-accent-red);
+  color: var(--neo-color-bg-card);
 }
 
 /* ---- 3.8 Notice Card ---- */
 .notice-card {
-  border: 4px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
   padding: 14px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
@@ -1839,11 +1842,11 @@ body {
   top: 0;
   bottom: 0;
   width: 5px;
-  background: #000000;
+  background: var(--neo-color-text-primary);
   transition: width 0.2s ease;
 }
 .notice-card:hover {
-  box-shadow: 7px 7px 0px 0px #000000;
+  box-shadow: 7px 7px 0px 0px var(--neo-color-text-primary);
   transform: translateX(-3px);
 }
 .notice-card:hover::before {
@@ -1858,17 +1861,17 @@ body {
 .notice-title-text {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .notice-time {
   font-size: 11px;
   font-weight: 700;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   text-transform: uppercase;
 }
 .notice-desc {
   font-size: 13px;
-  color: #333333;
+  color: var(--neo-color-text-secondary);
   margin: 0;
   line-height: 1.5;
   font-weight: 600;
@@ -1888,67 +1891,67 @@ body {
   gap: 8px;
   padding: 16px 8px;
   border: 2px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--neo-radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .action-item:hover {
-  background: #FFFDF5;
-  border-color: #000000;
-  box-shadow: 3px 3px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  background: var(--neo-color-bg-primary);
+  border-color: var(--neo-color-text-primary);
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 .action-item:active {
   transform: translate(0, 0);
-  box-shadow: 1px 1px 0px 0px #000000;
+  box-shadow: 1px 1px 0px 0px var(--neo-color-text-primary);
 }
 .qa-icon {
   width: 48px;
   height: 48px;
-  border: 2px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thin) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .action-item:hover .qa-icon {
   animation: bounce-icon 0.5s ease;
-  box-shadow: 3px 3px 0px 0px #000000;
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary);
 }
 .qa-label {
   font-size: 12px;
-  color: #333333;
+  color: var(--neo-color-text-secondary);
   text-align: center;
 }
 
 /* ---- 3.10 Neo List Item ---- */
 .neo-list-item {
   padding: 12px 14px;
-  background: #FFFDF5;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 2px 2px 0px 0px #000000;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-active);
   transition: all 0.2s ease;
   animation: slide-in-left 0.3s ease both;
 }
 .neo-list-item:hover {
-  background: #FFFFFF;
-  box-shadow: 5px 5px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  background: var(--neo-color-bg-card);
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 .neo-list-item--clickable {
   cursor: pointer;
 }
 .neo-list-item--clickable:hover {
-  border-color: #3B82F6;
+  border-color: var(--neo-color-accent-blue);
 }
 .list-item-dot {
   width: 10px;
   height: 10px;
-  border-radius: 2px;
-  border: 1px solid #000000;
+  border-radius: var(--neo-radius-sm);
+  border: 1px solid var(--neo-color-text-primary);
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
@@ -1965,25 +1968,25 @@ body {
 .status-item {
   text-align: center;
   padding: 16px 8px;
-  background: #FFFDF5;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 2px 2px 0px 0px #000000;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-active);
   transition: all 0.2s;
 }
 .status-item--clickable {
   cursor: pointer;
 }
 .status-item:hover {
-  box-shadow: 5px 5px 0px 0px #000000;
-  transform: translate(-2px, -2px);
-  background: #FFFFFF;
+  box-shadow: 5px 5px 0px 0px var(--neo-color-text-primary);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
+  background: var(--neo-color-bg-card);
 }
 .status-label {
   display: block;
   font-size: 12px;
   font-weight: 700;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-bottom: 6px;
 }
 .status-value {
@@ -1997,9 +2000,9 @@ body {
 .status-item:hover .status-value {
   transform: scale(1.15);
 }
-.status-success { color: #10B981; }
-.status-warning { color: #FFD93D; }
-.status-info    { color: #999999; }
+.status-success { color: var(--neo-color-accent-green); }
+.status-warning { color: var(--neo-color-accent-yellow); }
+.status-info    { color: var(--neo-color-text-muted); }
 
 /* ---- 3.12 Mini Stat Card ---- */
 .mini-stat-grid {
@@ -2010,16 +2013,16 @@ body {
 .mini-stat-card {
   padding: 14px 10px;
   text-align: center;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: 3px 3px 0px 0px var(--neo-color-text-primary);
   transition: all 0.2s ease;
   animation: slide-in-left 0.3s ease both;
 }
 .mini-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 6px 6px 0px 0px #000000;
+  transform: translateY(var(--neo-translate-hover));
+  box-shadow: var(--neo-shadow-hover);
 }
 .mini-stat-value {
   font-size: 24px;
@@ -2030,7 +2033,7 @@ body {
 .mini-stat-label {
   font-size: 11px;
   font-weight: 700;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   text-transform: uppercase;
 }
 
@@ -2042,16 +2045,16 @@ body {
 }
 .ranking-item {
   padding: 12px 14px;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
   transition: all 0.25s ease;
   animation: slide-in-left 0.35s ease both;
 }
 .ranking-item:hover {
-  box-shadow: 10px 10px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0px 0px var(--neo-color-text-primary);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 .ranking-row {
   display: flex;
@@ -2063,20 +2066,20 @@ body {
   height: 28px;
   line-height: 28px;
   text-align: center;
-  border-radius: 2px;
+  border-radius: var(--neo-radius-sm);
   font-size: 13px;
   font-weight: 900;
-  border: 2px solid #000000;
+  border: var(--neo-border-thin) solid var(--neo-color-text-primary);
   flex-shrink: 0;
   transition: transform 0.3s ease;
 }
 .ranking-item:hover .ranking-badge {
   transform: rotate(12deg) scale(1.15);
 }
-.ranking-1 { background: #FFD93D; color: #000000; }
-.ranking-2 { background: #3B82F6; color: #FFFFFF; }
-.ranking-3 { background: #EF4444; color: #FFFFFF; }
-.ranking-other { background: #E5E7EB; color: #000000; }
+.ranking-1 { background: var(--neo-color-accent-yellow); color: var(--neo-color-text-primary); }
+.ranking-2 { background: var(--neo-color-accent-blue); color: var(--neo-color-bg-card); }
+.ranking-3 { background: var(--neo-color-accent-red); color: var(--neo-color-bg-card); }
+.ranking-other { background: var(--neo-color-border-light); color: var(--neo-color-text-primary); }
 .ranking-info {
   flex: 1;
   min-width: 0;
@@ -2084,11 +2087,11 @@ body {
 .ranking-name {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 .ranking-detail {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-top: 2px;
 }
 .ranking-score {
@@ -2106,9 +2109,9 @@ body {
 }
 .neo-progress-bg {
   height: 8px;
-  background: #E5E7EB;
-  border-radius: 2px;
-  border: 1px solid #000000;
+  background: var(--neo-color-border-light);
+  border-radius: var(--neo-radius-sm);
+  border: 1px solid var(--neo-color-text-primary);
   overflow: hidden;
 }
 .neo-progress-fill {
@@ -2133,7 +2136,7 @@ body {
 .form-label {
   font-size: 18px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   line-height: 1.2;
 }
 .form-section {
@@ -2145,16 +2148,16 @@ body {
   align-items: center;
   gap: 10px;
   padding: 12px 0;
-  border-top: 4px solid #000000;
+  border-top: var(--neo-border-ultra) solid var(--neo-color-text-primary);
 }
 .form-section-icon {
   font-size: 20px;
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 .form-section-title {
   font-size: 16px;
   font-weight: 800;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex: 1;
@@ -2180,17 +2183,17 @@ body {
   width: 100%;
   aspect-ratio: 1.5 / 1;
   min-height: 48px;
-  border: 4px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-ultra) solid var(--neo-color-text-primary);
+  border-radius: var(--neo-radius-md);
   transition: all 0.1s ease;
 }
 .color-option--active .color-swatch-lg {
-  box-shadow: 0 0 0 4px #FFFDF5, 0 0 0 8px #000000;
+  box-shadow: 0 0 0 4px var(--neo-color-bg-primary), 0 0 0 8px var(--neo-color-text-primary);
 }
 .color-hex {
   font-size: 11px;
   font-weight: 700;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-family: monospace;
 }
 
@@ -2203,14 +2206,14 @@ body {
 .drawer-title-lg {
   font-size: 20px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
 }
 .drawer-footer-custom {
   display: flex;
   gap: 12px;
   padding-top: 16px;
-  border-top: 4px solid #000000;
+  border-top: var(--neo-border-ultra) solid var(--neo-color-text-primary);
 }
 
 /* ---- 3.18 Empty State ---- */
@@ -2253,8 +2256,8 @@ body {
   display: flex;
   justify-content: flex-end;
   padding: 12px 20px;
-  border-top: 3px solid #000000;
-  background: #FFFDF5;
+  border-top: var(--neo-border-thick) solid var(--neo-color-text-primary);
+  background: var(--neo-color-bg-primary);
 }
 .drawer-body {
   display: flex;
@@ -2265,7 +2268,7 @@ body {
 /* ---- 3.23 Form Tip (unified) ---- */
 .form-tip {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-top: 4px;
   line-height: 1.5;
   font-weight: 600;

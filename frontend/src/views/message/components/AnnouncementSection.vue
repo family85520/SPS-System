@@ -514,10 +514,10 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
-  background: #FFFDF5;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0px 0px #000000;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-md);
 }
 
 .announcement-title {
@@ -526,11 +526,11 @@ onMounted(() => {
   gap: 8px;
   font-size: 16px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .announcement-title .el-icon {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 
 /* ========== 公告列表 ========== */
@@ -544,30 +544,30 @@ onMounted(() => {
 .announcement-item {
   padding: 12px 14px;
   margin-bottom: 6px;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  background: #FFFFFF;
-  box-shadow: 2px 2px 0px 0px #000000;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-bg-card);
+  box-shadow: var(--neo-shadow-active);
   transition: all 0.15s ease;
   animation: slide-in-left 0.3s ease both;
 }
 
 .announcement-item:hover {
-  background: #FFFDF5;
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  background: var(--neo-color-bg-primary);
+  box-shadow: var(--neo-shadow-default);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 
 .announcement-item.is-highlighted {
-  background: #FFD93D;
-  border-color: #000000;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-accent-yellow);
+  border-color: var(--neo-color-border);
+  box-shadow: var(--neo-shadow-default);
   animation: pulse-highlight 1s ease-in-out 3, slide-in-left 0.3s ease both;
 }
 
 @keyframes pulse-highlight {
-  0%, 100% { box-shadow: 4px 4px 0px 0px #000000; }
-  50%      { box-shadow: 8px 8px 0px 0px #000000; }
+  0%, 100% { box-shadow: var(--neo-shadow-default); }
+  50%      { box-shadow: var(--neo-shadow-lg); }
 }
 
 .announcement-item__title {
@@ -576,12 +576,12 @@ onMounted(() => {
   gap: 6px;
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin-bottom: 4px;
 }
 
 .announcement-item__title .el-icon {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   flex-shrink: 0;
 }
 
@@ -594,7 +594,7 @@ onMounted(() => {
   display: flex;
   gap: 12px;
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
@@ -604,7 +604,7 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   font-size: 13px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin-bottom: 16px;
   flex-wrap: wrap;
   font-weight: 600;
@@ -615,24 +615,24 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .announcement-detail__publisher .el-icon {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 
 .announcement-detail__content {
   font-size: 14px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   line-height: 1.8;
   white-space: pre-wrap;
   padding: 16px;
-  background: #FFFDF5;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   font-weight: 500;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
 }
 
 /* ========== 空状态 ========== */
@@ -642,14 +642,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   gap: 12px;
 }
 
 .empty-state .el-icon {
   color: #CCCCCC;
   border: 2px solid #E0E0E0;
-  border-radius: 4px;
+  border-radius: var(--neo-radius-md);
   padding: 8px;
   box-shadow: 2px 2px 0px 0px #E0E0E0;
 }
@@ -657,12 +657,12 @@ onMounted(() => {
 .empty-state p {
   font-size: 14px;
   font-weight: 600;
-  color: #999999;
+  color: var(--neo-color-text-muted);
 }
 
 .empty-tip {
   font-size: 12px;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   margin-top: 4px;
   font-weight: 600;
 }
@@ -670,42 +670,42 @@ onMounted(() => {
 /* ========== 表单输入增强 ========== */
 .neo-input-form :deep(.el-input__wrapper),
 .neo-input-form :deep(.el-select__wrapper) {
-  border: 3px solid #000000 !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  border-radius: 4px !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  border-radius: var(--neo-radius-md) !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 600 !important;
   transition: all 0.1s ease !important;
 }
 
 .neo-input-form :deep(.el-input__wrapper):hover,
 .neo-input-form :deep(.el-select__wrapper):hover {
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-default) !important;
 }
 
 .neo-input-form :deep(.el-input__wrapper.is-focus),
 .neo-input-form :deep(.el-select__wrapper.is-focused) {
-  box-shadow: 4px 4px 0px 0px #3B82F6 !important;
-  border-color: #000000 !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  border-color: var(--neo-color-border) !important;
 }
 
 .neo-input-form :deep(.el-input__inner),
 .neo-input-form :deep(.el-select__selection .el-select__selected-item) {
   font-weight: 600 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 .neo-textarea :deep(.el-textarea__inner) {
-  border: 3px solid #000000 !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  border-radius: 4px !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  border-radius: var(--neo-radius-md) !important;
+  background: var(--neo-color-bg-card) !important;
   font-weight: 600 !important;
   font-family: inherit !important;
   transition: all 0.1s ease !important;
 }
 
 .neo-textarea :deep(.el-textarea__inner):focus {
-  box-shadow: 4px 4px 0px 0px #3B82F6 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-blue) !important;
 }
 </style>

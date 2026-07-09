@@ -210,22 +210,22 @@ watch(() => props.visible, (val) => {
 <style scoped>
 /* 弹窗 — 覆盖全局 .el-dialog */
 .swap-dialog :deep(.el-dialog) {
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
   box-shadow: 10px 10px 0px 0px #000000 !important;
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .swap-dialog :deep(.el-dialog__header) {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
   padding: 16px 20px !important;
   margin: 0 !important;
 }
 
 .swap-dialog :deep(.el-dialog__title) {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 16px !important;
   letter-spacing: 0.3px !important;
 }
@@ -236,7 +236,7 @@ watch(() => props.visible, (val) => {
 }
 
 .swap-dialog :deep(.el-dialog__footer) {
-  border-top: 3px solid #000000 !important;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border) !important;
   padding: 14px 20px !important;
   background: #FFFDF5 !important;
 }
@@ -244,7 +244,7 @@ watch(() => props.visible, (val) => {
 /* 表单标签 */
 :deep(.el-form-item__label) {
   font-weight: 800 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 13px !important;
   letter-spacing: 0.2px !important;
 }
@@ -265,21 +265,21 @@ watch(() => props.visible, (val) => {
 }
 
 .neo-radio-group :deep(.el-radio__input) {
-  border: 3px solid #000000 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  border-radius: 4px !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  border-radius: var(--neo-radius-md) !important;
   transition: all 0.1s ease !important;
 }
 
 .neo-radio-group :deep(.el-radio__input.is-checked .el-radio__inner) {
-  background: #3B82F6 !important;
-  border-color: #000000 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-blue) !important;
+  border-color: var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-active) !important;
 }
 
 .neo-radio-group :deep(.el-radio__input.is-checked + .el-radio__label) {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
 }
 
 /* 字数统计 */
@@ -287,7 +287,7 @@ watch(() => props.visible, (val) => {
   background: transparent !important;
   font-weight: 600 !important;
   font-size: 12px !important;
-  color: #999999 !important;
+  color: var(--neo-color-text-muted) !important;
 }
 
 /* ============================================
@@ -297,7 +297,7 @@ watch(() => props.visible, (val) => {
 @media (max-width: 768px) {
   .swap-dialog :deep(.el-dialog) {
     width: 95% !important;
-    box-shadow: 6px 6px 0px 0px #000000 !important;
+    box-shadow: var(--neo-shadow-hover) !important;
   }
 
   .btn-neo-primary,

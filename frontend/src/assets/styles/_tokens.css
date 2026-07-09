@@ -1,0 +1,91 @@
+/* ================================================================
+   Neo Design Tokens — CSS Custom Properties
+   基于 Neo Brutalism 风格（demo: neo-design-demo.html）
+   所有设计令牌统一在此声明，供 global.scss 和其他组件通过 var() 引用
+   ================================================================ */
+
+:root {
+  /* ========== 背景色系 ========== */
+  --neo-color-bg-primary: #FFFDF5;
+  --neo-color-bg-card: #FFFFFF;
+  --neo-color-bg-header: #FFFDF5;
+
+  /* ========== 文本色系 ========== */
+  --neo-color-text-primary: #000000;
+  --neo-color-text-secondary: #666666;
+  --neo-color-text-muted: #999999;
+
+  /* ========== 强调色系 ========== */
+  --neo-color-accent-blue: #3B82F6;
+  --neo-color-accent-blue-hover: #2563EB;
+  --neo-color-accent-green: #10B981;
+  --neo-color-accent-yellow: #FFD93D;
+  --neo-color-accent-red: #EF4444;
+  --neo-color-accent-red-hover: #DC2626;
+  --neo-color-accent-cyan: #06B6D4;
+  --neo-color-accent-purple: #8B5CF6;
+
+  /* ========== 描边色系 ========== */
+  --neo-color-border: #000000;
+  --neo-color-border-light: #E6EAF0;
+  --neo-color-overlay-mask: rgba(0, 0, 0, 0.5);
+
+  /* ========== 功能背景色 ========== */
+  --neo-color-success-bg: #D1FAE5;
+  --neo-color-danger-bg: #FEE2E2;
+  --neo-color-warning-bg: #FEF3C7;
+  --neo-color-info-bg: #DBEAFE;
+
+  /* ========== 禁用态 ========== */
+  --neo-color-disabled: #F5F5F0;
+  --neo-color-disabled-text: #999999;
+
+  /* ========== 圆角 ========== */
+  --neo-radius-sm: 2px;
+  --neo-radius-md: 4px;
+  --neo-radius-none: 0px;
+
+  /* ========== 边框宽度 ========== */
+  --neo-border-thin: 2px;
+  --neo-border-thick: 3px;
+  --neo-border-ultra: 4px;
+
+  /* ========== 阴影 ========== */
+  --neo-shadow-default: 4px 4px 0px 0px #000000;
+  --neo-shadow-hover: 6px 6px 0px 0px #000000;
+  --neo-shadow-active: 2px 2px 0px 0px #000000;
+  --neo-shadow-lg: 8px 8px 0px 0px #000000;
+  --neo-shadow-xl: 12px 12px 0px 0px #000000;
+  --neo-shadow-xs: 1px 1px 0px 0px #000000;
+  --neo-shadow-md: 3px 3px 0px 0px #000000;
+  --neo-shadow-md-lg: 5px 5px 0px 0px #000000;
+
+  /* ========== 字体 ========== */
+  --neo-font-family-base: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --neo-font-weight-regular: 500;
+  --neo-font-weight-medium: 600;
+  --neo-font-weight-bold: 700;
+  --neo-font-weight-extrabold: 900;
+
+  /* ========== 间距 ========== */
+  --neo-spacing-xs: 4px;
+  --neo-spacing-sm: 8px;
+  --neo-spacing-md: 12px;
+  --neo-spacing-lg: 16px;
+  --neo-spacing-xl: 20px;
+  --neo-spacing-2xl: 24px;
+  --neo-spacing-3xl: 32px;
+
+  /* ========== 过渡 ========== */
+  --neo-transition-fast: 0.1s;
+  --neo-transition-normal: 0.15s;
+  --neo-transition-slow: 0.2s;
+
+  /* ========== 位移 ========== */
+  --neo-translate-xs: -1px;
+  --neo-translate-hover: -2px;
+  --neo-translate-lg: -3px;
+  --neo-translate-active: 2px;
+  --neo-translate-active-sm: 1px;
+  --neo-translate-active-lg: 3px;
+}

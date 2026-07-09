@@ -352,16 +352,16 @@ onMounted(() => {
 
 /* --- Neo 卡片（复用项目全局样式） --- */
 .neo-card {
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 6px 6px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-hover);
   padding: 28px;
   transition: all 0.2s ease;
 }
 
 .neo-card:hover {
-  box-shadow: 8px 8px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-lg);
   transform: translateY(-1px);
 }
 
@@ -369,9 +369,9 @@ onMounted(() => {
   margin: 0 0 24px 0;
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-border);
   padding-bottom: 12px;
-  border-bottom: 2px solid #000000;
+  border-bottom: var(--neo-border-thin) solid var(--neo-color-border);
 }
 
 /* --- Neo 表单 --- */
@@ -384,7 +384,7 @@ onMounted(() => {
 .neo-form :deep(.el-form-item__label) {
   font-size: 15px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-border);
   padding-bottom: 0;
   line-height: 1.5;
 }
@@ -423,16 +423,16 @@ onMounted(() => {
 .neo-radio-group :deep(.el-radio__label) {
   font-weight: 700;
   font-size: 14px;
-  color: #000000;
+  color: var(--neo-color-border);
 }
 
 .neo-radio-group :deep(.el-radio__input) {
-  border: 2px solid #000000;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
 }
 
 .neo-radio-group :deep(.el-radio.is-checked .el-radio__label) {
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-border);
 }
 
 /* --- 底部操作按钮栏 --- */
@@ -465,10 +465,10 @@ onMounted(() => {
 }
 
 .modal-content {
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 8px 8px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-lg);
   max-width: 480px;
   width: 90%;
   padding: 28px;
@@ -490,7 +490,7 @@ onMounted(() => {
   margin: 0;
   font-size: 20px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-border);
 }
 
 .modal-text {

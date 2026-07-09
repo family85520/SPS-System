@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPS Neo-Corporate Design Tokens Demo</title>
+<style>
+/* ============================================================
+   Neo-Corporate Design Tokens — 商务 Neo 风格
+   基于 Neo 风格微调：降低饱和度、增加中性色调阶、专业感
+   ============================================================ */
+:root {
+  /* 背景 — 中性灰阶 */
+  --neo-bg-primary: #F3F4F6;
+  --neo-bg-card: #FFFFFF;
+  --neo-bg-header: #F9FAFB;
+  --neo-bg-input: #FFFFFF;
+  --neo-bg-hover: #F3F4F6;
+
+  /* 文本 — 灰阶体系 */
+  --neo-text-primary: #111827;
+  --neo-text-secondary: #374151;
+  --neo-text-tertiary: #6B7280;
+  --neo-text-muted: #9CA3AF;
+  --neo-text-inverse: #FFFFFF;
+
+  /* 强调色 — 低饱和度商务蓝 */
+  --neo-accent-blue: #3B82F6;
+  --neo-accent-blue-dark: #2563EB;
+  --neo-accent-blue-light: #DBEAFE;
+  --neo-accent-blue-50: #EFF6FF;
+
+  /* 中性强调色 */
+  --neo-accent-gray: #6B7280;
+  --neo-accent-gray-dark: #4B5563;
+  --neo-accent-gray-light: #F3F4F6;
+
+  /* 功能色 — 沉稳 */
+  --neo-success: #059669;
+  --neo-success-light: #D1FAE5;
+  --neo-warning: #D97706;
+  --neo-warning-light: #FEF3C7;
+  --neo-danger: #DC2626;
+  --neo-danger-light: #FEE2E2;
+  --neo-info: #4F46E5;
+  --neo-info-light: #E0E7FF;
+
+  /* 描边 */
+  --neo-border-primary: #111827;
+  --neo-border-default: #D1D5DB;
+  --neo-border-light: #E5E7EB;
+  --neo-border-lighter: #F3F4F6;
+
+  /* 圆角 — 略大于极简 */
+  --neo-radius-sm: 3px;
+  --neo-radius-md: 4px;
+  --neo-radius-lg: 6px;
+
+  /* 边框宽度 */
+  --neo-border-thin: 1px;
+  --neo-border-thick: 2px;
+  --neo-border-ultra: 3px;
+
+  /* 阴影 — 柔和版 */
+  --neo-shadow-default: 3px 3px 0px 0px #111827;
+  --neo-shadow-hover: 5px 5px 0px 0px #111827;
+  --neo-shadow-active: 1px 1px 0px 0px #111827;
+  --neo-shadow-card: 3px 3px 0px 0px #111827;
+  --neo-shadow-card-hover: 5px 5px 0px 0px #111827;
+
+  /* 字体 */
+  --neo-font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --neo-fw-regular: 500;
+  --neo-fw-medium: 600;
+  --neo-fw-bold: 700;
+  --neo-fw-extrabold: 900;
+
+  /* 间距 */
+  --neo-sp-xs: 4px;
+  --neo-sp-sm: 8px;
+  --neo-sp-md: 12px;
+  --neo-sp-lg: 16px;
+  --neo-sp-xl: 20px;
+  --neo-sp-2xl: 24px;
+  --neo-sp-3xl: 32px;
+
+  /* 过渡 */
+  --neo-tf: 0.1s;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--neo-font);
+  font-weight: var(--neo-fw-regular);
+  background: var(--neo-bg-primary);
+  color: var(--neo-text-primary);
+  padding: var(--neo-sp-2xl);
+  line-height: 1.5;
+}
+
+/* ---- Sections ---- */
+.demo-section { margin-bottom: var(--neo-sp-3xl); }
+.demo-section-title {
+  font-size: 11px;
+  font-weight: var(--neo-fw-bold);
+  color: var(--neo-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: var(--neo-sp-lg);
+  padding-bottom: var(--neo-sp-sm);
+  border-bottom: var(--neo-border-thin) solid var(--neo-border-light);
+}
+.demo-grid { display: flex; flex-wrap: wrap; gap: var(--neo-sp-md); align-items: center; }
+.flex-row { display: flex; align-items: center; gap: var(--neo-sp-md); flex-wrap: wrap; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--neo-sp-lg); }
+
+/* ---- Buttons ---- */
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--neo-sp-sm);
+  padding: var(--neo-sp-sm) var(--neo-sp-lg);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-fw-bold);
+  border: var(--neo-border-thick) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
+  cursor: pointer;
+  transition: all var(--neo-tf);
+  height: 42px;
+  text-decoration: none;
+  background: var(--neo-bg-card);
+  color: var(--neo-text-secondary);
+}
+.neo-btn:hover {
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(-2px, -2px);
+  border-color: var(--neo-text-secondary);
+}
+.neo-btn:active {
+  box-shadow: var(--neo-shadow-active);
+  transform: translate(1px, 1px);
+}
+.neo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: var(--neo-shadow-active);
+  transform: none;
+}
+
+.neo-btn--primary {
+  background: var(--neo-accent-blue);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-accent-blue-dark);
+}
+.neo-btn--primary:hover {
+  background: var(--neo-accent-blue-dark);
+  border-color: var(--neo-accent-blue);
+}
+
+.neo-btn--success {
+  background: var(--neo-success);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-success);
+}
+
+.neo-btn--warning {
+  background: var(--neo-warning);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-warning);
+}
+
+.neo-btn--danger {
+  background: var(--neo-danger);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-danger);
+}
+
+.neo-btn--info {
+  background: var(--neo-info);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-info);
+}
+
+.neo-btn--gray {
+  background: var(--neo-accent-gray);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-accent-gray-dark);
+}
+
+.neo-btn--ghost {
+  background: transparent;
+  color: var(--neo-text-secondary);
+  border-color: var(--neo-border-default);
+}
+.neo-btn--ghost:hover {
+  background: var(--neo-bg-hover);
+}
+
+.neo-btn--sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  height: 34px;
+  border-width: var(--neo-border-thin);
+}
+
+/* ---- Cards ---- */
+.neo-card {
+  background: var(--neo-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-card);
+  overflow: hidden;
+  transition: all var(--neo-tf);
+}
+.neo-card:hover {
+  box-shadow: var(--neo-shadow-card-hover);
+  transform: translate(-2px, -2px);
+  border-color: var(--neo-text-secondary);
+}
+.neo-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--neo-sp-md) var(--neo-sp-lg);
+  background: var(--neo-bg-header);
+  border-bottom: var(--neo-border-thick) solid var(--neo-border-default);
+}
+.neo-card__title {
+  font-size: 14px;
+  font-weight: var(--neo-fw-extrabold);
+  color: var(--neo-text-primary);
+}
+.neo-card__body { padding: var(--neo-sp-lg); }
+
+/* Stat Card */
+.stat-card {
+  padding: var(--neo-sp-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--neo-sp-lg);
+  border-left: 3px solid transparent;
+  transition: border-color var(--neo-tf);
+}
+.stat-card:hover { border-left-color: var(--neo-accent-blue); }
+
+.stat-card__icon {
+  width: 46px;
+  height: 46px;
+  border: var(--neo-border-thin) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: var(--neo-accent-blue-50);
+  color: var(--neo-accent-blue);
+}
+
+.stat-card__green .stat-card__icon { background: var(--neo-success-light); color: var(--neo-success); }
+.stat-card__green:hover { border-left-color: var(--neo-success); }
+.stat-card__danger .stat-card__icon { background: var(--neo-danger-light); color: var(--neo-danger); }
+.stat-card__danger:hover { border-left-color: var(--neo-danger); }
+.stat-card__info .stat-card__icon { background: var(--neo-info-light); color: var(--neo-info); }
+.stat-card__info:hover { border-left-color: var(--neo-info); }
+
+.stat-card__info-col { flex: 1; }
+.stat-card__label {
+  font-size: 11px;
+  font-weight: var(--neo-fw-bold);
+  color: var(--neo-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-card__value {
+  font-size: 30px;
+  font-weight: var(--neo-fw-extrabold);
+  color: var(--neo-text-primary);
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+/* ---- Tags ---- */
+.neo-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: var(--neo-fw-bold);
+  border: var(--neo-border-thin) solid transparent;
+  border-radius: var(--neo-radius-sm);
+  height: 26px;
+}
+.neo-tag--blue { background: var(--neo-accent-blue-50); color: var(--neo-accent-blue-dark); border-color: var(--neo-accent-blue); }
+.neo-tag--green { background: var(--neo-success-light); color: var(--neo-success); border-color: var(--neo-success); }
+.neo-tag--orange { background: var(--neo-warning-light); color: var(--neo-warning); border-color: var(--neo-warning); }
+.neo-tag--red { background: var(--neo-danger-light); color: var(--neo-danger); border-color: var(--neo-danger); }
+.neo-tag--indigo { background: var(--neo-info-light); color: var(--neo-info); border-color: var(--neo-info); }
+.neo-tag--gray { background: var(--neo-accent-gray-light); color: var(--neo-accent-gray-dark); border-color: var(--neo-border-default); }
+
+/* ---- Badges ---- */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: var(--neo-fw-extrabold);
+  border: var(--neo-border-thin) solid var(--neo-border-primary);
+  border-radius: var(--neo-radius-sm);
+  background: var(--neo-danger);
+  color: var(--neo-text-inverse);
+  box-shadow: 1px 1px 0px 0px #111827;
+}
+.neo-badge--blue { background: var(--neo-accent-blue); }
+.neo-badge--gray { background: var(--neo-accent-gray); border-color: var(--neo-accent-gray-dark); }
+
+/* ---- Inputs ---- */
+.neo-input {
+  width: 100%;
+  padding: var(--neo-sp-sm) var(--neo-sp-md);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-fw-medium);
+  border: var(--neo-border-thick) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  box-shadow: 2px 2px 0px 0px #111827;
+  background: var(--neo-bg-input);
+  color: var(--neo-text-primary);
+  transition: all var(--neo-tf);
+  outline: none;
+  height: 42px;
+}
+.neo-input::placeholder { color: var(--neo-text-muted); font-weight: var(--neo-fw-regular); }
+.neo-input:hover { box-shadow: 3px 3px 0px 0px #111827; border-color: var(--neo-text-tertiary); }
+.neo-input:focus {
+  border-color: var(--neo-accent-blue);
+  box-shadow: 2px 2px 0px 0px var(--neo-accent-blue);
+  background: var(--neo-accent-blue-50);
+}
+.neo-input--disabled {
+  background: var(--neo-bg-primary);
+  box-shadow: 1px 1px 0px 0px #111827;
+  color: var(--neo-text-muted);
+  cursor: not-allowed;
+}
+
+/* ---- Alerts ---- */
+.neo-alert {
+  padding: var(--neo-sp-lg);
+  border: var(--neo-border-thick) solid;
+  border-radius: var(--neo-radius-md);
+  display: flex;
+  gap: var(--neo-sp-md);
+  align-items: flex-start;
+}
+.neo-alert--info {
+  background: var(--neo-accent-blue-50);
+  border-color: var(--neo-accent-blue);
+  color: var(--neo-accent-blue-dark);
+}
+.neo-alert--warning {
+  background: var(--neo-warning-light);
+  border-color: var(--neo-warning);
+  color: #92400E;
+}
+.neo-alert--danger {
+  background: var(--neo-danger-light);
+  border-color: var(--neo-danger);
+  color: #991B1B;
+}
+.neo-alert__icon { font-size: 18px; flex-shrink: 0; }
+.neo-alert__content { font-size: 13px; font-weight: var(--neo-fw-bold); line-height: 1.5; }
+
+/* ---- Progress ---- */
+.neo-progress {
+  width: 100%;
+  height: 8px;
+  background: var(--neo-border-lighter);
+  border: var(--neo-border-thin) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-sm);
+  overflow: hidden;
+}
+.neo-progress__fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.5s ease;
+}
+.neo-progress__fill--blue { background: var(--neo-accent-blue); }
+.neo-progress__fill--green { background: var(--neo-success); }
+.neo-progress__fill--orange { background: var(--neo-warning); }
+.neo-progress__fill--red { background: var(--neo-danger); }
+
+/* ---- Form ---- */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--neo-sp-lg); }
+.form-group { margin-bottom: var(--neo-sp-lg); }
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: var(--neo-fw-bold);
+  color: var(--neo-text-secondary);
+  margin-bottom: var(--neo-sp-xs);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  body { padding: var(--neo-sp-lg); }
+  .form-row { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Buttons / 按钮</h2>
+  <div class="demo-grid">
+    <button class="neo-btn neo-btn--primary">Primary</button>
+    <button class="neo-btn neo-btn--success">Success</button>
+    <button class="neo-btn neo-btn--warning">Warning</button>
+    <button class="neo-btn neo-btn--danger">Danger</button>
+    <button class="neo-btn neo-btn--info">Info</button>
+    <button class="neo-btn neo-btn--gray">Gray</button>
+    <button class="neo-btn neo-btn--ghost">Ghost</button>
+  </div>
+  <div class="demo-grid" style="margin-top: 12px;">
+    <button class="neo-btn neo-btn--primary neo-btn--sm">Small</button>
+    <button class="neo-btn neo-btn--primary">Default</button>
+    <button class="neo-btn neo-btn--primary" disabled>Disabled</button>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Stat Cards / 统计卡片</h2>
+  <div class="stat-grid">
+    <div class="neo-card stat-card">
+      <div class="stat-card__icon">&#128100;</div>
+      <div class="stat-card__info-col">
+        <div class="stat-card__label">总员工数</div>
+        <div class="stat-card__value">128</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__green">
+      <div class="stat-card__icon">&#127970;</div>
+      <div class="stat-card__info-col">
+        <div class="stat-card__label">组织数量</div>
+        <div class="stat-card__value">12</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__danger">
+      <div class="stat-card__icon">&#128272;</div>
+      <div class="stat-card__info-col">
+        <div class="stat-card__label">待审批</div>
+        <div class="stat-card__value">7</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__info">
+      <div class="stat-card__icon">&#128222;</div>
+      <div class="stat-card__info-col">
+        <div class="stat-card__label">未读消息</div>
+        <div class="stat-card__value">3</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Tags / 标签</h2>
+  <div class="flex-row">
+    <span class="neo-tag neo-tag--blue">蓝色</span>
+    <span class="neo-tag neo-tag--green">成功</span>
+    <span class="neo-tag neo-tag--orange">警告</span>
+    <span class="neo-tag neo-tag--red">危险</span>
+    <span class="neo-tag neo-tag--indigo">信息</span>
+    <span class="neo-tag neo-tag--gray">灰色</span>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Badges / 徽章</h2>
+  <div class="flex-row">
+    <span class="neo-badge">3</span>
+    <span class="neo-badge neo-badge--blue">12</span>
+    <span class="neo-badge neo-badge--gray">9+</span>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Form / 表单</h2>
+  <div style="max-width: 480px;">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">用户名</label>
+        <input class="neo-input" type="text" placeholder="请输入用户名" value="admin">
+      </div>
+      <div class="form-group">
+        <label class="form-label">部门</label>
+        <input class="neo-input" type="text" placeholder="请选择部门" value="技术部" readonly>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">角色</label>
+        <select class="neo-input">
+          <option>调度员</option>
+          <option>组长</option>
+          <option>管理员</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">状态</label>
+        <input class="neo-input neo-input--disabled" type="text" value="已禁用" disabled>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Alerts / 告警</h2>
+  <div style="max-width: 560px; display: flex; flex-direction: column; gap: 12px;">
+    <div class="neo-alert neo-alert--info">
+      <span class="neo-alert__icon">&#8505;</span>
+      <span class="neo-alert__content">系统将于今晚 23:00 进行例行维护，预计持续 30 分钟。</span>
+    </div>
+    <div class="neo-alert neo-alert--warning">
+      <span class="neo-alert__icon">&#9888;</span>
+      <span class="neo-alert__content">当前排班存在 3 条约束冲突，请检查后重新发布。</span>
+    </div>
+    <div class="neo-alert neo-alert--danger">
+      <span class="neo-alert__icon">&#10060;</span>
+      <span class="neo-alert__content">该班次模板已被 5 个排班计划引用，删除将影响历史数据。</span>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section">
+  <h2 class="demo-section-title">Progress / 进度</h2>
+  <div style="max-width: 480px; display: flex; flex-direction: column; gap: 16px;">
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-text-tertiary);">排班完成率</span>
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-accent-blue);">78%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill neo-progress__fill--blue" style="width: 78%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-text-tertiary);">约束满足率</span>
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-success);">92%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill neo-progress__fill--green" style="width: 92%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-text-tertiary);">冲突检测</span>
+        <span style="font-size: 12px; font-weight: var(--neo-fw-bold); color: var(--neo-danger);">35%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill neo-progress__fill--red" style="width: 35%;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

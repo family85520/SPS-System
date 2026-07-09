@@ -121,40 +121,40 @@ async function handleExport() {
 <style scoped>
 /* Neo 表单控件样式 */
 :deep(.el-dialog) {
-  border: 4px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 8px 8px 0px 0px #000000 !important;
+  border: var(--neo-border-ultra) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 8px 8px 0px 0px var(--neo-color-border) !important;
 }
 
 :deep(.el-dialog__header) {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
   padding: 16px 20px !important;
 }
 
 :deep(.el-dialog__title) {
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 18px !important;
 }
 
 :deep(.el-form-item__label) {
   font-weight: 700 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 14px !important;
 }
 
 :deep(.el-date-editor.el-input__wrapper) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 
 :deep(.el-select .el-select__wrapper) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 </style>

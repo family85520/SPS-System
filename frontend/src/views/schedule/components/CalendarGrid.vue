@@ -276,10 +276,10 @@ function formatDate(d: Date): string {
   text-align: center;
   font-size: 14px;
   font-weight: 900;
-  color: #FFFFFF;
-  background: #000000;
-  border-right: 3px solid #333333;
-  border-bottom: 3px solid #000000;
+  color: var(--neo-color-bg-card);
+  background: var(--neo-color-text-primary);
+  border-right: var(--neo-border-thick) solid var(--neo-color-text-secondary);
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
   text-transform: uppercase;
   letter-spacing: 1px;
   position: sticky;
@@ -300,13 +300,13 @@ function formatDate(d: Date): string {
 }
 
 .day-cell {
-  border-right: 3px solid #000000;
-  border-bottom: 3px solid #000000;
+  border-right: var(--neo-border-thick) solid var(--neo-color-border);
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
   padding: 6px;
   min-height: 120px;
   overflow: visible;
   transition: all 0.1s ease;
-  background: #FFFFFF;
+  background: var(--neo-color-bg-card);
   cursor: pointer;
   position: relative;
 }
@@ -316,25 +316,25 @@ function formatDate(d: Date): string {
 }
 
 .day-cell:hover {
-  background: #FFD93D;
+  background: var(--neo-color-accent-yellow);
 }
 
 .day-cell.other-month {
-  background: #F5F5F0;
+  background: var(--neo-color-disabled);
 }
 
 .day-cell.other-month .day-number {
-  color: #BBBBBB;
+  color: var(--neo-color-text-muted);
 }
 
 /* 原型：.calendar-cell.today → border-neo-accent border-4 */
 .day-cell.is-today {
-  border: 4px solid #FF6B6B;
-  background: #FFFFFF;
+  border: 4px solid var(--neo-color-accent-red);
+  background: var(--neo-color-bg-card);
 }
 
 .day-cell.is-weekend {
-  background: #FFFBF0;
+  background: var(--neo-color-bg-primary);
 }
 
 /* 日期头部 — 原型：font-bold text-lg */
@@ -350,20 +350,20 @@ function formatDate(d: Date): string {
 .day-number {
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   width: 28px;
   height: 28px;
   line-height: 28px;
   text-align: center;
-  border-radius: 2px;
+  border-radius: var(--neo-radius-sm);
 }
 
 /* 原型：.calendar-cell.today 用红色边框标记，不需要额外背景 */
 .day-number.today {
-  background: #FF6B6B;
-  color: #FFFFFF;
-  border: 2px solid #000000;
-  box-shadow: 2px 2px 0px 0px #000000;
+  background: var(--neo-color-accent-red);
+  color: var(--neo-color-bg-card);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  box-shadow: var(--neo-shadow-active);
 }
 
 /* 添加按钮 — 原型风格 */
@@ -372,14 +372,14 @@ function formatDate(d: Date): string {
   transition: opacity 0.1s ease;
   width: 22px;
   height: 22px;
-  background: #FFD93D !important;
-  border-color: #000000 !important;
-  border-radius: 2px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  border-color: var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-sm) !important;
+  box-shadow: var(--neo-shadow-active) !important;
 }
 .add-btn:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
+  box-shadow: var(--neo-shadow-md) !important;
 }
 
 .day-cell:hover .add-btn {
@@ -397,20 +397,20 @@ function formatDate(d: Date): string {
 .more-indicator {
   font-size: 11px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-align: center;
   padding: 2px 4px;
   cursor: pointer;
-  border-radius: 2px;
-  border: 2px solid #000000;
-  background: #FFD93D;
-  box-shadow: 1px 1px 0px 0px #000000;
+  border-radius: var(--neo-radius-sm);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  background: var(--neo-color-accent-yellow);
+  box-shadow: var(--neo-shadow-xs);
   transition: all 0.1s ease;
 }
 
 .more-indicator:hover {
-  box-shadow: 2px 2px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-active);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 /* ========== 周视图 ========== */
@@ -421,10 +421,10 @@ function formatDate(d: Date): string {
 }
 
 .week-day-col {
-  border-right: 3px solid #000000;
+  border-right: var(--neo-border-thick) solid var(--neo-color-border);
   padding: 8px;
   min-width: 130px;
-  background: #FFFFFF;
+  background: var(--neo-color-bg-card);
   transition: all 0.1s ease;
   cursor: pointer;
 }
@@ -434,15 +434,15 @@ function formatDate(d: Date): string {
 }
 
 .week-day-col:hover {
-  background: #FFD93D;
+  background: var(--neo-color-accent-yellow);
 }
 
 .week-day-col.is-today {
-  border: 3px solid #FF6B6B;
+  border: 3px solid var(--neo-color-accent-red);
 }
 
 .week-day-col.is-weekend {
-  background: #FFFBF0;
+  background: var(--neo-color-bg-primary);
 }
 
 .week-day-header {
@@ -451,14 +451,14 @@ function formatDate(d: Date): string {
   align-items: center;
   gap: 4px;
   padding-bottom: 8px;
-  border-bottom: 3px solid #000000;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
   margin-bottom: 8px;
 }
 
 .weekday-name {
   font-size: 12px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
 }
 
@@ -503,8 +503,8 @@ function formatDate(d: Date): string {
     flex-wrap: wrap;
     gap: 4px;
     padding: 8px 6px;
-    background: #000000;
-    border-bottom: 3px solid #000000;
+    background: var(--neo-color-text-primary);
+    border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
     position: static;
     z-index: auto;
   }
@@ -513,7 +513,7 @@ function formatDate(d: Date): string {
     font-size: 11px;
     padding: 6px 0;
     border-right: none;
-    border-bottom: 3px solid #000000;
+    border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
     flex: 1 1 calc(14.28% - 4px);
     min-width: 0;
   }
@@ -530,9 +530,9 @@ function formatDate(d: Date): string {
   }
 
   .day-cell {
-    border-right: 3px solid #000000;
-    border-left: 3px solid #000000;
-    border-bottom: 3px solid #000000;
+    border-right: var(--neo-border-thick) solid var(--neo-color-border);
+    border-left: var(--neo-border-thick) solid var(--neo-color-border);
+    border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
     border-radius: 0;
     padding: 8px 10px;
     min-height: auto;
@@ -542,12 +542,12 @@ function formatDate(d: Date): string {
   }
 
   .day-cell:last-child {
-    border-right: 3px solid #000000;
+    border-right: var(--neo-border-thick) solid var(--neo-color-border);
   }
 
   .day-cell.is-today {
-    border: 3px solid #FF6B6B;
-    background: #FFFDF5;
+    border: 3px solid var(--neo-color-accent-red);
+    background: var(--neo-color-bg-primary);
   }
 
   /* 日期头部 — 水平排列 */
@@ -569,12 +569,12 @@ function formatDate(d: Date): string {
   }
 
   .day-number.today {
-    background: #FF6B6B;
-    color: #FFFFFF;
-    border: 2px solid #000000;
-    box-shadow: 2px 2px 0px 0px #000000;
+    background: var(--neo-color-accent-red);
+    color: var(--neo-color-bg-card);
+    border: var(--neo-border-thin) solid var(--neo-color-border);
+    box-shadow: var(--neo-shadow-active);
     padding: 2px 6px;
-    border-radius: 2px;
+    border-radius: var(--neo-radius-sm);
     display: inline;
     width: auto;
     height: auto;
@@ -608,9 +608,9 @@ function formatDate(d: Date): string {
   }
 
   .week-day-col {
-    border-right: 3px solid #000000;
-    border-left: 3px solid #000000;
-    border-bottom: 3px solid #000000;
+    border-right: var(--neo-border-thick) solid var(--neo-color-border);
+    border-left: var(--neo-border-thick) solid var(--neo-color-border);
+    border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
     border-radius: 0;
     padding: 8px 10px;
     min-width: unset;
@@ -618,12 +618,12 @@ function formatDate(d: Date): string {
   }
 
   .week-day-col:last-child {
-    border-right: 3px solid #000000;
+    border-right: var(--neo-border-thick) solid var(--neo-color-border);
   }
 
   .week-day-col.is-today {
-    border: 3px solid #FF6B6B;
-    background: #FFFDF5;
+    border: 3px solid var(--neo-color-accent-red);
+    background: var(--neo-color-bg-primary);
   }
 
   .week-day-header {
@@ -632,14 +632,14 @@ function formatDate(d: Date): string {
     align-items: center;
     gap: 6px;
     padding-bottom: 6px;
-    border-bottom: 3px solid #000000;
+    border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
     margin-bottom: 6px;
   }
 
   .weekday-name {
     font-size: 12px;
     font-weight: 900;
-    color: #000000;
+    color: var(--neo-color-text-primary);
   }
 
   .week-day-header .day-number {

@@ -277,31 +277,31 @@ defineExpose({ refresh })
   gap: 12px;
   padding: 14px 16px;
   margin-bottom: 6px;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  background: #FFFFFF;
-  box-shadow: 3px 3px 0px 0px #000000;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-bg-card);
+  box-shadow: var(--neo-shadow-md);
   cursor: pointer;
   transition: all 0.15s ease;
   animation: slide-in-left 0.3s ease both;
 }
 
 .message-item:hover {
-  background: #FFFDF5;
-  box-shadow: 5px 5px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  background: var(--neo-color-bg-primary);
+  box-shadow: var(--neo-shadow-md-lg);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 
 /* 未读消息 */
 .message-item.is-unread {
-  background: #EFF6FF;
-  border-color: #000000;
-  box-shadow: 3px 3px 0px 0px #000000;
+  background: var(--neo-color-info-bg);
+  border-color: var(--neo-color-border);
+  box-shadow: var(--neo-shadow-md);
 }
 
 .message-item.is-unread:hover {
-  background: #DBEAFE;
-  box-shadow: 5px 5px 0px 0px #000000;
+  background: var(--neo-color-info-bg);
+  box-shadow: var(--neo-shadow-md-lg);
 }
 
 /* 未读指示条 */
@@ -311,35 +311,35 @@ defineExpose({ refresh })
   top: 0;
   bottom: 0;
   width: 5px;
-  background: #3B82F6;
+  background: var(--neo-color-accent-blue);
   border-radius: 4px 0 0 4px;
 }
 
 /* 高亮消息 */
 .message-item.is-highlighted {
-  background: #FFD93D;
-  border-color: #000000;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-accent-yellow);
+  border-color: var(--neo-color-border);
+  box-shadow: var(--neo-shadow-default);
   animation: pulse-highlight 1s ease-in-out 3, slide-in-left 0.3s ease both;
 }
 
 @keyframes pulse-highlight {
-  0%, 100% { box-shadow: 4px 4px 0px 0px #000000; }
-  50%      { box-shadow: 8px 8px 0px 0px #000000; }
+  0%, 100% { box-shadow: var(--neo-shadow-default); }
+  50%      { box-shadow: var(--neo-shadow-lg); }
 }
 
 /* ========== 头像图标 ========== */
 .message-item__avatar {
   width: 40px;
   height: 40px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 2px 2px 0px 0px #000000;
-  color: #FFFFFF;
+  box-shadow: var(--neo-shadow-active);
+  color: var(--neo-color-bg-card);
   transition: transform 0.2s ease;
 }
 
@@ -364,7 +364,7 @@ defineExpose({ refresh })
 .message-item__title {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -387,13 +387,13 @@ defineExpose({ refresh })
 .message-item__status-badge {
   font-size: 10px !important;
   padding: 1px 6px !important;
-  background: #3B82F6 !important;
+  background: var(--neo-color-accent-blue) !important;
   color: #FFFFFF !important;
 }
 
 .message-item__excerpt {
   font-size: 13px;
-  color: #333333;
+  color: var(--neo-color-text-secondary);
   line-height: 1.5;
   margin-bottom: 6px;
   font-weight: 500;
@@ -408,13 +408,13 @@ defineExpose({ refresh })
   align-items: center;
   gap: 12px;
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
 .message-item__arrow {
   flex-shrink: 0;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   display: flex;
   align-items: center;
   transition: all 0.15s ease;
@@ -422,7 +422,7 @@ defineExpose({ refresh })
 }
 
 .message-item:hover .message-item__arrow {
-  color: #000000;
+  color: var(--neo-color-text-primary);
   transform: translateX(2px);
 }
 
@@ -433,14 +433,14 @@ defineExpose({ refresh })
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   gap: 12px;
 }
 
 .empty-state .el-icon {
   color: #CCCCCC;
   border: 2px solid #E0E0E0;
-  border-radius: 4px;
+  border-radius: var(--neo-radius-md);
   padding: 8px;
   box-shadow: 2px 2px 0px 0px #E0E0E0;
 }
@@ -448,7 +448,7 @@ defineExpose({ refresh })
 .empty-state p {
   font-size: 14px;
   font-weight: 600;
-  color: #999999;
+  color: var(--neo-color-text-muted);
 }
 
 /* ========== 分页 ========== */
@@ -456,9 +456,9 @@ defineExpose({ refresh })
   display: flex;
   justify-content: center;
   padding: 16px 8px 8px;
-  border-top: 3px solid #000000;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border);
   margin: 8px -8px 0;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 
 .message-pagination :deep(.el-pagination) {
@@ -466,11 +466,11 @@ defineExpose({ refresh })
 }
 
 .message-pagination :deep(.el-pager li) {
-  background: #FFFFFF !important;
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
+  background: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
   font-weight: 700 !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-active) !important;
   transition: all 0.1s ease !important;
   min-width: 36px !important;
   height: 36px !important;
@@ -478,21 +478,21 @@ defineExpose({ refresh })
 }
 
 .message-pagination :deep(.el-pager li:hover) {
-  background: #FFD93D !important;
-  transform: translate(-1px, -1px) !important;
+  background: var(--neo-color-accent-yellow) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
 }
 
 .message-pagination :deep(.el-pager li.is-active) {
-  background: #3B82F6 !important;
+  background: var(--neo-color-accent-blue) !important;
   color: #FFFFFF !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-md) !important;
 }
 
 .message-pagination :deep(.el-pagination button) {
-  background: #FFFFFF !important;
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  background: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-active) !important;
   font-weight: 700 !important;
   transition: all 0.1s ease !important;
   min-width: 36px !important;
@@ -500,13 +500,13 @@ defineExpose({ refresh })
 }
 
 .message-pagination :deep(.el-pagination button:hover:not(:disabled)) {
-  background: #FFD93D !important;
-  transform: translate(-1px, -1px) !important;
+  background: var(--neo-color-accent-yellow) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
 }
 
 .message-pagination :deep(.el-pagination button:active:not(:disabled)) {
-  transform: translate(1px, 1px) !important;
-  box-shadow: 1px 1px 0px 0px #000000 !important;
+  transform: translate(var(--neo-translate-active-sm), var(--neo-translate-active-sm)) !important;
+  box-shadow: var(--neo-shadow-xs) !important;
 }
 
 .message-pagination :deep(.el-pagination button:disabled) {

@@ -534,7 +534,7 @@ onMounted(async () => {
   font-size: 40px;
   font-weight: 900;
   line-height: 1;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   pointer-events: none;
   transition: transform 0.3s ease, opacity 0.3s ease;
   user-select: none;
@@ -555,7 +555,7 @@ onMounted(async () => {
 .duty-list { display: flex; flex-direction: column; gap: 10px; }
 .duty-shift-name {
   font-size: 14px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin-bottom: 6px;
   display: flex;
   align-items: center;
@@ -569,7 +569,7 @@ onMounted(async () => {
   flex-direction: column;
   gap: 2px;
 }
-.duty-leader { color: #EF4444; font-weight: 600; }
+.duty-leader { color: var(--neo-color-accent-red); font-weight: 600; }
 @media (max-width: 768px) {
   .duty-shift-name { font-size: 12px; }
   .duty-detail { font-size: 11px; }
@@ -577,8 +577,8 @@ onMounted(async () => {
 
 /* --- 待处理事项 --- */
 .pending-list { display: flex; flex-direction: column; gap: 10px; }
-.pending-label { font-size: 14px; color: #000000; font-weight: 700; }
-.pending-count { font-size: 14px; color: #666; font-weight: 700; }
+.pending-label { font-size: 14px; color: var(--neo-color-text-primary); font-weight: 700; }
+.pending-count { font-size: 14px; color: var(--neo-color-text-secondary); font-weight: 700; }
 @media (max-width: 768px) {
   .pending-label { font-size: 13px; }
   .pending-count { font-size: 13px; }
@@ -610,15 +610,15 @@ onMounted(async () => {
 .template-stat-item {
   text-align: center;
   padding: 14px 8px;
-  background: #FFFDF5;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 2px 2px 0px 0px #000000;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-active);
   transition: all 0.15s;
 }
 .template-stat-item:hover {
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-default);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 .template-stat-item .stat-value {
   font-size: 28px;
@@ -635,7 +635,7 @@ onMounted(async () => {
 .template-stat-item .stat-label {
   font-size: 11px;
   font-weight: 700;
-  color: #666;
+  color: var(--neo-color-text-secondary);
   text-transform: uppercase;
 }
 @media (max-width: 768px) {
@@ -659,9 +659,9 @@ onMounted(async () => {
     padding: 16px;
   }
 }
-.unit-h { font-size: 13px; color: #666; }
+.unit-h { font-size: 13px; color: var(--neo-color-text-secondary); }
 .workload-ranking { flex: 1; min-width: 0; }
-.workload-ranking-title { font-size: 13px; color: #000000; margin-bottom: 10px; }
+.workload-ranking-title { font-size: 13px; color: var(--neo-color-text-primary); margin-bottom: 10px; }
 
 /* --- 动画延迟（页面特有） --- */
 .stat-card:nth-child(1) { animation: pop-in 0.35s ease both; animation-delay: 0.05s; }

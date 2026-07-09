@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPS Neo Design Tokens Demo</title>
+<style>
+/* ============================================================
+   Neo Design Tokens — CSS Custom Properties
+   ============================================================ */
+:root {
+  /* Colors */
+  --neo-color-bg-primary: #FFFDF5;
+  --neo-color-bg-card: #FFFFFF;
+  --neo-color-bg-header: #FFFDF5;
+  --neo-color-text-primary: #000000;
+  --neo-color-text-secondary: #666666;
+  --neo-color-text-muted: #999999;
+  --neo-color-accent-blue: #3B82F6;
+  --neo-color-accent-blue-hover: #2563EB;
+  --neo-color-accent-green: #10B981;
+  --neo-color-accent-yellow: #FFD93D;
+  --neo-color-accent-red: #EF4444;
+  --neo-color-accent-red-hover: #DC2626;
+  --neo-color-accent-cyan: #06B6D4;
+  --neo-color-accent-purple: #8B5CF6;
+  --neo-color-border: #000000;
+  --neo-color-border-light: #E6EAF0;
+  --neo-color-overlay-mask: rgba(0, 0, 0, 0.5);
+  --neo-color-disabled: #F5F5F0;
+  --neo-color-disabled-text: #999999;
+
+  /* Radius */
+  --neo-radius-sm: 2px;
+  --neo-radius-md: 4px;
+
+  /* Border */
+  --neo-border-thin: 2px;
+  --neo-border-thick: 3px;
+  --neo-border-ultra: 4px;
+
+  /* Shadow */
+  --neo-shadow-default: 4px 4px 0px 0px #000000;
+  --neo-shadow-hover: 6px 6px 0px 0px #000000;
+  --neo-shadow-active: 2px 2px 0px 0px #000000;
+  --neo-shadow-lg: 8px 8px 0px 0px #000000;
+  --neo-shadow-xl: 12px 12px 0px 0px #000000;
+
+  /* Typography */
+  --neo-font-family-base: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --neo-font-weight-regular: 500;
+  --neo-font-weight-medium: 600;
+  --neo-font-weight-bold: 700;
+  --neo-font-weight-extrabold: 900;
+
+  /* Spacing */
+  --neo-spacing-xs: 4px;
+  --neo-spacing-sm: 8px;
+  --neo-spacing-md: 12px;
+  --neo-spacing-lg: 16px;
+  --neo-spacing-xl: 20px;
+  --neo-spacing-2xl: 24px;
+  --neo-spacing-3xl: 32px;
+
+  /* Transition */
+  --neo-transition-fast: 0.1s;
+  --neo-transition-normal: 0.15s;
+  --neo-transition-slow: 0.2s;
+
+  /* Translate */
+  --neo-translate-hover: -2px;
+  --neo-translate-active: 2px;
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--neo-font-family-base);
+  font-weight: var(--neo-font-weight-regular);
+  background: var(--neo-color-bg-primary);
+  color: var(--neo-color-text-primary);
+  line-height: 1.5;
+  padding: var(--neo-spacing-2xl);
+}
+
+.demo-section {
+  margin-bottom: var(--neo-spacing-3xl);
+}
+
+.demo-section-title {
+  font-size: 13px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--neo-spacing-lg);
+  padding-bottom: var(--neo-spacing-sm);
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+}
+
+.demo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--neo-spacing-lg);
+  align-items: center;
+}
+
+/* ============================================================
+   Buttons — Neo Brutalism
+   ============================================================ */
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--neo-spacing-sm);
+  padding: var(--neo-spacing-sm) var(--neo-spacing-lg);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-bold);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
+  cursor: pointer;
+  transition: all var(--neo-transition-fast);
+  min-width: 120px;
+  height: 44px;
+  text-decoration: none;
+}
+
+.neo-btn:hover {
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
+}
+
+.neo-btn:active {
+  box-shadow: var(--neo-shadow-active);
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active));
+}
+
+.neo-btn--primary {
+  background: var(--neo-color-accent-blue);
+  color: #FFFFFF;
+}
+.neo-btn--primary:hover { background: var(--neo-color-accent-blue-hover); }
+
+.neo-btn--success {
+  background: var(--neo-color-accent-green);
+  color: #FFFFFF;
+}
+
+.neo-btn--warning {
+  background: var(--neo-color-accent-yellow);
+  color: var(--neo-color-text-primary);
+}
+
+.neo-btn--danger {
+  background: var(--neo-color-accent-red);
+  color: #FFFFFF;
+}
+.neo-btn--danger:hover { background: var(--neo-color-accent-red-hover); }
+
+.neo-btn--info {
+  background: var(--neo-color-accent-cyan);
+  color: #FFFFFF;
+}
+
+.neo-btn--ghost {
+  background: var(--neo-color-bg-card);
+  color: var(--neo-color-text-primary);
+}
+.neo-btn--ghost:hover { background: var(--neo-color-bg-primary); }
+
+.neo-btn--sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  height: 36px;
+  min-width: auto;
+}
+
+.neo-btn--lg {
+  padding: var(--neo-spacing-md) var(--neo-spacing-2xl);
+  font-size: 16px;
+  height: 52px;
+  min-width: 160px;
+}
+
+.neo-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: var(--neo-shadow-active);
+  transform: none !important;
+}
+
+/* ============================================================
+   Cards — Neo Brutalism
+   ============================================================ */
+.neo-card {
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-lg);
+  overflow: hidden;
+  transition: all var(--neo-transition-normal);
+}
+
+.neo-card:hover {
+  box-shadow: var(--neo-shadow-xl);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
+}
+
+.neo-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--neo-spacing-md) var(--neo-spacing-lg);
+  background: var(--neo-color-bg-header);
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+}
+
+.neo-card__title {
+  font-size: 15px;
+  font-weight: var(--neo-font-weight-extrabold);
+  color: var(--neo-color-text-primary);
+}
+
+.neo-card__body {
+  padding: var(--neo-spacing-lg);
+}
+
+/* Stat Card Variant */
+.stat-card {
+  position: relative;
+  padding: var(--neo-spacing-xl);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--neo-spacing-lg);
+}
+
+.stat-card__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+}
+
+.stat-card__icon {
+  width: 48px;
+  height: 48px;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.stat-card__blue .stat-card__accent { background: var(--neo-color-accent-blue); }
+.stat-card__blue .stat-card__icon { background: #DBEAFE; color: #1D4ED8; }
+
+.stat-card__green .stat-card__accent { background: var(--neo-color-accent-green); }
+.stat-card__green .stat-card__icon { background: #D1FAE5; color: #047857; }
+
+.stat-card__red .stat-card__accent { background: var(--neo-color-accent-red); }
+.stat-card__red .stat-card__icon { background: #FEE2E2; color: #DC2626; }
+
+.stat-card__purple .stat-card__accent { background: var(--neo-color-accent-purple); }
+.stat-card__purple .stat-card__icon { background: #EDE9FE; color: #6D28D9; }
+
+.stat-card__info { flex: 1; }
+.stat-card__label {
+  font-size: 11px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-card__value {
+  font-size: 32px;
+  font-weight: var(--neo-font-weight-extrabold);
+  line-height: 1.1;
+  color: var(--neo-color-text-primary);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   Tags — Neo Brutalism
+   ============================================================ */
+.neo-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: var(--neo-font-weight-bold);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
+  box-shadow: 2px 2px 0px 0px #000000;
+  height: 26px;
+}
+
+.neo-tag--success { background: var(--neo-color-accent-green); color: #FFFFFF; }
+.neo-tag--warning { background: var(--neo-color-accent-yellow); color: var(--neo-color-text-primary); }
+.neo-tag--danger { background: var(--neo-color-accent-red); color: #FFFFFF; }
+.neo-tag--info { background: var(--neo-color-accent-blue); color: #FFFFFF; }
+.neo-tag--ghost { background: var(--neo-color-bg-card); color: var(--neo-color-text-primary); }
+
+/* ============================================================
+   Inputs — Neo Brutalism
+   ============================================================ */
+.neo-input {
+  width: 100%;
+  padding: var(--neo-spacing-sm) var(--neo-spacing-md);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-medium);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
+  background: var(--neo-color-bg-card);
+  color: var(--neo-color-text-primary);
+  transition: all var(--neo-transition-fast);
+  outline: none;
+  height: 44px;
+}
+
+.neo-input::placeholder {
+  color: var(--neo-color-text-muted);
+  font-weight: var(--neo-font-weight-regular);
+}
+
+.neo-input:hover {
+  box-shadow: var(--neo-shadow-hover);
+}
+
+.neo-input:focus {
+  background: var(--neo-color-accent-yellow);
+  box-shadow: var(--neo-shadow-default);
+  border-color: var(--neo-color-border);
+}
+
+.neo-input--disabled {
+  background: var(--neo-color-disabled);
+  box-shadow: 2px 2px 0px 0px #000000;
+  cursor: not-allowed;
+  color: var(--neo-color-disabled-text);
+}
+
+/* ============================================================
+   Badge — Neo Brutalism
+   ============================================================ */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: var(--neo-font-weight-extrabold);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
+  box-shadow: 2px 2px 0px 0px #000000;
+  color: #FFFFFF;
+  background: var(--neo-color-accent-red);
+}
+
+.neo-badge--blue { background: var(--neo-color-accent-blue); }
+.neo-badge--yellow { background: var(--neo-color-accent-yellow); color: var(--neo-color-text-primary); }
+
+/* ============================================================
+   Alert — Neo Brutalism
+   ============================================================ */
+.neo-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--neo-spacing-md);
+  padding: var(--neo-spacing-lg);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-color-accent-yellow);
+}
+
+.neo-alert--danger {
+  background: #FEE2E2;
+  border-color: var(--neo-color-accent-red);
+}
+
+.neo-alert--info {
+  background: #DBEAFE;
+  border-color: var(--neo-color-accent-blue);
+}
+
+.neo-alert__icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.neo-alert__content {
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-color-text-primary);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   Form Group
+   ============================================================ */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--neo-spacing-xs);
+  margin-bottom: var(--neo-spacing-lg);
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-color-text-primary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--neo-spacing-lg);
+}
+
+/* ============================================================
+   Layout Helpers
+   ============================================================ */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--neo-spacing-lg);
+}
+
+.flex-row {
+  display: flex;
+  align-items: center;
+  gap: var(--neo-spacing-md);
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+  body { padding: var(--neo-spacing-lg); }
+  .form-row { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     1. Buttons
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Buttons / 按钮</h2>
+  <div class="demo-grid">
+    <button class="neo-btn neo-btn--primary">Primary</button>
+    <button class="neo-btn neo-btn--success">Success</button>
+    <button class="neo-btn neo-btn--warning">Warning</button>
+    <button class="neo-btn neo-btn--danger">Danger</button>
+    <button class="neo-btn neo-btn--info">Info</button>
+    <button class="neo-btn neo-btn--ghost">Ghost</button>
+  </div>
+  <div class="demo-grid" style="margin-top: 16px;">
+    <button class="neo-btn neo-btn--primary neo-btn--sm">Small</button>
+    <button class="neo-btn neo-btn--primary">Default</button>
+    <button class="neo-btn neo-btn--primary neo-btn--lg">Large</button>
+    <button class="neo-btn neo-btn--primary" disabled>Disabled</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     2. Stat Cards
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Stat Cards / 统计卡片</h2>
+  <div class="stat-grid">
+    <div class="neo-card stat-card stat-card__blue">
+      <div class="stat-card__accent"></div>
+      <div class="stat-card__icon">&#128100;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">总员工数</div>
+        <div class="stat-card__value">128</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__green">
+      <div class="stat-card__accent"></div>
+      <div class="stat-card__icon">&#127970;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">组织数量</div>
+        <div class="stat-card__value">12</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__red">
+      <div class="stat-card__accent"></div>
+      <div class="stat-card__icon">&#128272;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">待审批事项</div>
+        <div class="stat-card__value">7</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__purple">
+      <div class="stat-card__accent"></div>
+      <div class="stat-card__icon">&#128222;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">未读消息</div>
+        <div class="stat-card__value">3</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     3. Tags & Badges
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Tags & Badges / 标签与徽章</h2>
+  <div class="flex-row">
+    <span class="neo-tag neo-tag--success">成功</span>
+    <span class="neo-tag neo-tag--warning">警告</span>
+    <span class="neo-tag neo-tag--danger">危险</span>
+    <span class="neo-tag neo-tag--info">信息</span>
+    <span class="neo-tag neo-tag--ghost">普通</span>
+  </div>
+  <div class="flex-row" style="margin-top: 12px;">
+    <span class="neo-badge">3</span>
+    <span class="neo-badge neo-badge--blue">12</span>
+    <span class="neo-badge neo-badge--yellow" style="color: #000;">9+</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     4. Form Elements
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Form Elements / 表单元素</h2>
+  <div style="max-width: 480px;">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">用户名</label>
+        <input class="neo-input" type="text" placeholder="请输入用户名">
+      </div>
+      <div class="form-group">
+        <label class="form-label">部门</label>
+        <input class="neo-input" type="text" placeholder="请选择部门" value="技术部" readonly>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">角色</label>
+        <select class="neo-input">
+          <option>调度员</option>
+          <option>组长</option>
+          <option>管理员</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">状态</label>
+        <input class="neo-input neo-input--disabled" type="text" value="已禁用" disabled>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">备注</label>
+      <textarea class="neo-input" rows="3" placeholder="输入备注信息..." style="resize: vertical; height: auto;"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     5. Alerts
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Alerts / 告警</h2>
+  <div style="max-width: 560px; display: flex; flex-direction: column; gap: 12px;">
+    <div class="neo-alert">
+      <span class="neo-alert__icon">&#9888;</span>
+      <span class="neo-alert__content">当前排班存在 3 条约束冲突，请检查后重新发布。</span>
+    </div>
+    <div class="neo-alert neo-alert--danger">
+      <span class="neo-alert__icon">&#10060;</span>
+      <span class="neo-alert__content">该班次模板已被 5 个排班计划引用，删除将影响历史数据。</span>
+    </div>
+    <div class="neo-alert neo-alert--info">
+      <span class="neo-alert__icon">&#8505;</span>
+      <span class="neo-alert__content">系统将于今晚 23:00 进行例行维护，预计持续 30 分钟。</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     6. Color Palette
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Color Palette / 配色方案</h2>
+  <div class="flex-row">
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-bg-primary); display: flex; align-items: flex-end; justify-content: center; padding: 4px; font-size: 10px; font-weight: var(--neo-font-weight-bold);">背景</div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-bg-card); display: flex; align-items: flex-end; justify-content: center; padding: 4px; font-size: 10px; font-weight: var(--neo-font-weight-bold);">卡片</div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-accent-blue);"></div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-accent-green);"></div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-accent-yellow);"></div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-accent-red);"></div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-accent-cyan);"></div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-accent-purple);"></div>
+    <div style="width: 64px; height: 64px; border: var(--neo-border-thick) solid var(--neo-color-border); box-shadow: var(--neo-shadow-default); background: var(--neo-color-text-primary);"></div>
+  </div>
+</section>
+
+</body>
+</html>

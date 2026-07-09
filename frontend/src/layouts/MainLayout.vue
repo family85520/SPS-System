@@ -152,8 +152,8 @@ function handleCommand(cmd: string) {
 
 /* ===== 侧边栏 ===== */
 .aside {
-  background: #FFFFFF;
-  border-right: 3px solid #000000;
+  background: var(--neo-color-bg-header);
+  border-right: var(--neo-border-thick) solid var(--neo-color-border);
   transition: width 0.2s ease;
   overflow: hidden;
   z-index: 100;
@@ -173,31 +173,31 @@ function handleCommand(cmd: string) {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border-bottom: 3px solid #000000;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
   cursor: pointer;
   user-select: none;
   transition: background 0.15s;
   padding: 0 12px;
 }
 .logo:hover {
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 .logo-icon {
   font-size: 22px;
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   flex-shrink: 0;
 }
 .logo-title {
   font-size: 16px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   white-space: nowrap;
   letter-spacing: 0.5px;
 }
 .logo-title-short {
   font-size: 14px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 /* 菜单 */
@@ -215,27 +215,27 @@ function handleCommand(cmd: string) {
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   font-weight: 700;
   font-size: 14px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-decoration: none;
   transition: all 0.1s ease;
   cursor: pointer;
   white-space: nowrap;
-  background: #FFFFFF;
-  box-shadow: 3px 3px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  box-shadow: var(--neo-shadow-default);
 }
 .menu-item:hover:not(.active) {
-  background: #FFFDF5;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-bg-primary);
+  box-shadow: var(--neo-shadow-hover);
   transform: translate(-1px, -1px);
 }
 .menu-item.active {
-  background: #3B82F6 !important;
-  color: #FFFFFF !important;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-accent-blue) !important;
+  color: var(--neo-color-bg-card) !important;
+  box-shadow: var(--neo-shadow-hover);
 }
 .menu-item .el-icon {
   font-size: 18px;
@@ -244,7 +244,7 @@ function handleCommand(cmd: string) {
 
 /* 侧边栏底部用户区 */
 .aside-footer {
-  border-top: 3px solid #000000;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border);
   padding: 12px;
   display: flex;
   align-items: center;
@@ -254,14 +254,14 @@ function handleCommand(cmd: string) {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 3px solid #000000;
-  background: #FFD93D;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-accent-yellow);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
   font-size: 16px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   flex-shrink: 0;
 }
 .user-info {
@@ -270,7 +270,7 @@ function handleCommand(cmd: string) {
 .user-name {
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -287,8 +287,8 @@ function handleCommand(cmd: string) {
 /* 顶栏 */
 .header {
   height: 64px;
-  background: #FFFFFF;
-  border-bottom: 3px solid #000000;
+  background: var(--neo-color-bg-card);
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -304,18 +304,18 @@ function handleCommand(cmd: string) {
 .collapse-btn {
   font-size: 22px;
   cursor: pointer;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   transition: color 0.15s;
   user-select: none;
 }
 .collapse-btn:hover {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 .breadcrumb {
   font-weight: 600;
 }
 .breadcrumb :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   font-weight: 700;
 }
 
@@ -331,11 +331,11 @@ function handleCommand(cmd: string) {
 .msg-icon {
   font-size: 22px;
   cursor: pointer;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   transition: color 0.15s;
 }
 .msg-icon:hover {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 .user-dropdown-trigger {
   display: flex;
@@ -343,16 +343,16 @@ function handleCommand(cmd: string) {
   gap: 8px;
   cursor: pointer;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   padding: 6px 12px;
   border: 3px solid transparent;
   border-radius: 4px;
   transition: all 0.1s;
 }
 .user-dropdown-trigger:hover {
-  border-color: #000000;
-  background: #FFFDF5;
-  box-shadow: 2px 2px 0px 0px #000000;
+  border-color: var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
+  box-shadow: var(--neo-shadow-active);
 }
 .username {
   font-size: 14px;
@@ -361,7 +361,7 @@ function handleCommand(cmd: string) {
 /* 主内容 */
 .main-content {
   flex: 1;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;

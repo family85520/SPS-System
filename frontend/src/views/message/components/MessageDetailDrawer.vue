@@ -178,8 +178,8 @@ const handleJumpSwap = () => {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  background: #FFFDF5;
-  border-bottom: 3px solid #000000;
+  background: var(--neo-color-bg-primary);
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
 }
 
 .drawer-header__left {
@@ -191,13 +191,13 @@ const handleJumpSwap = () => {
 .drawer-header__avatar {
   width: 44px;
   height: 44px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 3px 3px 0px 0px #000000;
-  color: #FFFFFF;
+  box-shadow: var(--neo-shadow-md);
+  color: var(--neo-color-bg-card);
   transition: transform 0.2s ease;
 }
 
@@ -214,12 +214,12 @@ const handleJumpSwap = () => {
 .drawer-header__type {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .drawer-header__time {
   font-size: 12px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
@@ -227,7 +227,7 @@ const handleJumpSwap = () => {
 .drawer-title {
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 16px;
   line-height: 1.4;
 }
@@ -235,16 +235,16 @@ const handleJumpSwap = () => {
 /* ========== 内容区 ========== */
 .drawer-content {
   font-size: 14px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   line-height: 1.8;
   padding: 16px;
   margin: 0 16px 16px;
-  background: #FFFDF5;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   white-space: pre-wrap;
   font-weight: 500;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
 }
 
 /* ========== 发送人 ========== */
@@ -253,13 +253,13 @@ const handleJumpSwap = () => {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin: 0 16px 16px;
   font-weight: 600;
 }
 
 .drawer-sender .el-icon {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 
 /* ========== 操作按钮 ========== */
@@ -268,7 +268,7 @@ const handleJumpSwap = () => {
   flex-wrap: wrap;
   gap: 8px;
   padding: 16px;
-  border-top: 3px solid #000000;
-  background: #FFFDF5;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
 }
 </style>

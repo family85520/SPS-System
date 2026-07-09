@@ -287,13 +287,13 @@ function handleClose() {
 
 .info-label {
   width: 60px;
-  color: #666;
+  color: var(--neo-color-text-secondary);
   flex-shrink: 0;
   font-weight: 700;
 }
 
 .info-value {
-  color: #000000;
+  color: var(--neo-color-text-primary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -304,13 +304,13 @@ function handleClose() {
   width: 12px;
   height: 12px;
   border-radius: 2px;
-  border: 2px solid #000000;
+  border: 2px solid var(--neo-color-border);
   flex-shrink: 0;
 }
 
 .time-text {
   font-size: 12px;
-  color: #666;
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
@@ -321,7 +321,7 @@ function handleClose() {
 .section-title {
   font-size: 14px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -330,7 +330,7 @@ function handleClose() {
 
 .current-leader {
   font-size: 14px;
-  color: #333;
+  color: var(--neo-color-text-secondary);
   padding: 4px 0;
   display: flex;
   flex-wrap: wrap;
@@ -355,15 +355,15 @@ function handleClose() {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: #FFFDF5;
-  border: 3px solid #000000;
+  background: var(--neo-color-bg-primary);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.06);
   transition: all 0.15s ease;
 }
 
 .member-item:hover {
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-default);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .member-info {
@@ -374,15 +374,15 @@ function handleClose() {
 
 .member-name {
   font-size: 14px;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   font-weight: 700;
 }
 
 .add-member-area {
-  border: 3px dashed #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) dashed var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   padding: 14px;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
   box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.05);
 }
 
@@ -404,8 +404,8 @@ function handleClose() {
   font-size: 13px;
   color: #EF4444;
   padding: 10px 12px;
-  background: #FEE2E2;
-  border: 3px solid #000000;
+  background: var(--neo-color-danger-bg);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
   border-left: 4px solid #EF4444;
   border-radius: 3px;
   font-weight: 600;
@@ -415,14 +415,14 @@ function handleClose() {
 
 .conflict-item:hover {
   box-shadow: 3px 3px 0px 0px rgba(239,68,68,0.25);
-  transform: translate(-1px, -1px);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .drawer-footer {
   display: flex;
   align-items: center;
   padding-top: 16px;
-  border-top: 3px solid #000000;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border);
   margin-top: 16px;
 }
 </style>

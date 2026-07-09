@@ -102,22 +102,22 @@ onMounted(() => {
 }
 
 :deep(.el-select .el-select__wrapper) {
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
   height: 40px !important;
   min-height: 40px !important;
   transition: all 0.1s ease !important;
 }
 
 :deep(.el-select .el-select__wrapper:hover) {
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-default) !important;
 }
 
 :deep(.el-select .el-select__wrapper.is-focused) {
-  box-shadow: 4px 4px 0px 0px #FFD93D !important;
-  border-color: #000000 !important;
+  box-shadow: 4px 4px 0px 0px var(--neo-color-accent-yellow) !important;
+  border-color: var(--neo-color-border) !important;
 }
 
 :deep(.el-option__label) {

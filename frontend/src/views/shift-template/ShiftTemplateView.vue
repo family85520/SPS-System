@@ -872,7 +872,7 @@ onMounted(() => {
 /* --- 页面容器 --- */
 .shift-template-page {
   padding: 24px;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
   min-height: calc(100vh - 96px);
   display: flex;
   flex-direction: column;
@@ -890,7 +890,7 @@ onMounted(() => {
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #999;
+  color: var(--neo-color-text-muted);
   font-size: 18px;
   z-index: 1;
   pointer-events: none;
@@ -899,10 +899,10 @@ onMounted(() => {
   padding-left: 42px !important;
   height: 44px !important;
   min-height: 44px !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  background: var(--neo-color-bg-card) !important;
 }
 .search-box :deep(.el-input__inner) {
   font-weight: 600 !important;
@@ -910,18 +910,18 @@ onMounted(() => {
 
 /* --- 抽屉样式覆盖 --- */
 .shift-drawer :deep(.el-drawer) {
-  border: 3px solid #000000 !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
   border-radius: 0 !important;
-  box-shadow: 8px 0px 0px 0px #000000 !important;
+  box-shadow: 8px 0px 0px 0px var(--neo-color-border) !important;
 }
 .shift-drawer :deep(.el-drawer__header) {
-  border-bottom: 3px solid #000000 !important;
-  background: #FFFDF5 !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  background: var(--neo-color-bg-primary) !important;
   padding: 16px 24px !important;
   margin-bottom: 0 !important;
 }
 .shift-drawer :deep(.el-drawer__body) {
-  background: #FFFFFF !important;
+  background: var(--neo-color-bg-card) !important;
 }
 
 /* --- 抽屉 body 右边距 --- */
@@ -937,7 +937,7 @@ onMounted(() => {
 /* --- 跨夜提示 --- */
 .cross-night-tip {
   font-size: 14px;
-  color: #333;
+  color: var(--neo-color-text-secondary);
   margin-top: 4px;
   display: flex;
   align-items: center;
@@ -949,7 +949,7 @@ onMounted(() => {
 .detail-text {
   font-size: 14px;
   font-weight: 600;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 /* --- 日期选择器布局 --- */

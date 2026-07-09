@@ -545,7 +545,7 @@ onMounted(async () => {
   height: calc(100vh - 56px - 40px);
   gap: 16px;
   padding: 16px;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
   overflow: hidden;
 }
 
@@ -561,7 +561,7 @@ onMounted(async () => {
 .page-title {
   font-size: 24px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -570,7 +570,7 @@ onMounted(async () => {
 .page-subtitle {
   font-size: 13px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin: 4px 0 0 0;
 }
 
@@ -598,8 +598,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 4px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-ultra) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
   flex-shrink: 0;
 }
 
@@ -609,7 +609,7 @@ onMounted(async () => {
   gap: 8px;
   font-size: 15px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -622,12 +622,12 @@ onMounted(async () => {
 .role-count-badge {
   font-size: 11px;
   font-weight: 900;
-  color: #000000;
-  background: #FFD93D;
-  border: 2px solid #000000;
+  color: var(--neo-color-text-primary);
+  background: var(--neo-color-accent-yellow);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
   padding: 2px 8px;
   border-radius: 2px;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -644,26 +644,26 @@ onMounted(async () => {
 /* ========== 角色列表项 ========== */
 .role-item {
   padding: 12px;
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-md);
   cursor: pointer;
   transition: all 0.15s ease;
   animation: slide-in-left 0.3s ease both;
 }
 
 .role-item:hover {
-  box-shadow: 5px 5px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-md-lg);
   transform: translate(-2px, -2px);
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 
 .role-item.active {
-  background: #DBEAFE;
-  border-color: #3B82F6;
-  box-shadow: 4px 4px 0px 0px #3B82F6;
-  transform: translate(2px, 2px);
+  background: var(--neo-color-info-bg);
+  border-color: var(--neo-color-accent-blue);
+  box-shadow: var(--neo-shadow-default);
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active));
 }
 
 .role-item-top {
@@ -676,14 +676,14 @@ onMounted(async () => {
 .role-item-avatar {
   width: 36px;
   height: 36px;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
   flex-shrink: 0;
-  color: #FFFFFF;
+  color: var(--neo-color-bg-card);
   transition: transform 0.2s ease;
 }
 
@@ -699,7 +699,7 @@ onMounted(async () => {
 .role-item-name {
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -708,7 +708,7 @@ onMounted(async () => {
 .role-item-code {
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-family: monospace;
 }
 
@@ -720,18 +720,18 @@ onMounted(async () => {
 }
 
 .role-item-arrow {
-  color: #999999;
+  color: var(--neo-color-text-muted);
   font-size: 14px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .role-item:hover .role-item-arrow {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
   transform: translateX(3px);
 }
 
 .role-item.active .role-item-arrow {
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 
 /* 空状态 */
@@ -742,7 +742,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   padding: 40px 20px;
 }
 
@@ -754,7 +754,7 @@ onMounted(async () => {
 
 .role-empty span {
   font-size: 12px;
-  color: #C0C4CC;
+  color: var(--neo-color-text-muted);
 }
 
 /* ========== 右面板 ========== */
@@ -767,7 +767,7 @@ onMounted(async () => {
 }
 
 .right-panel--active {
-  border-color: #3B82F6 !important;
+  border-color: var(--neo-color-accent-blue) !important;
 }
 
 /* ========== 编辑头部 ========== */
@@ -776,8 +776,8 @@ onMounted(async () => {
   align-items: flex-start;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 4px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-ultra) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
   flex-shrink: 0;
 }
 
@@ -787,7 +787,7 @@ onMounted(async () => {
   gap: 8px;
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -796,7 +796,7 @@ onMounted(async () => {
 .edit-subtitle {
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin: 4px 0 0 0;
   font-family: monospace;
 }
@@ -823,18 +823,18 @@ onMounted(async () => {
   align-items: center;
   gap: 10px;
   padding: 8px 0;
-  border-top: 4px solid #000000;
+  border-top: var(--neo-border-ultra) solid var(--neo-color-border);
 }
 
 .form-section-icon {
   font-size: 18px;
-  color: #3B82F6;
+  color: var(--neo-color-accent-blue);
 }
 
 .form-section-title {
   font-size: 14px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex: 1;
@@ -844,12 +844,12 @@ onMounted(async () => {
 .perm-count-badge {
   font-size: 11px;
   font-weight: 900;
-  color: #000000;
-  background: #FFD93D;
-  border: 2px solid #000000;
+  color: var(--neo-color-text-primary);
+  background: var(--neo-color-accent-yellow);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
   padding: 2px 8px;
   border-radius: 2px;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex-shrink: 0;
@@ -857,10 +857,10 @@ onMounted(async () => {
 
 /* ========== 权限表格 ========== */
 .permission-table-wrapper {
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 4px 4px 0px 0px #000000;
-  background: #FFFFFF;
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-default);
+  background: var(--neo-color-bg-card);
   overflow: auto;
 }
 
@@ -868,33 +868,33 @@ onMounted(async () => {
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  background: #FFFFFF !important;
+  background: var(--neo-color-bg-card) !important;
 }
 
 :deep(.permission-table-wrapper .el-table__header-wrapper th) {
-  background: #FFFDF5 !important;
-  border-bottom: 3px solid #000000 !important;
+  background: var(--neo-color-bg-primary) !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
   border-top: none !important;
   font-weight: 900 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 12px !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 :deep(.permission-table-wrapper .el-table__body-wrapper td) {
-  border-bottom: 2px solid #E6EAF0 !important;
+  border-bottom: var(--neo-border-thin) solid var(--neo-color-border-light) !important;
   font-weight: 500 !important;
-  color: #000000 !important;
+  color: var(--neo-color-text-primary) !important;
   padding: 8px 0 !important;
 }
 
 :deep(.permission-table-wrapper .el-table__body-wrapper tr:hover > td) {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 :deep(.permission-table-wrapper .el-table__cell) {
-  border-color: #E6EAF0 !important;
+  border-color: var(--neo-color-border-light) !important;
 }
 
 .perm-module-cell {
@@ -907,13 +907,13 @@ onMounted(async () => {
 .perm-module-icon {
   width: 32px;
   height: 32px;
-  border: 2px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 2px 2px 0px 0px #000000;
-  color: #FFFFFF;
+  box-shadow: var(--neo-shadow-active);
+  color: var(--neo-color-bg-card);
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
@@ -925,11 +925,11 @@ onMounted(async () => {
 .perm-module-label {
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .perm-action-dimmed {
-  color: #C0C4CC !important;
+  color: var(--neo-color-text-muted) !important;
   font-weight: 500 !important;
 }
 
@@ -939,7 +939,7 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding-top: 16px;
-  border-top: 3px solid #000000;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border);
   flex-wrap: wrap;
 }
 
@@ -956,21 +956,21 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   animation: pop-in 0.3s ease;
 }
 
 .empty-state-icon-wrap {
   width: 80px;
   height: 80px;
-  border: 4px solid #000000;
-  border-radius: 4px;
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   background: #C4B5FD;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 6px 6px 0px 0px #000000;
-  color: #FFFFFF;
+  box-shadow: var(--neo-shadow-hover);
+  color: var(--neo-color-bg-card);
   transition: transform 0.3s ease;
 }
 
@@ -981,7 +981,7 @@ onMounted(async () => {
 .empty-state-title {
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -990,7 +990,7 @@ onMounted(async () => {
 .empty-state-desc {
   font-size: 13px;
   font-weight: 600;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin: 0;
   text-align: center;
   max-width: 320px;

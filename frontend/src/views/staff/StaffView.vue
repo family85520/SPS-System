@@ -374,7 +374,7 @@
               <span
                 class="neo-switch-inline"
                 :class="{ 'is-checked': formData.create_account, 'is-disabled': !canEdit }"
-                @click="() => { if (canEdit) { formData.create_account = !formData.create_account; onAccountToggle() } }"
+                @click="() => { if (canEdit) { formData.create_account = !formData.create_account; onAccountToggle(formData.create_account) } }"
               >
                 <span class="neo-switch-knob"></span>
               </span>
@@ -870,7 +870,7 @@ onMounted(() => {
 /* ====== 页面容器 ====== */
 .staff-page {
   min-height: 100vh;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
 }
 
 /* ====== 页面头部 ====== */
@@ -879,8 +879,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
 }
 
 .header-main {
@@ -892,14 +892,14 @@ onMounted(() => {
 .header-icon {
   width: 48px;
   height: 48px;
-  background: #FF6B6B;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0px 0px #000000;
+  background: var(--neo-color-accent-red);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   font-size: 24px;
   flex-shrink: 0;
 }
@@ -914,7 +914,7 @@ onMounted(() => {
   margin: 0;
   font-size: 22px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   letter-spacing: 0.3px;
   line-height: 1.2;
 }
@@ -922,7 +922,7 @@ onMounted(() => {
 .header-desc {
   margin: 0;
   font-size: 13px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   font-weight: 500;
   line-height: 1.4;
 }
@@ -942,15 +942,15 @@ onMounted(() => {
 
 /* ====== Neo 卡片通用 ====== */
 .neo-card {
-  background: #FFFFFF;
-  border: 3px solid #000000;
-  border-radius: 4px;
-  box-shadow: 6px 6px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-hover);
   transition: all 0.2s ease;
 }
 
 .neo-card:hover {
-  box-shadow: 8px 8px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-lg);
   transform: translateY(-1px);
 }
 
@@ -961,7 +961,7 @@ onMounted(() => {
 
 .search-card:hover {
   transform: none;
-  box-shadow: 6px 6px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
 }
 
 .search-row {
@@ -982,7 +982,7 @@ onMounted(() => {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: var(--neo-color-text-secondary);
   font-size: 18px;
   pointer-events: none;
   z-index: 1;
@@ -991,29 +991,29 @@ onMounted(() => {
 .search-input-wrap :deep(.el-input__wrapper) {
   padding-left: 38px;
   height: 52px !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  background: var(--neo-color-bg-card) !important;
   transition: all 0.1s ease;
 }
 
 .search-input-wrap :deep(.el-input__inner) {
   font-size: 14px;
   font-weight: 600;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .search-input-wrap :deep(.el-input__inner::placeholder) {
-  color: #999999;
+  color: var(--neo-color-text-muted);
   font-weight: 500;
 }
 
 .search-input-wrap :deep(.el-input__wrapper:hover),
 .search-input-wrap :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 5px 5px 0px 0px #000000 !important;
-  transform: translate(-1px, -1px);
-  background: #FFD93D !important;
+  box-shadow: var(--neo-shadow-md-lg) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
+  background: var(--neo-color-accent-yellow) !important;
 }
 
 .neo-select {
@@ -1022,18 +1022,18 @@ onMounted(() => {
 
 .neo-select :deep(.el-input__wrapper) {
   height: 52px !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-default) !important;
+  background: var(--neo-color-bg-card) !important;
   transition: all 0.1s ease;
 }
 
 .neo-select :deep(.el-input__wrapper:hover),
 .neo-select :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 5px 5px 0px 0px #000000 !important;
-  transform: translate(-1px, -1px);
-  background: #FFD93D !important;
+  box-shadow: var(--neo-shadow-md-lg) !important;
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
+  background: var(--neo-color-accent-yellow) !important;
 }
 
 /* ====== 统计卡片网格 ====== */
@@ -1049,7 +1049,7 @@ onMounted(() => {
 
 .stat-card:hover {
   transform: none;
-  box-shadow: 6px 6px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
 }
 
 .stat-header {
@@ -1063,15 +1063,15 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.stat-icon-accent { color: #FF6B6B; }
-.stat-icon-success { color: #10B981; }
-.stat-icon-warning { color: #FFD93D; }
-.stat-icon-danger { color: #EF4444; }
+.stat-icon-accent { color: var(--neo-color-accent-red); }
+.stat-icon-success { color: var(--neo-color-accent-green); }
+.stat-icon-warning { color: var(--neo-color-accent-yellow); }
+.stat-icon-danger { color: var(--neo-color-accent-red-hover); }
 
 .stat-label {
   font-size: 13px;
   font-weight: 700;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   letter-spacing: 0.3px;
 }
 
@@ -1079,7 +1079,7 @@ onMounted(() => {
   display: block;
   font-size: 36px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   line-height: 1.1;
 }
 
@@ -1101,9 +1101,9 @@ onMounted(() => {
 }
 
 .staff-table :deep(.el-table__header th) {
-  background: #FFFDF5 !important;
-  border-bottom: 3px solid #000000 !important;
-  color: #000000 !important;
+  background: var(--neo-color-bg-primary) !important;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  color: var(--neo-color-text-primary) !important;
   font-weight: 700 !important;
   font-size: 13px !important;
   letter-spacing: 0.3px;
@@ -1111,12 +1111,12 @@ onMounted(() => {
 }
 
 .staff-table :deep(.el-table__body td) {
-  border-bottom: 2px solid #E6EAF0 !important;
+  border-bottom: var(--neo-border-thin) solid var(--neo-color-border-light) !important;
   padding: 10px 0 !important;
 }
 
 .staff-table :deep(.el-table__body tr:hover > td) {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 /* 人员单元格 */
@@ -1129,15 +1129,15 @@ onMounted(() => {
 .staff-avatar {
   width: 40px;
   height: 40px;
-  border: 2px solid #000000;
-  border-radius: 4px;
-  box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.25);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-active);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   flex-shrink: 0;
 }
 
@@ -1151,13 +1151,13 @@ onMounted(() => {
 .staff-name {
   font-size: 15px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   white-space: nowrap;
 }
 
 .staff-phone {
   font-size: 12px;
-  color: #00000099;
+  color: rgba(var(--neo-color-text-primary), 0.6);
   font-weight: 500;
 }
 
@@ -1169,7 +1169,7 @@ onMounted(() => {
 }
 
 .text-muted {
-  color: #999999;
+  color: var(--neo-color-text-muted);
   font-weight: 500;
   font-size: 13px;
 }
@@ -1184,7 +1184,7 @@ onMounted(() => {
 .account-name {
   font-size: 13px;
   font-weight: 600;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 /* ====== 操作按钮 —— 原型 A 风格：纯图标方形 neo 按钮 ====== */
@@ -1203,11 +1203,11 @@ onMounted(() => {
   width: 34px !important;
   height: 34px !important;
   padding: 0 !important;
-  border: 2px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
-  background: #FFFFFF !important;
-  color: #000000 !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: var(--neo-shadow-active) !important;
+  background: var(--neo-color-bg-card) !important;
+  color: var(--neo-color-text-primary) !important;
   font-size: 14px !important;
   transition: all 0.1s ease !important;
   cursor: pointer !important;
@@ -1216,63 +1216,63 @@ onMounted(() => {
 }
 
 .neo-icon-btn:hover {
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  transform: translate(-1px, -1px) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs)) !important;
 }
 
 .neo-icon-btn:active {
-  box-shadow: 1px 1px 0px 0px #000000 !important;
-  transform: translate(1px, 1px) !important;
+  box-shadow: var(--neo-shadow-xs) !important;
+  transform: translate(var(--neo-translate-active-sm), var(--neo-translate-active-sm)) !important;
 }
 
 .neo-icon-btn:disabled {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
-  box-shadow: 2px 2px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-active) !important;
   transform: none !important;
 }
 
 /* 危险操作 — 红色背景 */
 .neo-icon-btn.neo-icon-danger {
-  background: #FF6B6B !important;
-  color: #000000 !important;
+  background: var(--neo-color-accent-red) !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .neo-icon-btn.neo-icon-danger:hover {
-  background: #FF8A8A !important;
+  background: var(--neo-color-accent-red-hover) !important;
 }
 
 /* 警告操作 — 黄色背景 */
 .neo-icon-btn.neo-icon-warning {
-  background: #FFD93D !important;
-  color: #000000 !important;
+  background: var(--neo-color-accent-yellow) !important;
+  color: var(--neo-color-text-primary) !important;
 }
 .neo-icon-btn.neo-icon-warning:hover {
-  background: #FFE566 !important;
+  background: var(--neo-color-accent-yellow) !important;
 }
 
 /* 成功操作 — 绿色背景 */
 .neo-icon-btn.neo-icon-success {
-  background: #10B981 !important;
-  color: #FFFFFF !important;
+  background: var(--neo-color-accent-green) !important;
+  color: var(--neo-color-bg-card) !important;
 }
 .neo-icon-btn.neo-icon-success:hover {
-  background: #34D399 !important;
+  background: var(--neo-color-accent-green) !important;
 }
 
 /* tooltip 自定义样式 */
 :deep(.action-group .el-tooltip__popper) {
-  background: #000000 !important;
-  color: #FFFFFF !important;
-  border: 2px solid #000000 !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  border-radius: 2px !important;
+  background: var(--neo-color-text-primary) !important;
+  color: var(--neo-color-bg-card) !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  border-radius: var(--neo-radius-sm) !important;
   font-size: 12px !important;
   font-weight: 700 !important;
   padding: 4px 8px !important;
 }
 
 :deep(.action-group .el-tooltip__popper::before) {
-  border: 2px solid #000000 !important;
+  border: var(--neo-border-thin) solid var(--neo-color-border) !important;
 }
 
 /* ====== 分页 ====== */
@@ -1288,7 +1288,7 @@ onMounted(() => {
 .pagination-info {
   font-size: 13px;
   font-weight: 600;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 /* ====== 抽屉 ====== */
@@ -1307,11 +1307,11 @@ onMounted(() => {
 
 /* ====== 系统账号行 ====== */
 :deep(.system-account-row) {
-  background-color: #fafafa !important;
+  background-color: var(--neo-color-disabled) !important;
 }
 
 :deep(.system-account-row:hover > td) {
-  background-color: #f0f0f0 !important;
+  background-color: var(--neo-color-bg-primary) !important;
 }
 
 /* ====== 响应式 ====== */

@@ -198,7 +198,7 @@ async function handleForceChangePwd() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FFFDF5;
+  background: var(--neo-color-bg-primary);
   position: relative;
   overflow: hidden;
 }
@@ -207,21 +207,21 @@ async function handleForceChangePwd() {
 .login-decorator-left,
 .login-decorator-right {
   position: absolute;
-  border: 4px solid #000000;
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
   z-index: 0;
 }
 .login-decorator-left {
   width: 200px;
   height: 200px;
-  background: #FFD93D;
+  background: var(--neo-color-accent-yellow);
   top: -60px;
   left: -60px;
-  box-shadow: 6px 6px 0px 0px #3B82F6;
+  box-shadow: 6px 6px 0px 0px var(--neo-color-accent-blue);
 }
 .login-decorator-right {
   width: 160px;
   height: 160px;
-  background: #3B82F6;
+  background: var(--neo-color-accent-blue);
   bottom: -40px;
   right: -40px;
   box-shadow: -6px 6px 0px 0px #FFD93D;
@@ -230,10 +230,10 @@ async function handleForceChangePwd() {
 /* 登录卡片 */
 .login-card {
   width: 420px;
-  background: #FFFFFF;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  box-shadow: 8px 8px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-lg);
   position: relative;
   z-index: 1;
   overflow: hidden;
@@ -242,38 +242,38 @@ async function handleForceChangePwd() {
 .login-header {
   padding: 32px 32px 24px;
   text-align: center;
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
 }
 
 .login-logo {
   width: 56px;
   height: 56px;
   margin: 0 auto 12px;
-  background: #3B82F6;
-  border: 3px solid #000000;
-  border-radius: 4px;
+  background: var(--neo-color-accent-blue);
+  border: var(--neo-border-thick) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 4px 4px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-default);
 }
 .login-logo i {
   font-size: 28px;
-  color: #FFFFFF;
+  color: var(--neo-color-bg-card);
 }
 
 .login-title {
   font-size: 24px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0 0 4px;
   letter-spacing: 1px;
 }
 
 .org-name {
   font-size: 13px;
-  color: #666666;
+  color: var(--neo-color-text-secondary);
   margin: 0;
   font-weight: 500;
 }
@@ -291,7 +291,7 @@ async function handleForceChangePwd() {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .login-btn {
@@ -300,25 +300,25 @@ async function handleForceChangePwd() {
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 4px;
-  background: #3B82F6;
-  border-color: #000000;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-accent-blue);
+  border-color: var(--neo-color-border);
+  box-shadow: var(--neo-shadow-default);
   transition: all 0.1s ease;
 }
 .login-btn:hover {
-  box-shadow: 6px 6px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 .login-btn:active {
-  box-shadow: 2px 2px 0px 0px #000000;
-  transform: translate(2px, 2px);
+  box-shadow: var(--neo-shadow-active);
+  transform: translate(var(--neo-translate-active), var(--neo-translate-active));
 }
 
 /* 弹窗 */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--neo-color-overlay-mask);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,10 +328,10 @@ async function handleForceChangePwd() {
 
 .modal-box {
   width: 440px;
-  background: #FFFFFF;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  box-shadow: 10px 10px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: 10px 10px 0px 0px var(--neo-color-border);
   overflow: hidden;
 }
 
@@ -342,9 +342,9 @@ async function handleForceChangePwd() {
   padding: 16px 24px;
   font-size: 18px;
   font-weight: 900;
-  color: #000000;
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  color: var(--neo-color-text-primary);
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
 }
 .modal-icon {
   font-size: 20px;
@@ -357,10 +357,10 @@ async function handleForceChangePwd() {
 .modal-warning {
   margin: 0 0 20px;
   padding: 12px 16px;
-  background: #FFD93D;
-  border: 2px solid #000000;
-  border-radius: 4px;
-  color: #000000;
+  background: var(--neo-color-accent-yellow);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  color: var(--neo-color-text-primary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -373,25 +373,25 @@ async function handleForceChangePwd() {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--neo-color-text-primary);
 }
 
 .modal-footer {
   padding: 16px 24px;
-  border-top: 3px solid #000000;
+  border-top: var(--neo-border-thick) solid var(--neo-color-border);
   display: flex;
   justify-content: flex-end;
 }
 
 .modal-btn {
-  background: #3B82F6;
-  border-color: #000000;
-  box-shadow: 4px 4px 0px 0px #000000;
+  background: var(--neo-color-accent-blue);
+  border-color: var(--neo-color-border);
+  box-shadow: var(--neo-shadow-default);
   font-weight: 900;
   transition: all 0.1s ease;
 }
 .modal-btn:hover {
-  box-shadow: 6px 6px 0px 0px #000000;
-  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow-hover);
+  transform: translate(var(--neo-translate-hover), var(--neo-translate-hover));
 }
 </style>

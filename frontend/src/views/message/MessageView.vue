@@ -247,7 +247,7 @@ onUnmounted(() => {
 .page-title {
   font-size: 24px;
   font-weight: 900;
-  color: #000000;
+  color: var(--neo-color-text-primary);
   margin: 0;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -255,10 +255,10 @@ onUnmounted(() => {
 
 /* ========== 筛选栏 ========== */
 .filter-bar {
-  background: #FFFFFF;
-  border: 4px solid #000000;
-  border-radius: 4px;
-  box-shadow: 8px 8px 0px 0px #000000;
+  background: var(--neo-color-bg-card);
+  border: var(--neo-border-ultra) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-lg);
   padding: 16px;
   display: flex;
   flex-wrap: wrap;
@@ -268,8 +268,8 @@ onUnmounted(() => {
 }
 
 .filter-bar:hover {
-  box-shadow: 10px 10px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-lg);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .filter-bar__search {
@@ -282,10 +282,10 @@ onUnmounted(() => {
 }
 
 .filter-bar__input :deep(.el-input__wrapper) {
-  border: 3px solid #000000 !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  border-radius: 4px !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  border-radius: var(--neo-radius-md) !important;
+  background: var(--neo-color-bg-card) !important;
   height: 44px !important;
   padding: 0 12px !important;
 }
@@ -306,10 +306,10 @@ onUnmounted(() => {
 }
 
 .filter-bar__select :deep(.el-select__wrapper) {
-  border: 3px solid #000000 !important;
-  box-shadow: 3px 3px 0px 0px #000000 !important;
-  border-radius: 4px !important;
-  background: #FFFFFF !important;
+  border: var(--neo-border-thick) solid var(--neo-color-border) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+  border-radius: var(--neo-radius-md) !important;
+  background: var(--neo-color-bg-card) !important;
   height: 44px !important;
   font-weight: 600 !important;
 }
@@ -323,7 +323,7 @@ onUnmounted(() => {
 .message-card {
   border: 3px solid #000000 !important;
   border-radius: 4px !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
+  box-shadow: var(--neo-shadow-default) !important;
   background: #FFFFFF !important;
   overflow: visible !important;
 }
@@ -338,8 +338,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   padding: 12px 16px 0;
-  border-bottom: 3px solid #000000;
-  background: #FFFDF5;
+  border-bottom: var(--neo-border-thick) solid var(--neo-color-border);
+  background: var(--neo-color-bg-primary);
 }
 
 .message-tabs {
@@ -351,12 +351,12 @@ onUnmounted(() => {
 }
 
 .message-tabs :deep(.el-tabs__active-bar) {
-  background: #3B82F6 !important;
+  background: var(--neo-color-accent-blue) !important;
   height: 3px !important;
 }
 
 .message-tabs :deep(.el-tabs__nav-wrap::after) {
-  background: #000000 !important;
+  background: var(--neo-color-text-primary) !important;
   height: 3px !important;
 }
 
@@ -372,14 +372,14 @@ onUnmounted(() => {
 }
 
 .message-tabs :deep(.el-tabs__item:hover) {
-  background: #FFFDF5 !important;
+  background: var(--neo-color-bg-primary) !important;
 }
 
 .message-tabs :deep(.el-tabs__item.is-active) {
-  color: #3B82F6 !important;
+  color: var(--neo-color-accent-blue) !important;
   background: #FFFFFF !important;
-  border-color: #000000 !important;
-  border-bottom-color: #FFFDF5 !important;
+  border-color: var(--neo-color-border) !important;
+  border-bottom-color: var(--neo-color-bg-primary) !important;
   font-weight: 900 !important;
   position: relative !important;
   z-index: 1 !important;
@@ -395,22 +395,22 @@ onUnmounted(() => {
 
 .toolbar-icon {
   cursor: pointer;
-  color: #000000;
-  border: 2px solid #000000;
+  color: var(--neo-color-text-primary);
+  border: var(--neo-border-thin) solid var(--neo-color-border);
   border-radius: 4px;
-  background: #FFD93D;
+  background: var(--neo-color-accent-yellow);
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 2px 2px 0px 0px #000000;
+  box-shadow: var(--neo-shadow-active);
   transition: all 0.1s ease;
 }
 
 .toolbar-icon:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0px 0px #000000;
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
+  box-shadow: var(--neo-shadow-md);
 }
 
 .message-page__content {

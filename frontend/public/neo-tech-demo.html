@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPS Neo-Tech Design Tokens Demo</title>
+<style>
+/* ============================================================
+   Neo-Tech Design Tokens — 科技感 Neo 风格
+   基于原始 Neo 风格微调：增加发光效果、暗色背景、霓虹强调色
+   ============================================================ */
+:root {
+  /* ========== 背景色系 — 暗色基底 ========== */
+  --neo-bg-primary: #0F1117;
+  --neo-bg-secondary: #1A1D27;
+  --neo-bg-card: #1E2130;
+  --neo-bg-header: #161925;
+  --neo-bg-input: #1A1D27;
+  --neo-bg-input-focus: #222640;
+
+  /* ========== 文本色系 — 亮色高对比 ========== */
+  --neo-text-primary: #EAEAEA;
+  --neo-text-secondary: #9CA3AF;
+  --neo-text-muted: #6B7280;
+  --neo-text-inverse: #0F1117;
+
+  /* ========== 强调色系 — 霓虹高饱和 ========== */
+  --neo-accent-blue: #00D4FF;
+  --neo-accent-blue-glow: rgba(0, 212, 255, 0.4);
+  --neo-accent-cyan: #06FFB4;
+  --neo-accent-cyan-glow: rgba(6, 255, 180, 0.4);
+  --neo-accent-purple: #A855F7;
+  --neo-accent-purple-glow: rgba(168, 85, 247, 0.4);
+  --neo-accent-red: #FF4757;
+  --neo-accent-red-glow: rgba(255, 71, 87, 0.4);
+  --neo-accent-yellow: #FFD93D;
+  --neo-accent-yellow-glow: rgba(255, 217, 61, 0.3);
+  --neo-accent-orange: #FF6B35;
+  --neo-accent-pink: #FF6EC7;
+
+  /* ========== 描边色系 ========== */
+  --neo-border-default: #2D3148;
+  --neo-border-active: #3D4266;
+  --neo-border-accent-blue: #00D4FF;
+  --neo-border-accent-cyan: #06FFB4;
+  --neo-border-accent-purple: #A855F7;
+
+  /* ========== 圆角 ========== */
+  --neo-radius-sm: 2px;
+  --neo-radius-md: 4px;
+  --neo-radius-lg: 8px;
+
+  /* ========== 边框宽度 ========== */
+  --neo-border-thin: 1px;
+  --neo-border-thick: 2px;
+  --neo-border-ultra: 3px;
+
+  /* ========== 阴影 — 发光效果 ========== */
+  --neo-shadow-glow-blue: 0 0 8px var(--neo-accent-blue-glow), 0 0 20px rgba(0, 212, 255, 0.15);
+  --neo-shadow-glow-cyan: 0 0 8px var(--neo-accent-cyan-glow), 0 0 20px rgba(6, 255, 180, 0.15);
+  --neo-shadow-glow-purple: 0 0 8px var(--neo-accent-purple-glow), 0 0 20px rgba(168, 85, 247, 0.15);
+  --neo-shadow-glow-red: 0 0 8px var(--neo-accent-red-glow), 0 0 20px rgba(255, 71, 87, 0.15);
+  --neo-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --neo-shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --neo-shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+  /* ========== 字体 ========== */
+  --neo-font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --neo-font-weight-regular: 500;
+  --neo-font-weight-medium: 600;
+  --neo-font-weight-bold: 700;
+  --neo-font-weight-extrabold: 900;
+
+  /* ========== 间距 ========== */
+  --neo-spacing-xs: 4px;
+  --neo-spacing-sm: 8px;
+  --neo-spacing-md: 12px;
+  --neo-spacing-lg: 16px;
+  --neo-spacing-xl: 20px;
+  --neo-spacing-2xl: 24px;
+  --neo-spacing-3xl: 32px;
+
+  /* ========== 过渡 ========== */
+  --neo-transition-fast: 0.12s;
+  --neo-transition-normal: 0.2s;
+  --neo-transition-slow: 0.3s;
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--neo-font-family);
+  font-weight: var(--neo-font-weight-regular);
+  background: var(--neo-bg-primary);
+  color: var(--neo-text-primary);
+  line-height: 1.5;
+  padding: var(--neo-spacing-2xl);
+  min-height: 100vh;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ============================================================
+   Section Titles
+   ============================================================ */
+.demo-section {
+  margin-bottom: var(--neo-spacing-3xl);
+}
+
+.demo-section-title {
+  font-size: 11px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: var(--neo-spacing-lg);
+  padding-bottom: var(--neo-spacing-sm);
+  border-bottom: var(--neo-border-thin) solid var(--neo-border-default);
+  display: flex;
+  align-items: center;
+  gap: var(--neo-spacing-sm);
+}
+
+.demo-section-title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--neo-accent-blue);
+  border-radius: var(--neo-radius-sm);
+  box-shadow: 0 0 6px var(--neo-accent-blue-glow);
+}
+
+.demo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--neo-spacing-lg);
+  align-items: center;
+}
+
+.flex-row {
+  display: flex;
+  align-items: center;
+  gap: var(--neo-spacing-md);
+  flex-wrap: wrap;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--neo-spacing-lg);
+}
+
+/* ============================================================
+   Buttons — Neo-Tech (发光 + 霓虹边框)
+   ============================================================ */
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--neo-spacing-sm);
+  padding: var(--neo-spacing-sm) var(--neo-spacing-lg);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-bold);
+  border: var(--neo-border-thick) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  cursor: pointer;
+  transition: all var(--neo-transition-fast);
+  min-width: 120px;
+  height: 44px;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.neo-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--neo-transition-fast);
+}
+
+.neo-btn:hover {
+  border-color: var(--neo-border-active);
+}
+
+.neo-btn:active {
+  transform: scale(0.98);
+}
+
+.neo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Blue */
+.neo-btn--blue {
+  background: linear-gradient(135deg, #0077B6, #00D4FF);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-accent-blue);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+}
+.neo-btn--blue:hover {
+  box-shadow: var(--neo-shadow-glow-blue);
+  border-color: var(--neo-accent-blue);
+}
+
+/* Cyan */
+.neo-btn--cyan {
+  background: linear-gradient(135deg, #009B6E, #06FFB4);
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-accent-cyan);
+  box-shadow: 0 0 12px rgba(6, 255, 180, 0.2);
+}
+.neo-btn--cyan:hover {
+  box-shadow: var(--neo-shadow-glow-cyan);
+  border-color: var(--neo-accent-cyan);
+}
+
+/* Purple */
+.neo-btn--purple {
+  background: linear-gradient(135deg, #7C3AED, #A855F7);
+  color: #FFFFFF;
+  border-color: var(--neo-accent-purple);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
+}
+.neo-btn--purple:hover {
+  box-shadow: var(--neo-shadow-glow-purple);
+  border-color: var(--neo-accent-purple);
+}
+
+/* Red */
+.neo-btn--red {
+  background: linear-gradient(135deg, #D63031, #FF4757);
+  color: #FFFFFF;
+  border-color: var(--neo-accent-red);
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.2);
+}
+.neo-btn--red:hover {
+  box-shadow: var(--neo-shadow-glow-red);
+  border-color: var(--neo-accent-red);
+}
+
+/* Outline / Ghost */
+.neo-btn--outline {
+  background: transparent;
+  color: var(--neo-accent-blue);
+  border-color: var(--neo-accent-blue);
+}
+.neo-btn--outline:hover {
+  background: rgba(0, 212, 255, 0.1);
+  box-shadow: var(--neo-shadow-glow-blue);
+}
+
+.neo-btn--ghost {
+  background: var(--neo-bg-card);
+  color: var(--neo-text-secondary);
+  border-color: var(--neo-border-default);
+}
+.neo-btn--ghost:hover {
+  background: var(--neo-bg-secondary);
+  color: var(--neo-text-primary);
+  border-color: var(--neo-border-active);
+}
+
+/* Sizes */
+.neo-btn--sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  height: 36px;
+  min-width: auto;
+  border-width: var(--neo-border-thin);
+}
+
+.neo-btn--lg {
+  padding: var(--neo-spacing-md) var(--neo-spacing-2xl);
+  font-size: 16px;
+  height: 52px;
+  min-width: 160px;
+}
+
+/* ============================================================
+   Cards — Neo-Tech (暗色 + 微光边框)
+   ============================================================ */
+.neo-card {
+  background: var(--neo-bg-card);
+  border: var(--neo-border-thick) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  box-shadow: var(--neo-shadow-card);
+  overflow: hidden;
+  transition: all var(--neo-transition-normal);
+  position: relative;
+}
+
+.neo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+  opacity: 0;
+  transition: opacity var(--neo-transition-normal);
+}
+
+.neo-card:hover {
+  box-shadow: var(--neo-shadow-card-hover);
+  border-color: var(--neo-border-active);
+}
+
+.neo-card:hover::before {
+  opacity: 1;
+}
+
+.neo-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--neo-spacing-md) var(--neo-spacing-lg);
+  background: var(--neo-bg-header);
+  border-bottom: var(--neo-border-thin) solid var(--neo-border-default);
+}
+
+.neo-card__title {
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-extrabold);
+  color: var(--neo-text-primary);
+  letter-spacing: 0.5px;
+}
+
+.neo-card__body {
+  padding: var(--neo-spacing-lg);
+}
+
+/* Stat Card */
+.stat-card {
+  position: relative;
+  padding: var(--neo-spacing-xl);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--neo-spacing-lg);
+  border-left: 3px solid transparent;
+  transition: border-color var(--neo-transition-fast);
+}
+
+.stat-card:hover {
+  border-left-color: var(--card-accent, var(--neo-accent-blue));
+}
+
+.stat-card__icon {
+  width: 48px;
+  height: 48px;
+  border: var(--neo-border-thin) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  transition: all var(--neo-transition-fast);
+}
+
+.stat-card:hover .stat-card__icon {
+  border-color: var(--card-accent, var(--neo-accent-blue));
+  box-shadow: 0 0 8px var(--card-glow, rgba(0, 212, 255, 0.3));
+}
+
+.stat-card__blue { --card-accent: var(--neo-accent-blue); --card-glow: var(--neo-accent-blue-glow); }
+.stat-card__cyan { --card-accent: var(--neo-accent-cyan); --card-glow: var(--neo-accent-cyan-glow); }
+.stat-card__purple { --card-accent: var(--neo-accent-purple); --card-glow: var(--neo-accent-purple-glow); }
+.stat-card__red { --card-accent: var(--neo-accent-red); --card-glow: var(--neo-accent-red-glow); }
+
+.stat-card__blue .stat-card__icon { color: var(--neo-accent-blue); }
+.stat-card__cyan .stat-card__icon { color: var(--neo-accent-cyan); }
+.stat-card__purple .stat-card__icon { color: var(--neo-accent-purple); }
+.stat-card__red .stat-card__icon { color: var(--neo-accent-red); }
+
+.stat-card__info { flex: 1; }
+.stat-card__label {
+  font-size: 11px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.stat-card__value {
+  font-size: 36px;
+  font-weight: var(--neo-font-weight-extrabold);
+  line-height: 1.1;
+  color: var(--neo-text-primary);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card__blue .stat-card__value { color: var(--neo-accent-blue); text-shadow: 0 0 20px var(--neo-accent-blue-glow); }
+.stat-card__cyan .stat-card__value { color: var(--neo-accent-cyan); text-shadow: 0 0 20px var(--neo-accent-cyan-glow); }
+.stat-card__purple .stat-card__value { color: var(--neo-accent-purple); text-shadow: 0 0 20px var(--neo-accent-purple-glow); }
+.stat-card__red .stat-card__value { color: var(--neo-accent-red); text-shadow: 0 0 20px var(--neo-accent-red-glow); }
+
+.stat-card__trend {
+  font-size: 12px;
+  font-weight: var(--neo-font-weight-medium);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-card__trend--up { color: var(--neo-accent-cyan); }
+.stat-card__trend--down { color: var(--neo-accent-red); }
+
+/* ============================================================
+   Tags — Neo-Tech
+   ============================================================ */
+.neo-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: var(--neo-font-weight-bold);
+  border: var(--neo-border-thin) solid transparent;
+  border-radius: var(--neo-radius-sm);
+  height: 26px;
+  transition: all var(--neo-transition-fast);
+}
+
+.neo-tag--blue {
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--neo-accent-blue);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+.neo-tag--blue:hover {
+  background: rgba(0, 212, 255, 0.25);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+}
+
+.neo-tag--cyan {
+  background: rgba(6, 255, 180, 0.15);
+  color: var(--neo-accent-cyan);
+  border-color: rgba(6, 255, 180, 0.3);
+}
+
+.neo-tag--purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--neo-accent-purple);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.neo-tag--red {
+  background: rgba(255, 71, 87, 0.15);
+  color: var(--neo-accent-red);
+  border-color: rgba(255, 71, 87, 0.3);
+}
+
+.neo-tag--outline {
+  background: transparent;
+  color: var(--neo-text-secondary);
+  border-color: var(--neo-border-default);
+}
+
+/* ============================================================
+   Badges — Neo-Tech
+   ============================================================ */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: var(--neo-font-weight-extrabold);
+  border-radius: var(--neo-radius-sm);
+  color: #FFFFFF;
+}
+
+.neo-badge--blue {
+  background: var(--neo-accent-blue);
+  box-shadow: 0 0 8px var(--neo-accent-blue-glow);
+}
+.neo-badge--red {
+  background: var(--neo-accent-red);
+  box-shadow: 0 0 8px var(--neo-accent-red-glow);
+}
+.neo-badge--cyan {
+  background: var(--neo-accent-cyan);
+  color: var(--neo-text-inverse);
+  box-shadow: 0 0 8px var(--neo-accent-cyan-glow);
+}
+.neo-badge--purple {
+  background: var(--neo-accent-purple);
+  box-shadow: 0 0 8px var(--neo-accent-purple-glow);
+}
+
+/* Pulse animation */
+.neo-badge--pulse {
+  animation: neo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes neo-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================================
+   Inputs — Neo-Tech
+   ============================================================ */
+.neo-input {
+  width: 100%;
+  padding: var(--neo-spacing-sm) var(--neo-spacing-md);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-medium);
+  border: var(--neo-border-thick) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  background: var(--neo-bg-input);
+  color: var(--neo-text-primary);
+  transition: all var(--neo-transition-fast);
+  outline: none;
+  height: 44px;
+}
+
+.neo-input::placeholder {
+  color: var(--neo-text-muted);
+  font-weight: var(--neo-font-weight-regular);
+}
+
+.neo-input:hover {
+  border-color: var(--neo-border-active);
+  background: var(--neo-bg-input-focus);
+}
+
+.neo-input:focus {
+  border-color: var(--neo-accent-blue);
+  background: var(--neo-bg-input-focus);
+  box-shadow: 0 0 0 1px var(--neo-accent-blue), var(--neo-shadow-glow-blue);
+}
+
+.neo-input--cyan:focus {
+  border-color: var(--neo-accent-cyan);
+  box-shadow: 0 0 0 1px var(--neo-accent-cyan), var(--neo-shadow-glow-cyan);
+}
+
+.neo-input--disabled {
+  background: var(--neo-bg-secondary);
+  border-color: var(--neo-border-default);
+  color: var(--neo-text-muted);
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Alerts — Neo-Tech
+   ============================================================ */
+.neo-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--neo-spacing-md);
+  padding: var(--neo-spacing-lg);
+  border: var(--neo-border-thick) solid transparent;
+  border-radius: var(--neo-radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.neo-alert::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.neo-alert--info {
+  background: rgba(0, 212, 255, 0.08);
+  border-color: rgba(0, 212, 255, 0.3);
+  color: var(--neo-accent-blue);
+}
+.neo-alert--info::before { background: var(--neo-accent-blue); box-shadow: 0 0 8px var(--neo-accent-blue-glow); }
+.neo-alert--info .neo-alert__content { color: var(--neo-text-primary); }
+
+.neo-alert--warning {
+  background: rgba(255, 217, 61, 0.08);
+  border-color: rgba(255, 217, 61, 0.3);
+}
+.neo-alert--warning::before { background: var(--neo-accent-yellow); }
+.neo-alert--warning .neo-alert__content { color: var(--neo-text-primary); }
+
+.neo-alert--danger {
+  background: rgba(255, 71, 87, 0.08);
+  border-color: rgba(255, 71, 87, 0.3);
+}
+.neo-alert--danger::before { background: var(--neo-accent-red); box-shadow: 0 0 8px var(--neo-accent-red-glow); }
+.neo-alert--danger .neo-alert__content { color: var(--neo-text-primary); }
+
+.neo-alert__icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.neo-alert__content {
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-medium);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   Progress Bar — Neo-Tech
+   ============================================================ */
+.neo-progress {
+  width: 100%;
+  height: 8px;
+  background: var(--neo-bg-secondary);
+  border: var(--neo-border-thin) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-sm);
+  overflow: hidden;
+}
+
+.neo-progress__fill {
+  height: 100%;
+  border-radius: var(--neo-radius-sm);
+  transition: width var(--neo-transition-slow);
+  position: relative;
+}
+
+.neo-progress__fill--blue {
+  background: linear-gradient(90deg, #0077B6, var(--neo-accent-blue));
+  box-shadow: 0 0 8px var(--neo-accent-blue-glow);
+}
+
+.neo-progress__fill--cyan {
+  background: linear-gradient(90deg, #009B6E, var(--neo-accent-cyan));
+  box-shadow: 0 0 8px var(--neo-accent-cyan-glow);
+}
+
+.neo-progress__fill--purple {
+  background: linear-gradient(90deg, #7C3AED, var(--neo-accent-purple));
+  box-shadow: 0 0 8px var(--neo-accent-purple-glow);
+}
+
+.neo-progress__fill--red {
+  background: linear-gradient(90deg, #D63031, var(--neo-accent-red));
+  box-shadow: 0 0 8px var(--neo-accent-red-glow);
+}
+
+/* ============================================================
+   Ranking List — Neo-Tech
+   ============================================================ */
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: var(--neo-spacing-md);
+  padding: var(--neo-spacing-md) var(--neo-spacing-lg);
+  background: var(--neo-bg-card);
+  border: var(--neo-border-thin) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  transition: all var(--neo-transition-fast);
+}
+
+.ranking-item:hover {
+  border-color: var(--neo-border-active);
+  background: var(--neo-bg-secondary);
+  transform: translateX(4px);
+}
+
+.ranking-rank {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: var(--neo-font-weight-extrabold);
+  border-radius: var(--neo-radius-sm);
+  border: var(--neo-border-thin) solid var(--neo-border-default);
+  background: var(--neo-bg-secondary);
+  flex-shrink: 0;
+}
+
+.ranking-rank--1 {
+  background: linear-gradient(135deg, #F59E0B, var(--neo-accent-yellow));
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-accent-yellow);
+  box-shadow: 0 0 8px rgba(255, 217, 61, 0.3);
+}
+
+.ranking-rank--2 {
+  background: linear-gradient(135deg, #6366F1, var(--neo-accent-blue));
+  color: var(--neo-text-inverse);
+  border-color: var(--neo-accent-blue);
+  box-shadow: 0 0 8px var(--neo-accent-blue-glow);
+}
+
+.ranking-rank--3 {
+  background: linear-gradient(135deg, #EF4444, var(--neo-accent-red));
+  color: #FFFFFF;
+  border-color: var(--neo-accent-red);
+  box-shadow: 0 0 8px var(--neo-accent-red-glow);
+}
+
+.ranking-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-text-primary);
+}
+
+.ranking-detail {
+  font-size: 12px;
+  color: var(--neo-text-muted);
+}
+
+.ranking-score {
+  font-size: 16px;
+  font-weight: var(--neo-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.ranking-score--blue { color: var(--neo-accent-blue); text-shadow: 0 0 8px var(--neo-accent-blue-glow); }
+.ranking-score--cyan { color: var(--neo-accent-cyan); text-shadow: 0 0 8px var(--neo-accent-cyan-glow); }
+.ranking-score--purple { color: var(--neo-accent-purple); text-shadow: 0 0 8px var(--neo-accent-purple-glow); }
+.ranking-score--red { color: var(--neo-accent-red); text-shadow: 0 0 8px var(--neo-accent-red-glow); }
+
+/* ============================================================
+   Color Palette Swatches
+   ============================================================ */
+.palette-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--neo-spacing-md);
+}
+
+.palette-swatch {
+  width: 72px;
+  height: 72px;
+  border: var(--neo-border-thin) solid var(--neo-border-default);
+  border-radius: var(--neo-radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px;
+  font-size: 9px;
+  font-weight: var(--neo-font-weight-bold);
+  color: var(--neo-text-muted);
+  transition: all var(--neo-transition-fast);
+  position: relative;
+}
+
+.palette-swatch:hover {
+  transform: translateY(-4px);
+  border-color: var(--neo-border-active);
+}
+
+.palette-swatch--bg-primary { background: var(--neo-bg-primary); }
+.palette-swatch--bg-card { background: var(--neo-bg-card); }
+.palette-swatch--bg-secondary { background: var(--neo-bg-secondary); }
+.palette-swatch--blue { background: var(--neo-accent-blue); color: var(--neo-text-inverse); }
+.palette-swatch--cyan { background: var(--neo-accent-cyan); color: var(--neo-text-inverse); }
+.palette-swatch--purple { background: var(--neo-accent-purple); }
+.palette-swatch--red { background: var(--neo-accent-red); }
+.palette-swatch--yellow { background: var(--neo-accent-yellow); color: var(--neo-text-inverse); }
+.palette-swatch--orange { background: var(--neo-accent-orange); }
+.palette-swatch--pink { background: var(--neo-accent-pink); }
+.palette-swatch--text-primary { background: var(--neo-text-primary); }
+.palette-swatch--text-muted { background: var(--neo-text-muted); }
+
+/* ============================================================
+   Glow Divider
+   ============================================================ */
+.glow-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--neo-accent-blue), var(--neo-accent-cyan), var(--neo-accent-purple), transparent);
+  margin: var(--neo-spacing-3xl) 0;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+  body { padding: var(--neo-spacing-lg); }
+  .stat-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .palette-grid { gap: var(--neo-spacing-sm); }
+  .palette-swatch { width: 56px; height: 56px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Decorative Glow Divider
+     ============================================================ -->
+<div class="glow-divider"></div>
+
+<!-- ============================================================
+     1. Buttons
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Buttons / 按钮</h2>
+  <div class="demo-grid">
+    <button class="neo-btn neo-btn--blue">Blue Neon</button>
+    <button class="neo-btn neo-btn--cyan">Cyan Glow</button>
+    <button class="neo-btn neo-btn--purple">Purple Shift</button>
+    <button class="neo-btn neo-btn--red">Red Alert</button>
+  </div>
+  <div class="demo-grid" style="margin-top: 16px;">
+    <button class="neo-btn neo-btn--outline">Outline</button>
+    <button class="neo-btn neo-btn--ghost">Ghost</button>
+    <button class="neo-btn neo-btn--blue neo-btn--sm">Small</button>
+    <button class="neo-btn neo-btn--blue neo-btn--lg">Large</button>
+    <button class="neo-btn neo-btn--blue" disabled>Disabled</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     2. Stat Cards
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Stat Cards / 统计卡片</h2>
+  <div class="stat-grid">
+    <div class="neo-card stat-card stat-card__blue">
+      <div class="stat-card__icon">&#128100;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">总员工数</div>
+        <div class="stat-card__value">128</div>
+        <div class="stat-card__trend stat-card__trend--up">&#9650; +12%</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__cyan">
+      <div class="stat-card__icon">&#127970;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">组织数量</div>
+        <div class="stat-card__value">12</div>
+        <div class="stat-card__trend stat-card__trend--up">&#9650; +2</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__red">
+      <div class="stat-card__icon">&#128272;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">待审批事项</div>
+        <div class="stat-card__value">7</div>
+        <div class="stat-card__trend stat-card__trend--down">&#9660; -3</div>
+      </div>
+    </div>
+    <div class="neo-card stat-card stat-card__purple">
+      <div class="stat-card__icon">&#128222;</div>
+      <div class="stat-card__info">
+        <div class="stat-card__label">未读消息</div>
+        <div class="stat-card__value">3</div>
+        <div class="stat-card__trend stat-card__trend--up">&#9650; +1</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     3. Tags & Badges
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Tags & Badges / 标签与徽章</h2>
+  <div class="flex-row">
+    <span class="neo-tag neo-tag--blue">蓝色</span>
+    <span class="neo-tag neo-tag--cyan">青色</span>
+    <span class="neo-tag neo-tag--purple">紫色</span>
+    <span class="neo-tag neo-tag--red">红色</span>
+    <span class="neo-tag neo-tag--outline">轮廓</span>
+  </div>
+  <div class="flex-row" style="margin-top: 12px;">
+    <span class="neo-badge neo-badge--blue">3</span>
+    <span class="neo-badge neo-badge--red neo-badge--pulse">!</span>
+    <span class="neo-badge neo-badge--cyan">12</span>
+    <span class="neo-badge neo-badge--purple">9+</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     4. Form Elements
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Form Elements / 表单元素</h2>
+  <div style="max-width: 480px;">
+    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: var(--neo-font-weight-bold); color: var(--neo-text-secondary); margin-bottom: 6px;">用户名</label>
+        <input class="neo-input" type="text" placeholder="请输入用户名" value="admin">
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: var(--neo-font-weight-bold); color: var(--neo-text-secondary); margin-bottom: 6px;">部门</label>
+        <input class="neo-input" type="text" placeholder="请选择部门" value="技术部" readonly>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: var(--neo-font-weight-bold); color: var(--neo-text-secondary); margin-bottom: 6px;">状态</label>
+        <input class="neo-input neo-input--disabled" type="text" value="已禁用" disabled>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: var(--neo-font-weight-bold); color: var(--neo-text-secondary); margin-bottom: 6px;">焦点高亮</label>
+        <input class="neo-input" type="text" placeholder="点击我查看发光效果..." style="border-color: var(--neo-accent-cyan); box-shadow: 0 0 0 1px var(--neo-accent-cyan), var(--neo-shadow-glow-cyan);">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     5. Alerts
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Alerts / 告警</h2>
+  <div style="max-width: 560px; display: flex; flex-direction: column; gap: 12px;">
+    <div class="neo-alert neo-alert--info">
+      <span class="neo-alert__icon">&#8505;</span>
+      <span class="neo-alert__content">系统将于今晚 23:00 进行例行维护，预计持续 30 分钟。</span>
+    </div>
+    <div class="neo-alert neo-alert--warning">
+      <span class="neo-alert__icon">&#9888;</span>
+      <span class="neo-alert__content">当前排班存在 3 条约束冲突，请检查后重新发布。</span>
+    </div>
+    <div class="neo-alert neo-alert--danger">
+      <span class="neo-alert__icon">&#10060;</span>
+      <span class="neo-alert__content">该班次模板已被 5 个排班计划引用，删除将影响历史数据。</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     6. Progress Bars
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Progress / 进度条</h2>
+  <div style="max-width: 480px; display: flex; flex-direction: column; gap: 16px;">
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-font-weight-bold); color: var(--neo-text-secondary);">排班完成率</span>
+        <span style="font-size: 12px; font-weight: var(--neo-font-weight-bold); color: var(--neo-accent-blue);">78%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill neo-progress__fill--blue" style="width: 78%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-font-weight-bold); color: var(--neo-text-secondary);">约束满足率</span>
+        <span style="font-size: 12px; font-weight: var(--neo-font-weight-bold); color: var(--neo-accent-cyan);">92%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill neo-progress__fill--cyan" style="width: 92%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: var(--neo-font-weight-bold); color: var(--neo-text-secondary);">冲突检测</span>
+        <span style="font-size: 12px; font-weight: var(--neo-font-weight-bold); color: var(--neo-accent-red);">35%</span>
+      </div>
+      <div class="neo-progress">
+        <div class="neo-progress__fill neo-progress__fill--red" style="width: 35%;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     7. Ranking List
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Ranking / 排行榜</h2>
+  <div style="max-width: 560px; display: flex; flex-direction: column; gap: 8px;">
+    <div class="ranking-item">
+      <div class="ranking-rank ranking-rank--1">1</div>
+      <div class="ranking-name">张三</div>
+      <div class="ranking-detail">12班 · 96h · 夜4</div>
+      <div class="ranking-score ranking-score--yellow">94.5</div>
+    </div>
+    <div class="ranking-item">
+      <div class="ranking-rank ranking-rank--2">2</div>
+      <div class="ranking-name">李四</div>
+      <div class="ranking-detail">11班 · 88h · 夜3</div>
+      <div class="ranking-score ranking-score--blue">88.2</div>
+    </div>
+    <div class="ranking-item">
+      <div class="ranking-rank ranking-rank--3">3</div>
+      <div class="ranking-name">王五</div>
+      <div class="ranking-detail">10班 · 80h · 夜2</div>
+      <div class="ranking-score ranking-score--red">82.7</div>
+    </div>
+    <div class="ranking-item">
+      <div class="ranking-rank">4</div>
+      <div class="ranking-name">赵六</div>
+      <div class="ranking-detail">9班 · 72h · 夜2</div>
+      <div class="ranking-score ranking-score--cyan">76.1</div>
+    </div>
+    <div class="ranking-item">
+      <div class="ranking-rank">5</div>
+      <div class="ranking-name">孙七</div>
+      <div class="ranking-detail">8班 · 64h · 夜1</div>
+      <div class="ranking-score ranking-score--purple">68.9</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     8. Color Palette
+     ============================================================ -->
+<section class="demo-section">
+  <h2 class="demo-section-title">Color Palette / 配色方案</h2>
+  <div class="palette-grid">
+    <div class="palette-swatch palette-swatch--bg-primary">#0F1117</div>
+    <div class="palette-swatch palette-swatch--bg-secondary">#1A1D27</div>
+    <div class="palette-swatch palette-swatch--bg-card">#1E2130</div>
+    <div class="palette-swatch palette-swatch--blue">NEON</div>
+    <div class="palette-swatch palette-swatch--cyan">CYAN</div>
+    <div class="palette-swatch palette-swatch--purple">PURP</div>
+    <div class="palette-swatch palette-swatch--red">RED</div>
+    <div class="palette-swatch palette-swatch--yellow">YLW</div>
+    <div class="palette-swatch palette-swatch--orange">ORG</div>
+    <div class="palette-swatch palette-swatch--pink">PNK</div>
+    <div class="palette-swatch palette-swatch--text-primary">#EA</div>
+    <div class="palette-swatch palette-swatch--text-muted">#6B</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Decorative Glow Divider
+     ============================================================ -->
+<div class="glow-divider"></div>
+
+</body>
+</html>

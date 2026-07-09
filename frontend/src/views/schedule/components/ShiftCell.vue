@@ -255,9 +255,9 @@ function onDrop(e: DragEvent) {
   cursor: pointer;
   transition: all 0.1s ease;
   position: relative;
-  border: 2px solid #000000;
-  border-radius: 2px;
-  background: #FFFFFF;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
+  background: var(--neo-color-bg-card);
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
@@ -265,8 +265,8 @@ function onDrop(e: DragEvent) {
 }
 
 .shift-block:hover {
-  box-shadow: 4px 4px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-default);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .shift-block.shift-dragging {
@@ -274,15 +274,15 @@ function onDrop(e: DragEvent) {
 }
 
 .shift-block.staff-drop-over {
-  border: 2px dashed #3B82F6;
+  border: 2px dashed var(--neo-color-accent-blue);
   background: #DBEAFE !important;
-  box-shadow: 3px 3px 0px 0px #3B82F6;
+  box-shadow: var(--neo-shadow-md);
 }
 
 .shift-block.shift-drop-over {
   border: 2px dashed #10B981;
   background: #D1FAE5 !important;
-  box-shadow: 3px 3px 0px 0px #10B981;
+  box-shadow: var(--neo-shadow-md);
 }
 
 .shift-block[draggable="true"] {
@@ -325,31 +325,31 @@ function onDrop(e: DragEvent) {
   font-size: 10px;
   font-weight: 700;
   line-height: 1.4;
-  border: 2px solid #000000;
-  border-radius: 2px;
+  border: var(--neo-border-thin) solid var(--neo-color-border);
+  border-radius: var(--neo-radius-sm);
   white-space: nowrap;
   transition: all 0.1s ease;
   flex-shrink: 0;
 }
 
 .shift-tag:hover {
-  box-shadow: 1px 1px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-xs);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 .shift-tag-leader {
-  color: #FFFFFF;
+  color: var(--neo-color-bg-card);
   text-shadow: 0 1px 0 rgba(255,255,255,0.3);
 }
 
 .shift-tag-member {
-  background: #FFFFFF;
-  color: #333333;
+  background: var(--neo-color-bg-card);
+  color: var(--neo-color-text-secondary);
   font-weight: 600;
 }
 
 .shift-tag-main {
-  color: #FFFFFF;
+  color: var(--neo-color-bg-card);
   text-shadow: 0 1px 0 rgba(255,255,255,0.3);
 }
 
@@ -361,7 +361,7 @@ function onDrop(e: DragEvent) {
 }
 
 .shift-tag-member .shift-time {
-  color: #666666;
+  color: var(--neo-color-text-secondary);
 }
 
 /* ---- 成员拖拽 ---- */
@@ -375,15 +375,15 @@ function onDrop(e: DragEvent) {
 
 .member-draggable:hover {
   background: rgba(59, 130, 246, 0.1) !important;
-  border-color: #3B82F6 !important;
+  border-color: var(--neo-color-accent-blue) !important;
   box-shadow: 1px 1px 0px 0px rgba(59, 130, 246, 0.3);
-  transform: translate(-1px, -1px);
+  transform: translate(var(--neo-translate-xs), var(--neo-translate-xs));
 }
 
 /* ---- "+N 更多" ---- */
 .member-more {
   font-size: 10px;
-  color: #999999;
+  color: var(--neo-color-text-muted);
   line-height: 16px;
   font-weight: 600;
   white-space: nowrap;
@@ -397,7 +397,7 @@ function onDrop(e: DragEvent) {
   right: 3px;
   width: 7px;
   height: 7px;
-  border-radius: 2px;
+  border-radius: var(--neo-radius-sm);
   border: 1px solid rgba(0,0,0,0.3);
   transition: transform 0.2s ease;
 }
