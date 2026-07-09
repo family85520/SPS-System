@@ -40,7 +40,7 @@ async def export_schedule_excel(
     org_id: int | None = Query(None, description="组织ID"),
     dimension: str = Query("org", description="维度：org=按组织 / person=按人员"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("export", "read")),
+    current_user: SysUser = Depends(require_permissions("schedule", "export")),
 ):
     sd, ed = _parse(start_date, "start_date"), _parse(end_date, "end_date")
     if ed < sd:
@@ -66,7 +66,7 @@ async def export_statistics_excel(
     end_date: str = Query(..., description="结束日期 YYYY-MM-DD"),
     org_id: int | None = Query(None, description="组织ID"),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("export", "read")),
+    current_user: SysUser = Depends(require_permissions("schedule", "export")),
 ):
     sd, ed = _parse(start_date, "start_date"), _parse(end_date, "end_date")
     if ed < sd:
@@ -162,7 +162,7 @@ async def upload_template_file(
     is_default: bool = Form(False),
     description: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("export", "create")),
+    current_user: SysUser = Depends(require_permissions("schedule", "update")),
 ):
     if not file.filename or not file.filename.endswith(".xlsx"):
         raise HTTPException(400, "仅支持 .xlsx 格式")
@@ -178,7 +178,7 @@ async def upload_template_file(
 async def delete_export_template(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("export", "delete")),
+    current_user: SysUser = Depends(require_permissions("schedule", "delete")),
 ):
     try:
         await ExportService.delete_template(db, template_id)
@@ -191,7 +191,7 @@ async def delete_export_template(
 async def set_default_template(
     template_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: SysUser = Depends(require_permissions("export", "update")),
+    current_user: SysUser = Depends(require_permissions("schedule", "update")),
 ):
     try:
         await ExportService.set_default_template(db, template_id)
