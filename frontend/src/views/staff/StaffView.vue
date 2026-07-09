@@ -60,33 +60,53 @@
 
       <!-- ====== 统计卡片 ====== -->
       <div class="stats-grid">
-        <div class="neo-card stat-card">
-          <div class="stat-header">
-            <el-icon :size="24" class="stat-icon stat-icon-accent"><UserFilled /></el-icon>
-            <span class="stat-label">总员工数</span>
+        <div class="neo-card stat-card stat-card-blue">
+          <div class="stat-accent-bar" />
+          <div class="stat-card-inner">
+            <div class="stat-icon-wrap">
+              <el-icon :size="24"><UserFilled /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label-text">总员工数</span>
+              <span class="stat-big-number">{{ total }}</span>
+            </div>
           </div>
-          <span class="stat-value">{{ total }}</span>
         </div>
-        <div class="neo-card stat-card">
-          <div class="stat-header">
-            <el-icon :size="24" class="stat-icon stat-icon-success"><Check /></el-icon>
-            <span class="stat-label">在岗</span>
+        <div class="neo-card stat-card stat-card-green">
+          <div class="stat-accent-bar" />
+          <div class="stat-card-inner">
+            <div class="stat-icon-wrap">
+              <el-icon :size="24"><Check /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label-text">在岗</span>
+              <span class="stat-big-number">{{ statsActive }}</span>
+            </div>
           </div>
-          <span class="stat-value">{{ statsActive }}</span>
         </div>
-        <div class="neo-card stat-card">
-          <div class="stat-header">
-            <el-icon :size="24" class="stat-icon stat-icon-warning"><Coffee /></el-icon>
-            <span class="stat-label">请假</span>
+        <div class="neo-card stat-card stat-card-yellow">
+          <div class="stat-accent-bar" />
+          <div class="stat-card-inner">
+            <div class="stat-icon-wrap">
+              <el-icon :size="24"><Coffee /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label-text">请假</span>
+              <span class="stat-big-number">{{ statsLeave }}</span>
+            </div>
           </div>
-          <span class="stat-value">{{ statsLeave }}</span>
         </div>
-        <div class="neo-card stat-card">
-          <div class="stat-header">
-            <el-icon :size="24" class="stat-icon stat-icon-danger"><Close /></el-icon>
-            <span class="stat-label">停用</span>
+        <div class="neo-card stat-card stat-card-red">
+          <div class="stat-accent-bar" />
+          <div class="stat-card-inner">
+            <div class="stat-icon-wrap">
+              <el-icon :size="24"><Close /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label-text">停用</span>
+              <span class="stat-big-number">{{ statsResigned }}</span>
+            </div>
           </div>
-          <span class="stat-value">{{ statsResigned }}</span>
         </div>
       </div>
 
@@ -1041,46 +1061,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-}
-
-.stat-card {
-  padding: 16px 20px;
-}
-
-.stat-card:hover {
-  transform: none;
-  box-shadow: var(--neo-shadow-default);
-}
-
-.stat-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.stat-icon {
-  flex-shrink: 0;
-}
-
-.stat-icon-accent { color: var(--neo-color-accent-red); }
-.stat-icon-success { color: var(--neo-color-accent-green); }
-.stat-icon-warning { color: var(--neo-color-accent-yellow); }
-.stat-icon-danger { color: var(--neo-color-accent-red-hover); }
-
-.stat-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--neo-color-text-secondary);
-  letter-spacing: 0.3px;
-}
-
-.stat-value {
-  display: block;
-  font-size: 36px;
-  font-weight: 900;
-  color: var(--neo-color-text-primary);
-  line-height: 1.1;
 }
 
 /* ====== 工具栏 ====== */

@@ -80,7 +80,7 @@
           <el-icon><Upload /></el-icon>
           <span class="btn-text">导入</span>
         </el-button>
-        <el-button v-if="authStore.hasPermission('schedule', 'create')" class="btn-neo-info btn-neo-sm" @click="handleValidate">
+        <el-button v-if="authStore.hasPermission('schedule', 'read')" class="btn-neo-info btn-neo-sm" @click="handleValidate">
           <el-icon><CircleCheck /></el-icon>
           <span class="btn-text">校验</span>
         </el-button>
@@ -567,6 +567,10 @@ async function handleClickShift(shift: CalendarShift) {
 }
 
 async function handleShiftSwap(fromScheduleId: number, toScheduleId: number) {
+  if (!authStore.hasPermission('schedule', 'update')) {
+    ElMessage.warning('您没有班次调整权限')
+    return
+  }
   if (!fromScheduleId || fromScheduleId === toScheduleId) return
   try {
     await api.post(`/schedules/${fromScheduleId}/swap-staff/${toScheduleId}`)
@@ -579,7 +583,10 @@ async function handleShiftSwap(fromScheduleId: number, toScheduleId: number) {
 }
 
 async function handleStaffDrop(staffId: number, fromScheduleId: number, toScheduleId: number) {
-  if (!fromScheduleId || fromScheduleId === toScheduleId) return
+  if (!authStore.hasPermission('schedule', 'update')) {
+    ElMessage.warning('您没有班次调整权限')
+    return
+  }
 
   try {
     await api.post(`/schedules/${fromScheduleId}/remove-staff`, { staff_id: staffId })

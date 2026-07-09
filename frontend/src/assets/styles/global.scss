@@ -1593,6 +1593,8 @@ body {
 .stat-card-red .stat-accent-bar     { background: var(--neo-color-accent-red); }
 .stat-card-purple .stat-accent-bar  { background: var(--neo-color-accent-purple); }
 
+.stat-card-yellow .stat-accent-bar  { background: var(--neo-color-accent-yellow); }
+
 .stat-card-inner {
   display: flex;
   align-items: flex-start;
@@ -1620,6 +1622,7 @@ body {
 .stat-card-green .stat-icon-wrap   { background: #D1FAE5; color: #047857; }
 .stat-card-red .stat-icon-wrap     { background: #FEE2E2; color: #DC2626; }
 .stat-card-purple .stat-icon-wrap  { background: #EDE9FE; color: #6D28D9; }
+.stat-card-yellow .stat-icon-wrap  { background: #FEF3C7; color: #92400E; }
 
 .stat-info {
   display: flex;
