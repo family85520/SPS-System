@@ -72,6 +72,7 @@ htmlcov/
 # AI / Claude Code tools
 # ============================================
 .claude/
+.superpowers/
 superpowers/
 .playwright-cli
 .run-sps
