@@ -110,8 +110,14 @@ async def run_monthly_auto_schedule(db_factory):
             return
 
         today = date.today()
-        tomorrow = today + timedelta(days=1)
-        if today.month == tomorrow.month:
+
+        # 判断今天是否为当月最后一天：下月第一天减一天
+        if today.month == 12:
+            next_month_first = date(today.year + 1, 1, 1)
+        else:
+            next_month_first = date(today.year, today.month + 1, 1)
+        last_day_of_month = next_month_first - timedelta(days=1)
+        if today != last_day_of_month:
             return
 
         time_cfg = (await db.execute(
@@ -121,7 +127,11 @@ async def run_monthly_auto_schedule(db_factory):
         try:
             expected_h, expected_m = map(int, expected_time.split(":"))
             now = datetime.now()
-            if now.hour != expected_h or now.minute < expected_m or now.minute >= expected_m + 30:
+            # 在配置时间的 60 分钟窗口内触发（配置时间±30分钟）
+            now_minutes = now.hour * 60 + now.minute
+            expected_minutes = expected_h * 60 + expected_m
+            diff = abs(now_minutes - expected_minutes)
+            if diff > 30:
                 return
         except (ValueError, TypeError):
             pass
@@ -142,6 +152,19 @@ async def run_monthly_auto_schedule(db_factory):
             sa_select(SysConfig).where(SysConfig.config_key == "auto_schedule_skip_existing")
         )).scalars().first()
         skip_existing = skip_cfg.config_value == "true" if skip_cfg else False
+
+        # 防重复：检查今天是否已执行过
+        last_run_cfg = (await db.execute(
+            sa_select(SysConfig).where(SysConfig.config_key == "auto_schedule_last_run")
+        )).scalars().first()
+        if last_run_cfg and last_run_cfg.config_value:
+            try:
+                last_run_date = date.fromisoformat(last_run_cfg.config_value)
+                if last_run_date == today:
+                    logger.info(f"今天已执行过自动排班（{last_run_cfg.config_value}），跳过")
+                    return
+            except ValueError:
+                pass
 
         org_query = sa_select(OrgOrganization).where(OrgOrganization.status == 1)
         if org_ids:

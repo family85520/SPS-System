@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,13 +32,18 @@ async def lifespan(app: FastAPI):
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
     from app.services.auto_schedule_job import run_monthly_auto_schedule
     scheduler = AsyncIOScheduler()
+    # 每 5 分钟检查一次，auto_schedule_job 内部会判断：
+    # 1. 是否月末最后一天
+    # 2. 当前时间是否在配置的触发时间窗口内
     scheduler.add_job(
-        lambda: asyncio.create_task(run_monthly_auto_schedule(async_session_factory)),
-        'interval', minutes=30,
-        id='auto_schedule_monthly',
+        run_monthly_auto_schedule,
+        'interval', minutes=5,
+        args=[async_session_factory],
+        id='auto_schedule_check',
+        replace_existing=True,
     )
     scheduler.start()
-    print("自动排班调度器已启动（每 30 分钟检查一次）")
+    print("自动排班调度器已启动（每 5 分钟检查，月末按配置时间自动排班）")
 
     print("系统初始化完成")
 

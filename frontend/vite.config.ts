@@ -23,6 +23,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    hmr: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
@@ -32,6 +33,15 @@ export default defineConfig({
       '/ws': {
         target: 'ws://localhost:8000',
         ws: true,
+      },
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'element-plus': ['element-plus'],
+        },
       },
     },
   },
