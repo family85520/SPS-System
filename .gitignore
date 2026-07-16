@@ -104,3 +104,5 @@ project_tree.txt
 *.bak
 *.orig
 test.txt
+backups/
+logs/
